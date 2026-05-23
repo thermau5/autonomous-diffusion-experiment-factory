@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Auto-push every successful commit. Failure prints a message but never
+# rolls back the commit -- the local history is the source of truth.
+
+set -u
+
+branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+remote=$(git config --get branch."$branch".remote 2>/dev/null || echo "origin")
+
+if [[ -z "$branch" ]]; then
+  echo "[post-commit] detached HEAD; skipping push" >&2
+  exit 0
+fi
+
+if ! git remote get-url "$remote" >/dev/null 2>&1; then
+  echo "[post-commit] no remote '$remote' configured; skipping push" >&2
+  exit 0
+fi
+
+echo "[post-commit] pushing $branch -> $remote..."
+if git push "$remote" "$branch" 2>&1; then
+  echo "[post-commit] push ok"
+else
+  echo "[post-commit] push failed -- commit kept locally, rerun 'git push' once resolved" >&2
+fi
