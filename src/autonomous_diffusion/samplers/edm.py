@@ -72,6 +72,27 @@ def _edm_step(
     return x_next, nfe
 
 
+def _resolve_sigma_range(net: Any) -> tuple[float, float]:
+    """Clamp the net's sigma range to the Karras EDM defaults (0.002, 80).
+
+    EDM's `EDMPrecond` wrapper exposes `sigma_min=0` and `sigma_max=inf` as
+    placeholders meaning "use the sampler's defaults." VPPrecond / VEPrecond
+    expose nonzero finite values from their training noise schedules. EDM's
+    own `generate.py` resolves this with
+        sigma_min_eff = max(sampler_default, net.sigma_min)
+        sigma_max_eff = min(sampler_default, net.sigma_max)
+    so we do the same.
+    """
+    default_min, default_max = 0.002, 80.0
+    net_min = float(getattr(net, "sigma_min", default_min) or default_min)
+    net_max = float(getattr(net, "sigma_max", default_max))
+    if not (net_max > 0 and net_max < float("inf")):
+        net_max = default_max
+    sigma_min = max(default_min, net_min)
+    sigma_max = min(default_max, net_max)
+    return sigma_min, sigma_max
+
+
 def _edm_sample(
     *,
     net: Any,
@@ -85,8 +106,7 @@ def _edm_sample(
 ) -> SamplerOutput:
     device = torch.device(device)
     shape = _resolve_shape(net, image_shape)
-    sigma_min = float(getattr(net, "sigma_min", 0.002))
-    sigma_max = float(getattr(net, "sigma_max", 80.0))
+    sigma_min, sigma_max = _resolve_sigma_range(net)
     sigmas = karras_sigmas(num_steps, sigma_min, sigma_max, device=device).to(torch.float32)
 
     g = torch.Generator(device=device).manual_seed(int(seed))
