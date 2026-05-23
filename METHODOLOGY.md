@@ -38,9 +38,16 @@ change. Any attempt to change them aborts the run.
    `clean_fid_at_matched_nfe` to primary post-hoc.
 5. **No best-seed reporting.** All numbers are reported as mean ± SEM over the
    declared seed grid, with per-seed values saved alongside.
-6. **Persist everything.** Every run writes `config_used.yaml`, `metrics.json`,
-   `log.txt`, `samples.npz` (deletable on policy), exact CLI invocation, and
-   `git_commit`. If we cannot reproduce a number, that number is unreported.
+6. **Persist everything reproducible.** Every run writes `config_used.yaml`,
+   `metrics.json`, `log.txt`, `env.json` (git commit + hostname + argv), and
+   `generate_summary.json`. If we cannot reproduce a number, that number is
+   unreported.
+   - **Retention of `samples.npz`** is a separate axis from reproducibility.
+     The default policy is `seed0_only`: seed-0 samples for every (sampler, NFE)
+     are kept for inspection / qualitative figures; samples for seeds 1–4 are
+     deleted after Clean-FID is computed. Set `RETENTION=keep_all` to override
+     when disk allows; `RETENTION=delete_all` to keep only metadata + metrics.
+     The retention action taken is recorded under `metrics.retention` per run.
 7. **Sharp failure reporting.** If the theory fails on the locked test, the
    report carries the failure with the same prominence as a win. No quiet
    demotion to an appendix.

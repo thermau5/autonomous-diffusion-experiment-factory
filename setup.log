@@ -1,0 +1,3062 @@
+=== make setup started: Sat May 23 02:52:33 PM PDT 2026 ===
+>> cloning NVlabs/edm into third_party/edm
+Cloning into 'third_party/edm'...
+>> creating conda env autodiff
+2 channel Terms of Service accepted
+Retrieving notices: - done
+Channels:
+ - pytorch
+ - nvidia
+ - conda-forge
+ - defaults
+Platform: linux-64
+Collecting package metadata (repodata.json): | / - \ | / - \ | / - \ | / - \ | / - \ done
+Solving environment: / done
+
+
+==> WARNING: A newer version of conda exists. <==
+    current version: 25.5.1
+    latest version: 26.5.0
+
+Please update conda by running
+
+    $ conda update -n base -c defaults conda
+
+
+
+Downloading and Extracting Packages: ...working...pytorch-2.4.1        | 1.35 GB   |            |   0% 
+libcublas-12.1.0.26  | 329.0 MB  |            |   0% [A
+
+torchtriton-3.0.0    | 233.7 MB  |            |   0% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  |            |   0% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  |            |   0% [A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  |            |   0% [A[A[A[A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  |            |   0% [A[A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   |            |   0% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   |            |   0% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   |            |   0% [A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   |            |   0% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+libnvjitlink-12.1.10 | 16.9 MB   |            |   0% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+cuda-cupti-12.1.105  | 15.4 MB   |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+ffmpeg-4.4.2         | 10.1 MB   |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+torchvision-0.19.1   | 8.5 MB    |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+numpy-1.26.4         | 7.7 MB    |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+libstdcxx-15.2.0     | 5.6 MB    |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+intel-openmp-2022.1. | 4.5 MB    |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ... (more hidden) ...[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   |            |   0% 
+libcublas-12.1.0.26  | 329.0 MB  |            |   1% [A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  |            |   0% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  |            |   1% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  |            |   0% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | 2          |   2% [Apytorch-2.4.1        | 1.35 GB   |            |   0% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | 2          |   2% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  |            |   1% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  |            |   1% [A[Apytorch-2.4.1        | 1.35 GB   |            |   0% 
+libcublas-12.1.0.26  | 329.0 MB  | 3          |   3% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | 4          |   4% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | 1          |   2% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | 2          |   2% [A[Apytorch-2.4.1        | 1.35 GB   |            |   0% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | 6          |   6% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | 2          |   2% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | 4          |   5% [A
+
+torchtriton-3.0.0    | 233.7 MB  | 3          |   3% [A[Apytorch-2.4.1        | 1.35 GB   |            |   0% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | 7          |   8% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | 2          |   3% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | 5          |   6% [A
+
+torchtriton-3.0.0    | 233.7 MB  | 4          |   4% [A[Apytorch-2.4.1        | 1.35 GB   |            |   0% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | 9          |   9% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | 3          |   4% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | 6          |   7% [A
+
+torchtriton-3.0.0    | 233.7 MB  | 5          |   5% [A[Apytorch-2.4.1        | 1.35 GB   |            |   1% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | 5          |   5% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #1         |  11% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | 6          |   7% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | 7          |   8% [Apytorch-2.4.1        | 1.35 GB   |            |   1% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | 6          |   7% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #2         |  13% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | 7          |   8% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | 8          |   9% [Apytorch-2.4.1        | 1.35 GB   |            |   1% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | 8          |   9% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #4         |  14% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | 8          |   9% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | 9          |  10% [Apytorch-2.4.1        | 1.35 GB   |            |   1% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #          |  10% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | 9          |  10% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #5         |  16% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #1         |  12% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | 1          |   1% 
+libcublas-12.1.0.26  | 329.0 MB  | #          |  11% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #          |  11% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #7         |  17% [A[A[Apytorch-2.4.1        | 1.35 GB   | 1          |   1% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #3         |  14% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #1         |  12% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #1         |  12% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #8         |  19% [A[A[Apytorch-2.4.1        | 1.35 GB   | 1          |   2% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #5         |  15% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #2         |  12% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #2         |  13% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ##         |  20% [A[A[Apytorch-2.4.1        | 1.35 GB   | 1          |   2% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #6         |  17% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #3         |  13% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #3         |  14% [A[Apytorch-2.4.1        | 1.35 GB   | 1          |   2% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #8         |  18% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ##1        |  21% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | #4         |  15% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | #4         |  14% [Apytorch-2.4.1        | 1.35 GB   | 2          |   2% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ##2        |  23% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ##         |  20% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | #5         |  16% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | #4         |  15% [Apytorch-2.4.1        | 1.35 GB   | 2          |   2% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ##4        |  24% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ##1        |  22% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | #6         |  17% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | #5         |  15% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ##5        |  26% [A[A[Apytorch-2.4.1        | 1.35 GB   | 2          |   3% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ##3        |  24% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | #7         |  18% [A[Apytorch-2.4.1        | 1.35 GB   | 2          |   3% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ##7        |  27% [A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #6         |  16% [A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ##5        |  25% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | #8         |  19% [A[Apytorch-2.4.1        | 1.35 GB   | 2          |   3% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ##8        |  29% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ##6        |  27% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #6         |  17% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #9         |  20% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ###        |  31% [A[A[Apytorch-2.4.1        | 1.35 GB   | 3          |   3% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ##8        |  28% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #7         |  17% [A
+
+torchtriton-3.0.0    | 233.7 MB  | ##         |  21% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ###2       |  32% [A[A[Apytorch-2.4.1        | 1.35 GB   | 3          |   3% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ##9        |  30% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #8         |  18% [A
+
+torchtriton-3.0.0    | 233.7 MB  | ##1        |  22% [A[Apytorch-2.4.1        | 1.35 GB   | 3          |   3% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ###3       |  34% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ###1       |  31% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ##2        |  23% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | #8         |  19% [Apytorch-2.4.1        | 1.35 GB   | 3          |   4% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ###5       |  35% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ###2       |  33% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ##3        |  24% [A[Apytorch-2.4.1        | 1.35 GB   | 3          |   4% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ###6       |  37% [A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #9         |  19% [A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ###4       |  34% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ##4        |  25% [A[Apytorch-2.4.1        | 1.35 GB   | 4          |   4% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ###8       |  38% [A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##         |  20% [A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ###5       |  36% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ##5        |  26% [A[Apytorch-2.4.1        | 1.35 GB   | 4          |   4% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ###9       |  40% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ###7       |  37% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##         |  21% [A
+
+torchtriton-3.0.0    | 233.7 MB  | ##6        |  27% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ####1      |  41% [A[A[Apytorch-2.4.1        | 1.35 GB   | 4          |   4% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ###9       |  39% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ##7        |  28% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##1        |  21% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ####2      |  43% [A[A[Apytorch-2.4.1        | 1.35 GB   | 4          |   5% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ####       |  41% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##2        |  22% [A
+
+torchtriton-3.0.0    | 233.7 MB  | ##8        |  29% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ####4      |  44% [A[A[Apytorch-2.4.1        | 1.35 GB   | 4          |   5% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ####2      |  42% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ##9        |  30% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##2        |  23% [Apytorch-2.4.1        | 1.35 GB   | 5          |   5% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ####6      |  46% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ####3      |  44% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ###        |  31% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##3        |  23% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ####7      |  48% [A[A[Apytorch-2.4.1        | 1.35 GB   | 5          |   5% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ####5      |  45% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ###2       |  32% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##4        |  24% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ####9      |  49% [A[A[Apytorch-2.4.1        | 1.35 GB   | 5          |   5% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ####6      |  47% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ###3       |  33% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##4        |  25% [Apytorch-2.4.1        | 1.35 GB   | 5          |   6% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #####      |  50% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ####8      |  48% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ###4       |  34% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##5        |  26% [Apytorch-2.4.1        | 1.35 GB   | 5          |   6% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #####1     |  52% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ####9      |  50% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ###5       |  35% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##6        |  26% [Apytorch-2.4.1        | 1.35 GB   | 6          |   6% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #####3     |  53% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #####1     |  51% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ###6       |  36% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##7        |  27% [Apytorch-2.4.1        | 1.35 GB   | 6          |   6% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #####3     |  53% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #####4     |  55% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ###7       |  37% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##7        |  28% [A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #####4     |  55% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | 6          |   6% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #####5     |  56% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ###8       |  38% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##8        |  29% [Apytorch-2.4.1        | 1.35 GB   | 6          |   7% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #####6     |  56% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #####7     |  57% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ###9       |  39% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ##9        |  30% [Apytorch-2.4.1        | 1.35 GB   | 6          |   7% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #####8     |  58% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #####8     |  59% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ####       |  40% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ###        |  31% [Apytorch-2.4.1        | 1.35 GB   | 6          |   7% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #####9     |  60% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #####9     |  60% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ####1      |  41% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ###1       |  32% [Apytorch-2.4.1        | 1.35 GB   | 7          |   7% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ######1    |  61% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ######1    |  61% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ####2      |  42% [A[Apytorch-2.4.1        | 1.35 GB   | 7          |   7% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ######2    |  63% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ###2       |  32% [A
+
+torchtriton-3.0.0    | 233.7 MB  | ####3      |  43% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ######2    |  63% [A[A[Apytorch-2.4.1        | 1.35 GB   | 7          |   7% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ######4    |  64% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ###3       |  33% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ######4    |  65% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ####3      |  44% [A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ######5    |  66% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ###4       |  34% [Apytorch-2.4.1        | 1.35 GB   | 7          |   8% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ######6    |  66% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ######7    |  68% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | 7          |   8% 
+libcublas-12.1.0.26  | 329.0 MB  | ###5       |  35% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ######7    |  68% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ######9    |  69% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ####4      |  45% [A[Apytorch-2.4.1        | 1.35 GB   | 8          |   8% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ######9    |  69% [A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ###5       |  36% [A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #######    |  71% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | 8          |   8% 
+
+torchtriton-3.0.0    | 233.7 MB  | ####5      |  45% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #######1   |  71% [A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ###6       |  37% [A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #######2   |  73% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | 8          |   9% 
+
+torchtriton-3.0.0    | 233.7 MB  | ####6      |  46% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #######2   |  73% [A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ###7       |  37% [Apytorch-2.4.1        | 1.35 GB   | 8          |   9% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #######4   |  74% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ####6      |  47% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ###8       |  38% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #######4   |  74% [A[A[Apytorch-2.4.1        | 1.35 GB   | 8          |   9% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #######5   |  76% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ####7      |  48% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ###8       |  39% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #######6   |  76% [A[A[Apytorch-2.4.1        | 1.35 GB   | 9          |   9% 
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #######7   |  77% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ####8      |  48% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ###9       |  40% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #######7   |  78% [A[A[Apytorch-2.4.1        | 1.35 GB   | 9          |   9% 
+
+torchtriton-3.0.0    | 233.7 MB  | ####9      |  49% [A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #######8   |  79% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ####       |  40% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #######9   |  79% [A[A[Apytorch-2.4.1        | 1.35 GB   | 9          |  10% 
+
+torchtriton-3.0.0    | 233.7 MB  | ####9      |  50% [A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ########   |  80% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ########   |  81% [A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ####1      |  41% [Apytorch-2.4.1        | 1.35 GB   | 9          |  10% 
+
+torchtriton-3.0.0    | 233.7 MB  | #####      |  51% [A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ########2  |  83% [A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ########2  |  82% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | #####1     |  52% [A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ########4  |  85% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | #          |  10% 
+libcublas-12.1.0.26  | 329.0 MB  | ####1      |  42% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #####2     |  52% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ########3  |  84% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ########7  |  87% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | #          |  10% 
+libcublas-12.1.0.26  | 329.0 MB  | ####2      |  43% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #####3     |  53% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ########4  |  85% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ########9  |  89% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | #          |  10% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ########6  |  87% [A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | #####3     |  54% [A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #########1 |  91% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ####3      |  43% [Apytorch-2.4.1        | 1.35 GB   | #          |  11% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ########8  |  89% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #########3 |  93% [A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ####3      |  44% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #####4     |  55% [A[Apytorch-2.4.1        | 1.35 GB   | #          |  11% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #########  |  90% [A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ####4      |  45% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #####5     |  55% [A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #########5 |  95% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | #1         |  11% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #########1 |  92% [A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ####5      |  46% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #####6     |  56% [A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #########7 |  97% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | #1         |  11% 
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #########3 |  94% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | #########9 | 100% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | #1         |  11% 
+
+torchtriton-3.0.0    | 233.7 MB  | #####6     |  57% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ####6      |  46% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #########5 |  96% [A[A[Apytorch-2.4.1        | 1.35 GB   | #1         |  12% 
+
+torchtriton-3.0.0    | 233.7 MB  | #####7     |  58% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | ####7      |  47% [A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #########7 |  97% [A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ########## | 100% [A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | #####8     |  59% [A[Apytorch-2.4.1        | 1.35 GB   | #1         |  12% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  |            |   0% [A[A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | #########9 |  99% [A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ####8      |  48% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #####9     |  60% [A[Apytorch-2.4.1        | 1.35 GB   | #2         |  12% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | 2          |   3% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ####8      |  49% [Apytorch-2.4.1        | 1.35 GB   | #2         |  12% 
+
+torchtriton-3.0.0    | 233.7 MB  | ######     |  61% [A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | 5          |   5% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #2         |  13% 
+
+torchtriton-3.0.0    | 233.7 MB  | ######1    |  62% [A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ########## | 100% [A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ####9      |  50% [A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | 7          |   8% [A[A[A[A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  |            |   0% [A[A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ######2    |  62% [A[Apytorch-2.4.1        | 1.35 GB   | #2         |  13% 
+libcublas-12.1.0.26  | 329.0 MB  | #####      |  50% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | 2          |   3% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | 9          |  10% [A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ######3    |  63% [A[Apytorch-2.4.1        | 1.35 GB   | #3         |  13% 
+libcublas-12.1.0.26  | 329.0 MB  | #####      |  51% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | 4          |   5% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #1         |  12% [A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ######4    |  64% [A[Apytorch-2.4.1        | 1.35 GB   | #3         |  13% 
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | 7          |   7% [A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #####1     |  51% [A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #3         |  14% [A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ######5    |  65% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | 9          |   9% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #3         |  14% 
+libcublas-12.1.0.26  | 329.0 MB  | #####2     |  52% [A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #5         |  15% [A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ######5    |  66% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | #####2     |  53% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #1         |  11% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #3         |  14% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #7         |  17% [A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ######6    |  67% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | #####3     |  54% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #4         |  14% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #4         |  14% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #8         |  19% [A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ######7    |  68% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | #####4     |  55% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #6         |  16% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #4         |  14% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ##         |  21% [A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ######8    |  69% [A[A
+libcublas-12.1.0.26  | 329.0 MB  | #####5     |  55% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #8         |  19% [A[A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ######9    |  70% [A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ##2        |  22% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #4         |  14% 
+libcublas-12.1.0.26  | 329.0 MB  | #####6     |  56% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ##         |  21% [A[A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | #######    |  71% [A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ##3        |  24% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #4         |  15% 
+libcublas-12.1.0.26  | 329.0 MB  | #####6     |  57% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ##3        |  23% [A[A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | #######2   |  72% [A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ##5        |  26% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #4         |  15% 
+libcublas-12.1.0.26  | 329.0 MB  | #####7     |  57% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #######3   |  73% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ##5        |  25% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ##7        |  27% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #5         |  15% 
+libcublas-12.1.0.26  | 329.0 MB  | #####8     |  58% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #######4   |  74% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ##7        |  28% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #5         |  15% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ##8        |  29% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #####8     |  59% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #######5   |  76% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ##9        |  30% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #5         |  16% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ###        |  30% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #####9     |  59% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #######6   |  77% [A[Apytorch-2.4.1        | 1.35 GB   | #5         |  16% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ###1       |  32% [A[A[A[A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ###1       |  32% [A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ######     |  60% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #######7   |  78% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ###3       |  34% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ###3       |  33% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #5         |  16% 
+libcublas-12.1.0.26  | 329.0 MB  | ######1    |  61% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #######8   |  79% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ###6       |  36% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #6         |  16% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ###4       |  35% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ######2    |  62% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #######9   |  80% [A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ###6       |  36% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #6         |  16% 
+libcublas-12.1.0.26  | 329.0 MB  | ######2    |  63% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ###8       |  38% [A[A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ########   |  81% [A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ###8       |  38% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #6         |  16% 
+libcublas-12.1.0.26  | 329.0 MB  | ######4    |  64% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ###9       |  40% [A[A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ########1  |  82% [A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ####       |  40% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #6         |  17% 
+libcublas-12.1.0.26  | 329.0 MB  | ######4    |  65% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ####2      |  43% [A[A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ########2  |  83% [A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ####1      |  42% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #6         |  17% 
+libcublas-12.1.0.26  | 329.0 MB  | ######5    |  66% [A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ####3      |  44% [A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ########3  |  84% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ####4      |  44% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #7         |  17% 
+libcublas-12.1.0.26  | 329.0 MB  | ######6    |  67% [A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ####5      |  46% [A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ########4  |  85% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ####6      |  46% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #7         |  17% 
+libcublas-12.1.0.26  | 329.0 MB  | ######7    |  67% [A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ####7      |  47% [A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ########5  |  86% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ####8      |  49% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #7         |  17% 
+libcublas-12.1.0.26  | 329.0 MB  | ######8    |  68% [A
+
+torchtriton-3.0.0    | 233.7 MB  | ########6  |  87% [A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ####9      |  49% [A[A[A[A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #####      |  51% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #7         |  18% 
+libcublas-12.1.0.26  | 329.0 MB  | ######9    |  69% [A
+
+torchtriton-3.0.0    | 233.7 MB  | ########7  |  88% [A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #####      |  51% [A[A[A[A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #####2     |  53% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #7         |  18% 
+libcublas-12.1.0.26  | 329.0 MB  | #######    |  70% [A
+
+torchtriton-3.0.0    | 233.7 MB  | ########8  |  89% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #####4     |  55% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #####2     |  52% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #######1   |  71% [Apytorch-2.4.1        | 1.35 GB   | #8         |  18% 
+
+torchtriton-3.0.0    | 233.7 MB  | ########9  |  90% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #####6     |  57% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #####3     |  54% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #######2   |  72% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #########1 |  91% [A[Apytorch-2.4.1        | 1.35 GB   | #8         |  18% 
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #####9     |  60% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #####5     |  55% [A[A[A[A[A
+
+torchtriton-3.0.0    | 233.7 MB  | #########2 |  92% [A[Apytorch-2.4.1        | 1.35 GB   | #8         |  18% 
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ######2    |  63% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #####6     |  57% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #######2   |  73% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #########3 |  93% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ######5    |  66% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #8         |  18% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #####8     |  58% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #######3   |  74% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #########4 |  94% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ######8    |  69% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #8         |  19% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #####9     |  60% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #######4   |  74% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #########5 |  95% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #######1   |  71% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ######1    |  61% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #######5   |  75% [Apytorch-2.4.1        | 1.35 GB   | #8         |  19% 
+
+torchtriton-3.0.0    | 233.7 MB  | #########6 |  97% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #######4   |  75% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ######3    |  64% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #######5   |  76% [Apytorch-2.4.1        | 1.35 GB   | #8         |  19% 
+
+torchtriton-3.0.0    | 233.7 MB  | #########7 |  98% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #######7   |  77% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ######5    |  66% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #9         |  19% 
+libcublas-12.1.0.26  | 329.0 MB  | #######6   |  76% [A
+
+torchtriton-3.0.0    | 233.7 MB  | #########8 |  99% [A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #######9   |  80% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ######8    |  68% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #######7   |  77% [Apytorch-2.4.1        | 1.35 GB   | #9         |  19% 
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ########2  |  83% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #######    |  71% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #######7   |  78% [Apytorch-2.4.1        | 1.35 GB   | #9         |  19% 
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ########5  |  85% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #######3   |  73% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #######8   |  79% [Apytorch-2.4.1        | 1.35 GB   | #9         |  20% 
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ########7  |  88% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #######5   |  76% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #######9   |  80% [A
+
+torchtriton-3.0.0    | 233.7 MB  | ########## | 100% [A[A
+
+torchtriton-3.0.0    | 233.7 MB  | ########## | 100% [A[Apytorch-2.4.1        | 1.35 GB   | #9         |  20% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   |            |   0% [A[A[A[A[A[A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #########  |  90% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #######7   |  78% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ########   |  81% [Apytorch-2.4.1        | 1.35 GB   | ##         |  20% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | 1          |   2% [A[A[A[A[A[A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #########2 |  93% [A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ########   |  80% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ########1  |  82% [Apytorch-2.4.1        | 1.35 GB   | ##         |  20% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | 4          |   4% [A[A[A[A[A[A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #########5 |  95% [A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ########2  |  83% [A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ########1  |  82% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##         |  20% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | 6          |   6% [A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ########3  |  84% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #########7 |  97% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##         |  21% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ########3  |  84% [A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | 8          |   8% [A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ########4  |  84% [A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | #########9 |  99% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##         |  21% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #          |  11% [A[A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ########5  |  86% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ########5  |  85% [Apytorch-2.4.1        | 1.35 GB   | ##         |  21% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #3         |  14% [A[A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ########7  |  87% [A[A[A[A[A
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ########## | 100% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##1        |  21% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #6         |  17% [A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ########6  |  86% [A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   |            |   0% [A[A[A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ########8  |  89% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##1        |  21% 
+libcublas-12.1.0.26  | 329.0 MB  | ########7  |  87% [A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #9         |  19% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | 3          |   4% [A[A[A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #########  |  91% [A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ##1        |  22% [A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##1        |  22% 
+libcublas-12.1.0.26  | 329.0 MB  | ########8  |  88% [A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | 7          |   7% [A[A[A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #########2 |  92% [A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ##5        |  26% [A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##1        |  22% 
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | #1         |  11% [A[A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ########9  |  89% [A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ##9        |  30% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | #5         |  15% [A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##2        |  22% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #########3 |  94% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########  |  90% [A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ###3       |  34% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | #9         |  19% [A[A[A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #########5 |  95% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##2        |  22% 
+libcublas-12.1.0.26  | 329.0 MB  | #########  |  91% [A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ###6       |  37% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ##3        |  23% [A[A[A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #########6 |  97% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########1 |  92% [Apytorch-2.4.1        | 1.35 GB   | ##2        |  23% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ####       |  40% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ##6        |  27% [A[A[A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | #########8 |  98% [A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########2 |  92% [Apytorch-2.4.1        | 1.35 GB   | ##2        |  23% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ####3      |  44% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ###        |  31% [A[A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########3 |  93% [Apytorch-2.4.1        | 1.35 GB   | ##2        |  23% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ####6      |  47% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ###6       |  37% [A[A[A[A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ########## | 100% [A[A[A[A[A
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ########## | 100% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##3        |  23% 
+libcublas-12.1.0.26  | 329.0 MB  | #########4 |  94% [A
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   |            |   0% [A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ####9      |  50% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ####4      |  45% [A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##3        |  23% 
+libcublas-12.1.0.26  | 329.0 MB  | #########4 |  95% [A
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | 6          |   7% [A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #####2     |  53% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ####9      |  50% [A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##3        |  23% 
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | #5         |  16% [A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | #####5     |  56% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #####5     |  56% [A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########5 |  95% [Apytorch-2.4.1        | 1.35 GB   | ##3        |  24% 
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | ##4        |  24% [A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ######2    |  62% [A[A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########6 |  96% [A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #####8     |  59% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | ###5       |  36% [A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##3        |  24% 
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ######8    |  68% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ######1    |  61% [A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########6 |  97% [A
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | ####4      |  45% [A[A[A[A[A[A[A[A[A
+
+
+
+libnpp-12.0.2.50     | 139.8 MB  | ########## | 100% [A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##3        |  24% 
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | #######4   |  74% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ######3    |  64% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | #####4     |  54% [A[A[A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########7 |  97% [Apytorch-2.4.1        | 1.35 GB   | ##4        |  24% 
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ########   |  81% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ######6    |  66% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | ######4    |  64% [A[A[A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########7 |  98% [Apytorch-2.4.1        | 1.35 GB   | ##4        |  24% 
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | #######3   |  73% [A[A[A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########8 |  98% [A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ######8    |  69% [A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##4        |  25% 
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | ########3  |  84% [A[A[A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########9 |  99% [A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #######    |  71% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ########6  |  87% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | #########3 |  93% [A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##4        |  25% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #######4   |  74% [A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | #########9 | 100% [Apytorch-2.4.1        | 1.35 GB   | ##5        |  25% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #######8   |  78% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | #########1 |  92% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   |            |   0% [A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##5        |  26% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ########1  |  82% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | #########6 |  96% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   | 8          |   9% [A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##5        |  26% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ########5  |  85% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   | ##         |  21% [A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##6        |  26% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ########9  |  89% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ########## | 100% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   | ###4       |  34% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+libnvjitlink-12.1.10 | 16.9 MB   |            |   0% [A[A[A[A[A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ########## | 100% [Apytorch-2.4.1        | 1.35 GB   | ##6        |  27% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #########3 |  93% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   | ####5      |  46% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+libnvjitlink-12.1.10 | 16.9 MB   | 5          |   6% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   | #1         |  11% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | #########7 |  97% [A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##6        |  27% 
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   | #####7     |  58% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+libnvjitlink-12.1.10 | 16.9 MB   | #2         |  13% [A[A[A[A[A[A[A[A[A[A[A
+
+
+libcusparse-12.0.2.5 | 163.0 MB  | ########## | 100% [A[A[A
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   | ##2        |  23% [A[A[A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##7        |  27% 
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   | #######1   |  71% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+libnvjitlink-12.1.10 | 16.9 MB   | ##8        |  29% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   | ###4       |  35% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   | ########3  |  83% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+libnvjitlink-12.1.10 | 16.9 MB   | #####3     |  53% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ########## | 100% [A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##7        |  27% 
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   | #####1     |  51% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+cuda-cupti-12.1.105  | 15.4 MB   |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   | #########5 |  96% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+libnvjitlink-12.1.10 | 16.9 MB   | #######3   |  74% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+cuda-cupti-12.1.105  | 15.4 MB   | #9         |  20% [A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   | ######4    |  64% [A[A[A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##7        |  28% 
+
+
+
+
+
+
+
+
+
+
+libnvjitlink-12.1.10 | 16.9 MB   | #########4 |  94% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+ffmpeg-4.4.2         | 10.1 MB   |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+libnvjitlink-12.1.10 | 16.9 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+cuda-cupti-12.1.105  | 15.4 MB   | ####3      |  43% [A[A[A[A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##7        |  28% 
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   | #######6   |  76% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+torchvision-0.19.1   | 8.5 MB    |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+ffmpeg-4.4.2         | 10.1 MB   | ##3        |  23% [A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+torchvision-0.19.1   | 8.5 MB    | ###3       |  34% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+cuda-cupti-12.1.105  | 15.4 MB   | ######5    |  65% [A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   | ########8  |  89% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+ffmpeg-4.4.2         | 10.1 MB   | ####6      |  47% [A[A[A[A[A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##8        |  28% 
+
+
+
+
+
+
+
+
+
+
+
+
+cuda-cupti-12.1.105  | 15.4 MB   | ########4  |  85% [A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+torchvision-0.19.1   | 8.5 MB    | ######4    |  65% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+ffmpeg-4.4.2         | 10.1 MB   | #######6   |  76% [A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+numpy-1.26.4         | 7.7 MB    |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+cuda-cupti-12.1.105  | 15.4 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##8        |  28% 
+
+
+
+
+
+
+
+
+
+
+
+
+
+ffmpeg-4.4.2         | 10.1 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+torchvision-0.19.1   | 8.5 MB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+libstdcxx-15.2.0     | 5.6 MB    |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+intel-openmp-2022.1. | 4.5 MB    |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ... (more hidden) ...[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+numpy-1.26.4         | 7.7 MB    | ##3        |  24% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+libstdcxx-15.2.0     | 5.6 MB    | #####7     |  57% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##8        |  28% 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+intel-openmp-2022.1. | 4.5 MB    | ######     |  61% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ... (more hidden) ...[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+numpy-1.26.4         | 7.7 MB    | ####6      |  47% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+intel-openmp-2022.1. | 4.5 MB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ... (more hidden) ...[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+libstdcxx-15.2.0     | 5.6 MB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##8        |  29% 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+numpy-1.26.4         | 7.7 MB    | ######9    |  70% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##8        |  29% 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+numpy-1.26.4         | 7.7 MB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+numpy-1.26.4         | 7.7 MB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##9        |  29% 
+
+
+
+
+mkl-2022.1.0         | 129.7 MB  | ########## | 100% [A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ##9        |  29% pytorch-2.4.1        | 1.35 GB   | ##9        |  30% pytorch-2.4.1        | 1.35 GB   | ###        |  30% pytorch-2.4.1        | 1.35 GB   | ###        |  31% pytorch-2.4.1        | 1.35 GB   | ###1       |  31% 
+
+
+
+
+
+
+
+
+python-3.11.15       | 29.5 MB   | ########## | 100% [A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ###1       |  32% pytorch-2.4.1        | 1.35 GB   | ###2       |  33% 
+
+
+
+
+
+
+
+libcurand-10.3.10.19 | 44.0 MB   | ########## | 100% [A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ###3       |  33% pytorch-2.4.1        | 1.35 GB   | ###4       |  34% pytorch-2.4.1        | 1.35 GB   | ###4       |  35% pytorch-2.4.1        | 1.35 GB   | ###5       |  36% pytorch-2.4.1        | 1.35 GB   | ###6       |  36% pytorch-2.4.1        | 1.35 GB   | ###7       |  37% pytorch-2.4.1        | 1.35 GB   | ###8       |  38% pytorch-2.4.1        | 1.35 GB   | ###8       |  39% pytorch-2.4.1        | 1.35 GB   | ###9       |  40% pytorch-2.4.1        | 1.35 GB   | ####       |  41% pytorch-2.4.1        | 1.35 GB   | ####1      |  41% pytorch-2.4.1        | 1.35 GB   | ####2      |  42% pytorch-2.4.1        | 1.35 GB   | ####2      |  43% pytorch-2.4.1        | 1.35 GB   | ####3      |  44% pytorch-2.4.1        | 1.35 GB   | ####4      |  45% pytorch-2.4.1        | 1.35 GB   | ####5      |  45% pytorch-2.4.1        | 1.35 GB   | ####6      |  46% pytorch-2.4.1        | 1.35 GB   | ####7      |  47% pytorch-2.4.1        | 1.35 GB   | ####7      |  48% pytorch-2.4.1        | 1.35 GB   | ####8      |  49% pytorch-2.4.1        | 1.35 GB   | ####9      |  49% pytorch-2.4.1        | 1.35 GB   | #####      |  50% 
+
+
+
+
+
+libcufft-11.0.2.4    | 102.9 MB  | ########## | 100% [A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | #####1     |  51% pytorch-2.4.1        | 1.35 GB   | #####1     |  52% pytorch-2.4.1        | 1.35 GB   | #####2     |  53% pytorch-2.4.1        | 1.35 GB   | #####3     |  54% pytorch-2.4.1        | 1.35 GB   | #####4     |  54% pytorch-2.4.1        | 1.35 GB   | #####5     |  55% pytorch-2.4.1        | 1.35 GB   | #####6     |  56% pytorch-2.4.1        | 1.35 GB   | #####6     |  57% pytorch-2.4.1        | 1.35 GB   | #####7     |  58% pytorch-2.4.1        | 1.35 GB   | #####8     |  58% pytorch-2.4.1        | 1.35 GB   | #####9     |  59% pytorch-2.4.1        | 1.35 GB   | ######     |  60% pytorch-2.4.1        | 1.35 GB   | ######     |  61% pytorch-2.4.1        | 1.35 GB   | ######1    |  62% pytorch-2.4.1        | 1.35 GB   | ######2    |  63% pytorch-2.4.1        | 1.35 GB   | ######3    |  63% pytorch-2.4.1        | 1.35 GB   | ######4    |  64% pytorch-2.4.1        | 1.35 GB   | ######5    |  65% pytorch-2.4.1        | 1.35 GB   | ######5    |  66% pytorch-2.4.1        | 1.35 GB   | ######6    |  67% pytorch-2.4.1        | 1.35 GB   | ######7    |  67% pytorch-2.4.1        | 1.35 GB   | ######8    |  68% pytorch-2.4.1        | 1.35 GB   | ######9    |  69% pytorch-2.4.1        | 1.35 GB   | ######9    |  70% pytorch-2.4.1        | 1.35 GB   | #######    |  71% pytorch-2.4.1        | 1.35 GB   | #######1   |  72% pytorch-2.4.1        | 1.35 GB   | #######2   |  72% pytorch-2.4.1        | 1.35 GB   | #######3   |  73% pytorch-2.4.1        | 1.35 GB   | #######4   |  74% pytorch-2.4.1        | 1.35 GB   | #######4   |  75% pytorch-2.4.1        | 1.35 GB   | #######5   |  76% pytorch-2.4.1        | 1.35 GB   | #######6   |  76% pytorch-2.4.1        | 1.35 GB   | #######7   |  77% pytorch-2.4.1        | 1.35 GB   | #######8   |  78% pytorch-2.4.1        | 1.35 GB   | #######8   |  79% pytorch-2.4.1        | 1.35 GB   | #######9   |  80% pytorch-2.4.1        | 1.35 GB   | ########   |  80% pytorch-2.4.1        | 1.35 GB   | ########1  |  81% pytorch-2.4.1        | 1.35 GB   | ########2  |  82% pytorch-2.4.1        | 1.35 GB   | ########2  |  83% pytorch-2.4.1        | 1.35 GB   | ########3  |  84% pytorch-2.4.1        | 1.35 GB   | ########4  |  85% pytorch-2.4.1        | 1.35 GB   | ########5  |  85% pytorch-2.4.1        | 1.35 GB   | ########6  |  86% pytorch-2.4.1        | 1.35 GB   | ########6  |  87% pytorch-2.4.1        | 1.35 GB   | ########7  |  88% pytorch-2.4.1        | 1.35 GB   | ########8  |  89% pytorch-2.4.1        | 1.35 GB   | ########9  |  89% pytorch-2.4.1        | 1.35 GB   | #########  |  90% pytorch-2.4.1        | 1.35 GB   | #########1 |  91% 
+
+torchtriton-3.0.0    | 233.7 MB  | ########## | 100% [A[Apytorch-2.4.1        | 1.35 GB   | #########1 |  92% pytorch-2.4.1        | 1.35 GB   | #########2 |  93% pytorch-2.4.1        | 1.35 GB   | #########3 |  94% pytorch-2.4.1        | 1.35 GB   | #########4 |  94% pytorch-2.4.1        | 1.35 GB   | #########5 |  95% pytorch-2.4.1        | 1.35 GB   | #########6 |  96% pytorch-2.4.1        | 1.35 GB   | #########6 |  97% pytorch-2.4.1        | 1.35 GB   | #########7 |  98% pytorch-2.4.1        | 1.35 GB   | #########8 |  98% pytorch-2.4.1        | 1.35 GB   | #########9 |  99% 
+
+
+
+
+
+
+
+
+
+cuda-nvrtc-12.1.105  | 19.7 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+libnvjitlink-12.1.10 | 16.9 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A[A[Apytorch-2.4.1        | 1.35 GB   | ########## | 100% 
+
+
+
+
+
+
+libcusolver-11.4.4.5 | 98.3 MB   | ########## | 100% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+scipy-1.17.1         | 16.3 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+ffmpeg-4.4.2         | 10.1 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+cuda-cupti-12.1.105  | 15.4 MB   | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+intel-openmp-2022.1. | 4.5 MB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+torchvision-0.19.1   | 8.5 MB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+torchvision-0.19.1   | 8.5 MB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+libstdcxx-15.2.0     | 5.6 MB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ... (more hidden) ...[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ... (more hidden) ...[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+numpy-1.26.4         | 7.7 MB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+libcublas-12.1.0.26  | 329.0 MB  | ########## | 100% [A

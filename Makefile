@@ -11,6 +11,7 @@ SAMPLES_ROOT    ?= outputs/samples
 RUN_ROOT        ?= outputs/runs
 HOURS           ?= 10
 GPU             ?= 0
+RETENTION       ?= seed0_only       # keep_all | seed0_only | delete_all
 
 PY := CUDA_VISIBLE_DEVICES=$(GPU) python -m
 
@@ -62,7 +63,8 @@ smoke:
 		--contract $(CONTRACT) \
 		--dataset $(DATASET) \
 		--phase smoke \
-		--latest
+		--latest \
+		--retention $(RETENTION)
 
 validation_sweep:
 	$(PY) autonomous_diffusion.experiments.run_sweep \

@@ -28,6 +28,34 @@ def _logger(name: str) -> logging.Logger:
     return log
 
 
+RETENTION_CHOICES = ["keep_all", "seed0_only", "delete_all"]
+
+
+def _apply_retention(sample_path: Path, *, seed: int, retention: str, log: logging.Logger) -> str:
+    """Apply the retention policy AFTER FID is computed. Returns the action taken."""
+    if retention == "keep_all":
+        log.info(f"retention=keep_all: keeping {sample_path}")
+        return "kept"
+    if retention == "delete_all":
+        if sample_path.exists():
+            size = sample_path.stat().st_size
+            sample_path.unlink()
+            log.info(f"retention=delete_all: deleted {sample_path} ({size/1e6:.1f} MB)")
+            return "deleted"
+        return "missing"
+    if retention == "seed0_only":
+        if seed == 0:
+            log.info(f"retention=seed0_only: keeping seed-0 samples at {sample_path}")
+            return "kept_seed0"
+        if sample_path.exists():
+            size = sample_path.stat().st_size
+            sample_path.unlink()
+            log.info(f"retention=seed0_only: deleted non-seed-0 samples at {sample_path} ({size/1e6:.1f} MB)")
+            return "deleted_non_seed0"
+        return "missing"
+    raise click.UsageError(f"unknown retention policy {retention!r}")
+
+
 @click.command()
 @click.option("--contract", required=True, type=click.Path(exists=True, dir_okay=False))
 @click.option("--dataset", required=True, type=str)
@@ -36,6 +64,8 @@ def _logger(name: str) -> logging.Logger:
 @click.option("--run-id", default=None, type=str, help="Specific run id; otherwise --latest")
 @click.option("--latest", is_flag=True, help="Eval the most recent matching run")
 @click.option("--fid-mode", default="clean", type=click.Choice(["clean", "legacy_pytorch", "legacy_tensorflow"]))
+@click.option("--retention", default="seed0_only", type=click.Choice(RETENTION_CHOICES),
+              help="What to do with samples.npz after FID is computed.")
 def main(
     contract: str,
     dataset: str,
@@ -44,6 +74,7 @@ def main(
     run_id: str | None,
     latest: bool,
     fid_mode: str,
+    retention: str,
 ) -> None:
     log = _logger("ad.eval")
     contract_d = load_contract(contract)
@@ -85,6 +116,10 @@ def main(
         import json
         gen_summary = json.loads(gs_path.read_text())
 
+    retention_action = _apply_retention(
+        sample_path, seed=int(cfg_used["seed"]), retention=retention, log=log,
+    )
+
     metrics = {
         "run_id":         cfg_used["run_id"],
         "phase":          phase,
@@ -98,6 +133,8 @@ def main(
         "clean_fid":      fid_out["fid"],
         "fid_mode":       fid_out["mode"],
         "fid_ref_split":  fid_out["split"],
+        "retention":      {"policy": retention, "action": retention_action,
+                           "sample_path": str(sample_path) if retention_action in ("kept","kept_seed0") else None},
     }
     write_json(run_dir / "metrics.json", metrics)
     log.info(f"wrote {run_dir / 'metrics.json'}")
