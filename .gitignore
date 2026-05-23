@@ -1,0 +1,36 @@
+# Generated artefacts
+outputs/
+samples/
+*.npz
+*.pkl
+*.pt
+*.ckpt
+
+# External code (vendored or cloned)
+third_party/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Envs
+.venv/
+.conda/
+env/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local overrides (kept out of git)
+.env
+configs/local.*.yaml

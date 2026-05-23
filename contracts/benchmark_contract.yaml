@@ -1,0 +1,192 @@
+# Locked benchmark contract for Autonomous Diffusion.
+#
+# Fields under `locked_test_freeze:` are immutable after the validation phase ends.
+# The critic role (src/autonomous_diffusion/critic/guards.py) refuses to execute the
+# locked-test runner if any of those fields have changed since freeze.
+#
+# Author: thermau5 <thermaus@uw.edu>
+# Created: 2026-05-23
+
+project: autonomous_diffusion_real_image_verification
+contract_version: 1
+freeze_date: null            # set by `make freeze_contract` at validation end
+
+# ---------------------------------------------------------------------------
+# Datasets — primary is mandatory; secondary runs when GPU-hours allow.
+# ---------------------------------------------------------------------------
+datasets:
+  primary:
+    - name: cifar10
+      resolution: 32
+      samples_eval: 50000          # locked test
+      samples_validation: 10000
+      samples_smoke: 1024
+      fid_reference_split: train   # standard convention
+  secondary:
+    - name: ffhq
+      resolution: 64
+      samples_eval: 50000
+      samples_validation: 10000
+      samples_smoke: 1024
+      fid_reference_split: trainval
+    - name: afhqv2
+      resolution: 64
+      samples_eval: 50000
+      samples_validation: 10000
+      samples_smoke: 1024
+      fid_reference_split: train
+
+# ---------------------------------------------------------------------------
+# Model policy — generator is frozen pretrained EDM; method modifies only the
+# sampling control. Any deviation from this requires a contract bump.
+# ---------------------------------------------------------------------------
+model_policy:
+  use_pretrained_models: true
+  retrain_generator: false
+  modify_only: [sampler, schedule, control]
+  pretrained_sources:
+    cifar10:  https://nvlabs-fi-cdn.nvidia.com/edm/pretrained/edm-cifar10-32x32-uncond-vp.pkl
+    ffhq:     https://nvlabs-fi-cdn.nvidia.com/edm/pretrained/edm-ffhq-64x64-uncond-vp.pkl
+    afhqv2:   https://nvlabs-fi-cdn.nvidia.com/edm/pretrained/edm-afhqv2-64x64-uncond-vp.pkl
+
+# ---------------------------------------------------------------------------
+# Baselines — all mandatory. Removal post-results is forbidden (see `forbidden`).
+# ---------------------------------------------------------------------------
+baselines:
+  - id: edm_euler
+    family: edm
+    notes: "Karras 2022, Algorithm 1 with first-order Euler steps"
+  - id: edm_heun
+    family: edm
+    notes: "Karras 2022, Algorithm 1 (Heun 2nd-order); reference deterministic sampler"
+  - id: ddim
+    family: diffusers
+    notes: "Song et al 2020"
+  - id: ddpm_ancestral
+    family: diffusers
+    notes: "Ho et al 2020 ancestral sampling on the same pretrained net"
+  - id: dpm_solver
+    family: diffusers
+    notes: "Lu et al 2022 (1st gen)"
+  - id: dpm_solver_pp
+    family: diffusers
+    notes: "Lu et al 2022 ++ multistep"
+  - id: unipc
+    family: diffusers
+    notes: "Zhao et al 2023"
+  - id: deis
+    family: diffusers
+    notes: "Zhang & Chen 2022"
+  - id: pndm
+    family: diffusers
+    notes: "Liu et al 2022"
+  - id: restart
+    family: custom
+    notes: "Xu et al 2023 restart sampling"
+  - id: uniform_schedule
+    family: schedule_baseline
+    notes: "Uniform spacing in t over the same EDM solver"
+  - id: karras_schedule
+    family: schedule_baseline
+    notes: "Karras rho=7 schedule as a baseline control u_base"
+
+# ---------------------------------------------------------------------------
+# Proposed method — only knob the agent is allowed to tune.
+# ---------------------------------------------------------------------------
+proposed:
+  name: risk_constrained_control_scheduler
+  module: autonomous_diffusion.samplers.proposed_control
+  tune_on: validation_only          # critic enforces this
+  control_class:
+    rho:  "training/schedule density"
+    m:    "sampling-step density"
+  certificate: |
+    Q(u) = Q0
+         + (c_stat / n) * integral(a(r)/rho(r) dr)
+         + c_disc * integral(d(r) / m(r)^p dr)
+  optimizers:
+    rho_star_KL: "proportional to sqrt(a(r))"
+    m_star_KL:   "proportional to d(r)^(1/(p+1))"
+    rho_star_W:  "proportional to A_y(r) * sigma_y(r)"
+    m_star_W:    "proportional to (A_y(r) * tau_y(r))^(2/(p+1))"
+
+# ---------------------------------------------------------------------------
+# Search budgets.
+# ---------------------------------------------------------------------------
+budgets:
+  nfe_grid: [5, 8, 10, 12, 16, 18, 20, 24, 32, 40, 64]
+  seeds: [0, 1, 2, 3, 4]
+  max_hours_validation: 10
+  max_hours_locked_test: 24
+  per_run_max_minutes: 90
+
+# ---------------------------------------------------------------------------
+# Metrics. Primary is what the success criterion compares.
+# ---------------------------------------------------------------------------
+metrics:
+  primary:
+    - clean_fid
+    - nfe
+    - wall_clock_seconds
+    - pareto_auc_fid_nfe
+    - risk_violation_rate     # V(u) = (1/S) * sum_s 1{R_emp_s(u) > epsilon}
+  secondary:
+    - gpu_hours
+    - peak_memory_mb
+    - precision_recall
+    - density_coverage
+  fid_implementation: clean_fid   # GaParmar/clean-fid, mode=clean
+
+# ---------------------------------------------------------------------------
+# Success criterion — judged ONCE on the locked test split.
+# ---------------------------------------------------------------------------
+success:
+  primary:
+    metric: pareto_auc_fid_nfe
+    improvement_over_best_baseline: 0.05   # 5% relative AUC improvement
+  secondary:
+    metric: clean_fid_at_matched_nfe
+    improvement_over_best_baseline: 0.03   # 3% relative FID improvement at some K
+  risk:
+    metric: risk_violation_rate
+    must_be_at_most: 0.05                  # per declared epsilon
+
+# ---------------------------------------------------------------------------
+# Hard contract — enforced by src/.../critic/guards.py at runtime.
+# ---------------------------------------------------------------------------
+forbidden:
+  - tune_on_locked_test
+  - remove_baseline_after_failure
+  - change_primary_metric_after_results
+  - report_best_seed_only
+  - use_test_split_for_validation
+  - silently_skip_baseline_on_OOM       # must log and rerun with smaller batch
+  - retrain_generator_without_contract_bump
+
+# ---------------------------------------------------------------------------
+# Frozen-at-test-time fields. Any diff vs. the freeze record aborts the
+# locked-test runner.
+# ---------------------------------------------------------------------------
+locked_test_freeze:
+  - datasets
+  - model_policy
+  - baselines
+  - metrics.primary
+  - success
+  - forbidden
+  - budgets.nfe_grid
+  - budgets.seeds
+
+# ---------------------------------------------------------------------------
+# Reporting.
+# ---------------------------------------------------------------------------
+reporting:
+  always_report:
+    - mean_and_sem_over_seeds
+    - per_seed_values
+    - exact_command_per_run
+    - git_commit_per_run
+  pareto_definition: |
+    u_a dominates u_b iff
+      FID(u_a) <= FID(u_b) AND NFE(u_a) <= NFE(u_b) AND wall(u_a) <= wall(u_b)
+      with at least one strict inequality.

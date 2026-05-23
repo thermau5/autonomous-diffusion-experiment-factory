@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autonomous-diffusion"
+version = "0.1.0"
+description = "Autonomous benchmark + locked real-image verification of certified generative-transport schedulers."
+authors = [{ name = "thermau5", email = "thermaus@uw.edu" }]
+requires-python = ">=3.11"
+readme = "README.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[project.scripts]
+ad-generate     = "autonomous_diffusion.experiments.run_generate:main"
+ad-eval         = "autonomous_diffusion.experiments.run_eval:main"
+ad-sweep        = "autonomous_diffusion.experiments.run_sweep:main"
+ad-locked-test  = "autonomous_diffusion.experiments.run_locked_test:main"
+ad-report       = "autonomous_diffusion.report.write_latex:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts   = "-ra -q"

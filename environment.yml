@@ -1,0 +1,26 @@
+name: autodiff
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pytorch=2.4.*
+  - pytorch-cuda=12.1
+  - torchvision
+  - numpy<2
+  - scipy
+  - pyyaml
+  - tqdm
+  - click
+  - requests
+  - pillow
+  - pip:
+      - diffusers>=0.30
+      - accelerate>=0.33
+      - huggingface-hub>=0.24
+      - clean-fid>=0.1.35
+      - safetensors
+      - pytest>=8
+      - psutil
