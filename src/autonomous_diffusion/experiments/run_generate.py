@@ -79,15 +79,18 @@ def main(
     if phase == "validation":
         forbid_test_split_in_validation(phase=phase, split="validation")
 
-    # Map NFE -> num_steps for EDM samplers.
-    if sampler_id == "edm_heun":
+    # Map NFE -> num_steps. For most samplers NFE == num_steps. For 2nd-order
+    # samplers that take two net calls per step (Heun, 1st-gen DPM-Solver) the
+    # last step costs only 1 NFE because sigma_next=0, hence 2*num_steps - 1.
+    # Restart has a more complex NFE that depends on inner_steps + num_restart;
+    # for sweeps we treat the user-supplied NFE as the target num_steps for
+    # the base solver and let the actual NFE be reported by the sampler.
+    two_call_per_step = {"edm_heun", "dpm_solver"}
+    if sampler_id in two_call_per_step:
         if nfe % 2 == 0:
-            raise click.UsageError("edm_heun NFE must be odd (NFE = 2*num_steps - 1)")
+            raise click.UsageError(f"{sampler_id} NFE must be odd (NFE = 2*num_steps - 1)")
         num_steps = (nfe + 1) // 2
-    elif sampler_id == "edm_euler":
-        num_steps = nfe
     else:
-        # other samplers will define their own mapping; default 1:1
         num_steps = nfe
 
     run_id = make_run_id(dataset=dataset, sampler=sampler_id, nfe=nfe, seed=seed, phase=phase)

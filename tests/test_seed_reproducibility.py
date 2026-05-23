@@ -61,3 +61,30 @@ def test_nfe_accounting_in_output():
     )
     assert out_euler.nfe == n_steps
     assert out_heun.nfe == 2 * n_steps - 1
+
+
+@pytest.mark.parametrize("sampler_id", [
+    "edm_euler", "edm_heun",
+    "karras_schedule", "uniform_schedule",
+    "ddim", "ddpm_ancestral",
+    "dpm_solver", "dpm_solver_pp",
+    "unipc", "deis", "pndm",
+    "restart",
+])
+def test_every_sampler_smokes_on_toy_net(sampler_id):
+    """Every registered baseline returns a tensor of the right shape on the toy
+    net without raising. This catches obvious shape/dtype/registration bugs
+    without needing the EDM pretrained weights."""
+    from autonomous_diffusion.samplers import get_sampler
+    net = _ToyNet().to("cpu").eval()
+    for p in net.parameters():
+        p.requires_grad_(False)
+    out = get_sampler(sampler_id).sample(
+        net=net, num_samples=2, num_steps=6, seed=0, device="cpu", batch_size=2,
+    )
+    assert out.samples.shape == (2, 3, 8, 8)
+    assert out.samples.dtype == torch.float32
+    # samples are clamped to [-1, 1] by the run driver
+    assert out.samples.min().item() >= -1.0 - 1e-5
+    assert out.samples.max().item() <= 1.0 + 1e-5
+    assert out.nfe > 0
