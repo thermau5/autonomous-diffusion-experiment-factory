@@ -12,3 +12,4 @@ from . import unipc        # noqa: F401  -- unipc
 from . import deis         # noqa: F401  -- deis
 from . import pndm         # noqa: F401  -- pndm
 from . import restart      # noqa: F401  -- restart
+from . import proposed_control  # noqa: F401  -- proposed_control (the actual research method)
