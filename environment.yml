@@ -24,3 +24,4 @@ dependencies:
       - safetensors
       - pytest>=8
       - psutil
+      - matplotlib>=3.7
