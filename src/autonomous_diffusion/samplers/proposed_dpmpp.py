@@ -61,6 +61,8 @@ class ProposedDPMpp(Sampler):
     calibration depends on the underlying ODE (the EDM pretrained net),
     not on the integrator class.
     """
+    CALIB_ID_PER_CORE = "dpmpp"
+
     def __init__(
         self,
         *,
@@ -72,6 +74,7 @@ class ProposedDPMpp(Sampler):
         force_recalibrate: bool = False,
         p: int = 2,
         perceptual_weight_k: float | None = None,
+        per_core_calib: bool | None = None,
     ):
         import os
         self.cache_root = Path(cache_root)
@@ -84,9 +87,13 @@ class ProposedDPMpp(Sampler):
         if perceptual_weight_k is None:
             perceptual_weight_k = float(os.environ.get("AD_PROPOSED_K", "2.0"))
         self.perceptual_weight_k = float(perceptual_weight_k)
+        if per_core_calib is None:
+            per_core_calib = os.environ.get("AD_PROPOSED_CALIB", "shared").lower() == "per_core"
+        self.per_core_calib = bool(per_core_calib)
 
     def _get_calibration(self, net, device, image_shape):
-        path = calibration_cache_path(net, root=self.cache_root)
+        calib_id = self.CALIB_ID_PER_CORE if self.per_core_calib else "heun"
+        path = calibration_cache_path(net, root=self.cache_root, calib_id=calib_id)
         if path.exists() and not self.force_recalibrate:
             return load_calibration(path), 0, False
         calib = calibrate(
@@ -97,6 +104,7 @@ class ProposedDPMpp(Sampler):
             seed=self.calib_seed,
             device=device,
             image_shape=image_shape,
+            calib_id=calib_id,
         )
         save_calibration(calib, path)
         traj_nfe = 2 * self.num_intervals - 1

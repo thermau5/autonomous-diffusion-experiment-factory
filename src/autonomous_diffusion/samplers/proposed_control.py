@@ -78,6 +78,69 @@ def _heun_substeps(net, x, sigma, sigma_next, num_sub):
     return x
 
 
+def _dpmpp_single_step_with_history(net, x_cur, sigma_cur, sigma_next,
+                                     denoised_prev, sigma_prev):
+    """One DPM-Solver++ 2M step using already-computed history."""
+    denoised = denoise(net, x_cur, sigma_cur)
+    if denoised_prev is None or sigma_prev is None:
+        h_i = sigma_cur.log() - sigma_next.log()
+        return (sigma_next / sigma_cur) * x_cur - torch.expm1(-h_i) * denoised
+    h_i_1 = sigma_prev.log() - sigma_cur.log()
+    h_i = sigma_cur.log() - sigma_next.log()
+    r = h_i_1 / h_i
+    D_i = (1 + 1 / (2 * r)) * denoised - (1 / (2 * r)) * denoised_prev
+    return (sigma_next / sigma_cur) * x_cur - torch.expm1(-h_i) * D_i
+
+
+def _unipc_single_step_with_history(net, x_cur, sigma_cur, sigma_next,
+                                     denoised_prev, sigma_prev):
+    """One UniPC step (predictor + free corrector via the next denoised eval)."""
+    denoised_cur = denoise(net, x_cur, sigma_cur)
+    # Predictor (1st-order if no history; else 2nd-order multistep)
+    if denoised_prev is None or sigma_prev is None:
+        h_i = sigma_cur.log() - sigma_next.log()
+        x_pred = (sigma_next / sigma_cur) * x_cur - torch.expm1(-h_i) * denoised_cur
+    else:
+        h_i_1 = sigma_prev.log() - sigma_cur.log()
+        h_i = sigma_cur.log() - sigma_next.log()
+        r = h_i_1 / h_i
+        D_pred = (1 + 1 / (2 * r)) * denoised_cur - (1 / (2 * r)) * denoised_prev
+        x_pred = (sigma_next / sigma_cur) * x_cur - torch.expm1(-h_i) * D_pred
+    # Corrector
+    denoised_next = denoise(net, x_pred, sigma_next)
+    D_corr = 0.5 * denoised_cur + 0.5 * denoised_next
+    h_i_eff = sigma_cur.log() - sigma_next.log()
+    return (sigma_next / sigma_cur) * x_cur - torch.expm1(-h_i_eff) * D_corr
+
+
+def _deis_single_step_with_history(net, x_cur, sigma_cur, sigma_next,
+                                    eps_prev, sigma_prev):
+    """One DEIS tAB-2 step in sigma-space (VE) using already-computed history."""
+    denoised = denoise(net, x_cur, sigma_cur)
+    eps_cur = (x_cur - denoised) / sigma_cur
+    if eps_prev is None or sigma_prev is None:
+        return x_cur + (sigma_next - sigma_cur) * eps_cur
+    lam_cur = -sigma_cur.log()
+    lam_next = -sigma_next.log()
+    lam_prev = -sigma_prev.log()
+    h_i = lam_next - lam_cur
+    h_prev = lam_cur - lam_prev
+    coef_cur = 1 + h_i / (2 * h_prev)
+    coef_prev = -h_i / (2 * h_prev)
+    eps_extrap = coef_cur * eps_cur + coef_prev * eps_prev
+    return x_cur + (sigma_next - sigma_cur) * eps_extrap
+
+
+# Solver core -> single-step function name that needs history. Used by
+# calibrate() to know whether to feed history.
+PER_CORE_STEP = {
+    "heun":  None,       # uses default _heun_step (no history)
+    "dpmpp": _dpmpp_single_step_with_history,
+    "unipc": _unipc_single_step_with_history,
+    "deis":  _deis_single_step_with_history,
+}
+
+
 @torch.inference_mode()
 def calibrate(
     net,
@@ -89,25 +152,28 @@ def calibrate(
     device: str | torch.device = "cuda",
     image_shape: tuple[int, int, int] | None = None,
     grid: str = "uniform_log",
+    calib_id: str = "heun",
 ) -> Calibration:
-    """Empirically estimate d(sigma), the per-interval discretization weight.
+    """Empirically estimate d_s(sigma), the per-interval discretization weight
+    for solver core `calib_id`.
 
     For each interval [sigma_a, sigma_b] on a (uniform-log by default) grid:
-      single = Heun(x_a, sigma_a -> sigma_b, 1 step)
+      single = (solver s)(x_a, sigma_a -> sigma_b, 1 step, with history if needed)
       ref    = Heun(x_a, sigma_a -> sigma_b, num_ref_substeps small steps)
       d_i    = mean ||single - ref|| / |sigma_a - sigma_b|   (per-unit-sigma)
 
-    The intermediate x_a are sampled by integrating the same Karras trajectory
-    (validation-only) so d(sigma) reflects errors on in-distribution noisy
-    images, not on arbitrary noise.
+    The reference is always Heun substepping (solver-independent high-order
+    ground truth). Only the test step `single` varies per solver core.
+    History (for multistep solvers) is supplied from the same Karras
+    trajectory that generates the intermediate x_a values.
 
-    The final interval (sigma -> 0) is excluded from the d estimate because
-    the reference substepping is numerically singular at sigma = 0; we copy
-    the previous interval's d into that bin so optimal_step_sigmas places a
-    sensible number of steps near zero without being dominated by noise.
-
-    grid: 'uniform_log' (default, unbiased) or 'karras' (Karras-spaced).
+    calib_id selects the test-step solver: 'heun' (default), 'dpmpp',
+    'unipc', 'deis'. The d_s(sigma) shape may differ across solver cores
+    at 2nd order if higher-order terms matter; the experimental question
+    is whether per-core d gives a better m* than the shared (heun) d.
     """
+    if calib_id not in PER_CORE_STEP:
+        raise ValueError(f"unknown calib_id {calib_id!r}; choices: {list(PER_CORE_STEP)}")
     device = torch.device(device)
     sigma_min, sigma_max = resolve_sigma_range(net)
     shape = resolve_shape(net, image_shape)
@@ -117,26 +183,29 @@ def calibrate(
             num_intervals + 1, dtype=torch.float64, device=device,
         )
         sigma_grid = torch.cat([torch.exp(log_sigmas), log_sigmas.new_zeros([1])]).to(torch.float32)
-        # the final 0 is for the boundary-only step that we *exclude* below
     elif grid == "karras":
         sigma_grid = karras_sigmas(num_intervals, sigma_min, sigma_max, device=device).to(torch.float32)
     else:
         raise ValueError(f"unknown calibration grid {grid!r}")
 
-    # Generate intermediate x_a values along a Karras trajectory (the canonical
-    # validation-time distribution of noisy images at each sigma).
+    # Karras-trajectory intermediates (the canonical validation-time x_sigma).
+    # Also precompute the Karras-trajectory denoised values, so multistep
+    # solvers' calibration steps can use realistic history (denoised_prev at
+    # the previous Karras grid sigma).
     karras_traj_sigmas = karras_sigmas(num_intervals, sigma_min, sigma_max, device=device).to(torch.float32)
     x_traj = sample_initial_noise((num_calib_samples, *shape), float(karras_traj_sigmas[0]),
                                   seed=seed, device=device)
     karras_xs = [x_traj]
+    karras_denoised_at = [denoise(net, x_traj, karras_traj_sigmas[0])]
     for i in range(num_intervals):
         x_traj = _heun_step(net, x_traj, karras_traj_sigmas[i], karras_traj_sigmas[i + 1])
         karras_xs.append(x_traj)
+        karras_denoised_at.append(denoise(net, x_traj, karras_traj_sigmas[min(i + 1, num_intervals - 1)]))
 
-    def x_at(sigma_target):
-        # nearest-sigma lookup into the Karras trajectory
-        idx = int(np.argmin(np.abs(karras_traj_sigmas.cpu().numpy() - float(sigma_target))))
-        return karras_xs[idx]
+    def nearest_idx(sigma_target):
+        return int(np.argmin(np.abs(karras_traj_sigmas.cpu().numpy() - float(sigma_target))))
+
+    step_fn = PER_CORE_STEP[calib_id]
 
     # Compute d on each non-boundary interval of sigma_grid.
     M = sigma_grid.shape[0] - 2   # exclude trailing 0
@@ -144,13 +213,33 @@ def calibrate(
     for i in range(M):
         sigma_a = sigma_grid[i]
         sigma_b = sigma_grid[i + 1]
-        x = x_at(sigma_a)
-        single = _heun_step(net, x, sigma_a, sigma_b)
+        idx_a = nearest_idx(sigma_a)
+        x = karras_xs[idx_a]
+
+        if calib_id == "heun" or step_fn is None:
+            single = _heun_step(net, x, sigma_a, sigma_b)
+        else:
+            # Find a previous Karras-grid sigma (with cached history).
+            if idx_a > 0:
+                sigma_prev = karras_traj_sigmas[idx_a - 1]
+                if calib_id in ("dpmpp", "unipc"):
+                    history = karras_denoised_at[idx_a - 1]
+                elif calib_id == "deis":
+                    # eps_prev = (x_prev - denoised_prev) / sigma_prev
+                    x_prev = karras_xs[idx_a - 1]
+                    denoised_prev = karras_denoised_at[idx_a - 1]
+                    history = (x_prev - denoised_prev) / sigma_prev
+                else:
+                    history = None
+            else:
+                sigma_prev = None
+                history = None
+            single = step_fn(net, x, sigma_a, sigma_b, history, sigma_prev)
+
         ref = _heun_substeps(net, x, sigma_a, sigma_b, num_ref_substeps)
         diff = (single - ref).pow(2).mean(dim=list(range(1, single.dim()))).sqrt()
         interval_len = float(sigma_a - sigma_b).__abs__()
         d_per_interval[i] = float(diff.mean().item()) / max(interval_len, 1e-12)
-    # Boundary interval to sigma=0: copy the previous bin's value (extrapolate)
     d_per_interval[M] = d_per_interval[M - 1] if M > 0 else 1.0
 
     return Calibration(
@@ -166,6 +255,7 @@ def calibrate(
             "sigma_max": sigma_max,
             "grid": grid,
             "boundary_handling": "copy_previous",
+            "calib_id": calib_id,
         },
     )
 
@@ -233,10 +323,18 @@ def _net_key(net) -> str:
     return hashlib.sha256("|".join(bits).encode()).hexdigest()[:16]
 
 
-def calibration_cache_path(net, *, root: str | Path = "outputs/calibration") -> Path:
+def calibration_cache_path(net, *, root: str | Path = "outputs/calibration",
+                           calib_id: str = "heun") -> Path:
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
-    return root / f"calib_{_net_key(net)}.npz"
+    # Legacy path (no calib_id suffix) was used for the original Heun-only
+    # calibration; keep it so existing caches are still picked up when
+    # calib_id="heun".
+    if calib_id == "heun":
+        legacy = root / f"calib_{_net_key(net)}.npz"
+        if legacy.exists():
+            return legacy
+    return root / f"calib_{calib_id}_{_net_key(net)}.npz"
 
 
 def save_calibration(calib: Calibration, path: str | Path) -> None:
