@@ -96,10 +96,12 @@ def main(
     else:
         seed_list = [int(x) for x in seeds.split(",")]
     if samplers is None:
-        sampler_list = [b["id"] for b in contract_d["baselines"]] + [contract_d["proposed"]["name"].replace(" ", "_")]
-        # contract proposed name is "risk_constrained_control_scheduler", but the
-        # registered sampler id is "proposed_control". Use the registered id.
-        sampler_list = [b["id"] for b in contract_d["baselines"]] + ["proposed_control"]
+        # Contract baselines + EVERY registered sampler whose id starts with
+        # "proposed_". New `proposed_<solver>` variants get swept automatically
+        # without requiring a contract edit each time.
+        from ..samplers import list_samplers
+        sampler_list = [b["id"] for b in contract_d["baselines"]]
+        sampler_list += sorted(s for s in list_samplers() if s.startswith("proposed_"))
     else:
         sampler_list = [s.strip() for s in samplers.split(",")]
 
