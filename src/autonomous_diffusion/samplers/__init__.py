@@ -12,4 +12,8 @@ from . import unipc        # noqa: F401  -- unipc
 from . import deis         # noqa: F401  -- deis
 from . import pndm         # noqa: F401  -- pndm
 from . import restart      # noqa: F401  -- restart
-from . import proposed_control  # noqa: F401  -- proposed_control (the actual research method)
+from . import proposed_control  # noqa: F401  -- proposed_control (Heun core)
+from . import proposed_dpmpp    # noqa: F401  -- proposed_dpmpp   (DPM-Solver++ 2M core)
+from . import proposed_unipc    # noqa: F401  -- proposed_unipc   (UniPC predictor-corrector core)
+from . import proposed_deis     # noqa: F401  -- proposed_deis    (DEIS tAB-2 core)
+from . import proposed_restart  # noqa: F401  -- proposed_restart (Restart wrapper + Heun)

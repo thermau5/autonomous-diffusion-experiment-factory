@@ -71,6 +71,10 @@ def test_nfe_accounting_in_output():
     "unipc", "deis", "pndm",
     "restart",
     "proposed_control",
+    "proposed_dpmpp",
+    "proposed_unipc",
+    "proposed_deis",
+    "proposed_restart",
 ])
 def test_every_sampler_smokes_on_toy_net(sampler_id):
     """Every registered baseline returns a tensor of the right shape on the toy
