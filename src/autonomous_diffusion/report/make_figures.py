@@ -33,6 +33,7 @@ def pareto_frontier_figure(
     out_path: str | Path,
     title: str = "CIFAR-10: FID vs NFE",
     ylim: tuple[float, float] | None = None,
+    log_y: bool = True,
 ) -> Path:
     per = summary.get("per_sampler", {})
     fig, ax = plt.subplots(figsize=(7, 5))
@@ -51,8 +52,10 @@ def pareto_frontier_figure(
             color=color, capsize=2.0, alpha=0.95 if is_proposed else 0.7,
         )
     ax.set_xscale("log")
+    if log_y:
+        ax.set_yscale("log")
     ax.set_xlabel("NFE (network function evaluations per sample)")
-    ax.set_ylabel("Clean-FID $\\downarrow$")
+    ax.set_ylabel("Clean-FID $\\downarrow$" + (" (log)" if log_y else ""))
     ax.set_title(title)
     if ylim is not None:
         ax.set_ylim(*ylim)
