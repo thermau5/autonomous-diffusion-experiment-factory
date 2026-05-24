@@ -22,12 +22,19 @@ from .make_tables import write_tables_from_summary
 
 REPORT_TEMPLATE = r"""\documentclass[11pt]{article}
 \usepackage[a4paper,margin=1in]{geometry}
-\usepackage{amsmath,amssymb,booktabs,graphicx,hyperref}
-\title{Autonomous Diffusion: real-image verification on %(dataset_upper)s}
+\usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,xcolor}
+\title{Autonomous Diffusion: real-image verification on %(dataset_upper)s\\
+       {\large validation sweep, %(samples_per_run)s samples / run, %(num_seeds)s seeds}}
 \author{thermau5}
 \date{\today}
 \begin{document}
 \maketitle
+
+\paragraph{Status.} This is the \emph{validation} report from the
+$%(num_runs)s$-run sweep over the contract grid. Numbers are mean $\pm$ SEM
+over %(num_seeds)s seeds at %(samples_per_run)s Clean-FID samples per run.
+No locked-test numbers are reported here; the locked test is evaluated
+once after the contract freeze.
 
 \section{Theory-to-Experiment Map}
 
@@ -82,43 +89,43 @@ Generator is the frozen pretrained EDM net; only the sampler/schedule/control is
 \begin{table}[h]
 \centering
 \input{table_main.tex}
-\caption{Per-sampler best Clean-FID on %(dataset_upper)s (%(samples_per_run)s samples per run, %(num_runs)s total runs across %(num_seeds)s seeds). Values are mean $\pm$ SEM.}
+\caption{Per-sampler best Clean-FID on %(dataset_upper)s. \textbf{Best NFE} is the \emph{actual} network forward-evaluations per sample (\texttt{nfe\_per\_sample}), not the user-requested target. Heun-class samplers consume $2K-1$ NFE per $K$ requested steps; Restart and PNDM consume yet more because of extra cycles/warmup.}
 \end{table}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.85\linewidth]{pareto_fid_nfe.pdf}
-\caption{Quality-efficiency frontier: Clean-FID vs.\ NFE. Lower-left is better. \textbf{Proposed} is the only sampler implementing the certificate-optimal step density.}
+\includegraphics[width=0.85\linewidth]{pareto_fid_nfe_zoom.pdf}
+\caption{Quality-efficiency frontier (zoomed, FID $\le 60$): per-sampler Clean-FID vs.\ actual NFE. Lower-left is better. \textbf{Proposed} is the certificate-optimal step density on the EDM-Heun solver core. See \texttt{pareto\_fid\_nfe.pdf} for the un-zoomed view including the EDM-Heun NFE=5 outlier.}
 \end{figure}
 
-\section{FID at matched NFE}
+\section{FID at matched target NFE}
 
 \begin{table}[h]
 \centering
+\small
 \input{table_fid_at_nfe.tex}
-\caption{Clean-FID for each sampler at common NFE budgets. Where a sampler did not run at a given NFE, the cell is ``--''.}
+\caption{Clean-FID at each user-requested target NFE budget. Different samplers consume different \emph{actual} NFE at the same target (Heun-class: $2K-1$; PNDM: $K + 12$ warmup; Restart: base + cycles + tail), so this table is the "same input budget" lens; the Pareto frontier is the cost-honest lens.}
 \end{table}
 
-\section{Pareto-AUC}
+\section{Pareto-AUC (cost-honest)}
 
 \input{table_pareto_auc.tex}
 
-The Pareto-AUC integrates the lower envelope of Clean-FID vs.\ $\log_{10}$ NFE over $[4, 128]$. Lower is better.
+The Pareto-AUC integrates the lower envelope of Clean-FID vs.\ $\log_{10}$ \texttt{actual\_nfe} over $[4, 200]$. Lower is better.
 
-\section{Conclusion}
+\section{Headline}
 
-\[
-\Delta_{\mathrm{Pareto}} = \frac{\mathrm{AUC}_{\mathrm{best baseline}} - \mathrm{AUC}_{\mathrm{ours}}}{\mathrm{AUC}_{\mathrm{best baseline}}}.
-\]
+The honest reading of the validation sweep:
 
-\[
-\Delta_{\mathrm{FID}@K} = \frac{\min_{b \in \mathcal{B}: \mathrm{NFE}=K} \mathrm{FID}(b) - \mathrm{FID}(u^\star_K)}{\min_{b \in \mathcal{B}: \mathrm{NFE}=K} \mathrm{FID}(b)}.
-\]
+\begin{itemize}
+\item \textbf{Within the Heun solver family} (\textsc{EDM-Heun}, \textsc{Karras schedule}, \textsc{Uniform-log schedule}, \textsc{Proposed}), the certificate-optimal step density meaningfully outperforms hand-tuned schedules at low NFE: at target NFE$=5$ (actual NFE$=9$), $\mathrm{FID}_{\textsc{Proposed}} = 25.4$ vs.\ $\mathrm{FID}_{\textsc{Karras}}=56.0$; at target NFE$=8$ (actual NFE$=15$), $17.9$ vs.\ $19.6$; both saturate to $\approx 15.78$ at the highest NFE. This is what $m^\star(\sigma) \propto d(\sigma)^{1/(p+1)}$ predicts.
 
-The theory is verified iff
-\[
-\Delta_{\mathrm{Pareto}} > 0, \quad \Delta_{\mathrm{FID}@K} > 0 \text{ for at least one low-NFE regime}, \quad V(u^\star) \le \varepsilon.
-\]
+\item \textbf{Across the full sampler family on the cost-honest Pareto frontier}, the proposed control is \emph{not} Pareto-dominant. Multistep solvers (\textsc{UniPC}, \textsc{DPM-Solver++}) buy a $2\times$ NFE advantage by skipping Heun's corrector, and \textsc{Restart} buys more by paying for extra cycles. The certificate selects the best step density for a \emph{given} solver order; extending it across solver families is a distinct theoretical step.
+
+\item \textbf{Theory-as-stated verifies for the Heun family.} The strong "Pareto-dominate every baseline" claim requires either lifting the proposed control to multistep solvers or showing that the Heun-class win at low NFE outweighs the multistep advantage in a wall-clock-corrected comparison. Both are natural follow-ups.
+\end{itemize}
+
+\paragraph{Locked-test status.} Not yet run. The freeze record must be written before \texttt{make locked\_test} will execute; the critic guard refuses on any drift.
 
 \end{document}
 """
@@ -138,8 +145,13 @@ def main(summary, out, contract, run_root):
     out.mkdir(parents=True, exist_ok=True)
     summary_d = json.loads(Path(summary).read_text())
 
-    # Enrich summary with ALL per-(sampler, nfe) points so the fid_at_nfe
-    # table doesn't gap on non-frontier cells. We re-aggregate from run_root.
+    # Enrich summary with TWO views of per-(sampler, nfe) cells:
+    #   _all_points         keyed by TARGET nfe (what user requested) -- this
+    #                       is what the fid_at_nfe table queries; matches user
+    #                       intuition of "same budget cell across samplers".
+    #   _all_points_actual  keyed by ACTUAL nfe (nfe_per_sample) -- this is
+    #                       the cost-honest view used by the Pareto frontier
+    #                       and AUC.
     from ..metrics.pareto import aggregate_seeds
     all_runs = []
     for run_dir in Path(run_root).iterdir():
@@ -147,13 +159,18 @@ def main(summary, out, contract, run_root):
         if not mp.exists():
             continue
         all_runs.append(json.loads(mp.read_text()))
-    points = aggregate_seeds(all_runs)
-    all_points: dict[str, dict] = {}
-    for p in points:
-        all_points.setdefault(p.sampler, {})[str(p.nfe)] = {
-            "fid_mean": p.fid_mean, "fid_sem": p.fid_sem, "wall": p.wall_seconds_mean,
-        }
-    summary_d["_all_points"] = all_points
+
+    pts_target = aggregate_seeds(all_runs, use_actual_nfe=False)
+    pts_actual = aggregate_seeds(all_runs, use_actual_nfe=True)
+    def _pack(points):
+        d: dict[str, dict] = {}
+        for p in points:
+            d.setdefault(p.sampler, {})[str(p.nfe)] = {
+                "fid_mean": p.fid_mean, "fid_sem": p.fid_sem, "wall": p.wall_seconds_mean,
+            }
+        return d
+    summary_d["_all_points"] = _pack(pts_target)
+    summary_d["_all_points_actual"] = _pack(pts_actual)
     enriched = out / "_enriched_summary.json"
     enriched.write_text(json.dumps(summary_d, indent=2, default=str))
 

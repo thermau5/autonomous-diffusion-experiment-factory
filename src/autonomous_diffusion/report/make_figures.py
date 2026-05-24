@@ -72,8 +72,17 @@ def write_figures_from_summary(summary_path: str | Path, out_dir: str | Path) ->
     out_dir.mkdir(parents=True, exist_ok=True)
     summary = json.loads(Path(summary_path).read_text())
     paths = {}
+    dset = summary.get("dataset", "?").upper()
     paths["pareto"] = pareto_frontier_figure(
         summary, out_path=out_dir / "pareto_fid_nfe.png",
-        title=f"{summary.get('dataset', '?').upper()}: Quality-efficiency frontier",
+        title=f"{dset}: Quality-efficiency frontier",
+    )
+    # Zoomed-in version: the interesting region is FID < 60. Cuts the
+    # EDM-Heun NFE=5 (FID 343, 3 num_steps is too few) outlier so the
+    # mid-NFE comparison is readable.
+    paths["pareto_zoom"] = pareto_frontier_figure(
+        summary, out_path=out_dir / "pareto_fid_nfe_zoom.png",
+        title=f"{dset}: Quality-efficiency frontier (zoom, FID $\\leq$ 60)",
+        ylim=(14, 60),
     )
     return paths

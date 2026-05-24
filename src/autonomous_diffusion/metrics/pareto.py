@@ -32,15 +32,24 @@ class FrontierPoint:
     per_seed_fid: tuple[float, ...]
 
 
-def aggregate_seeds(runs: Iterable[dict]) -> list[FrontierPoint]:
-    """Group runs by (sampler, nfe) and average FID over seeds.
+def aggregate_seeds(runs: Iterable[dict], *, use_actual_nfe: bool = True) -> list[FrontierPoint]:
+    """Group runs by (sampler, NFE) and average FID over seeds.
 
-    Each input dict must have keys: sampler, nfe, seed, clean_fid,
-    wall_seconds. Returns one FrontierPoint per (sampler, nfe).
+    use_actual_nfe=True (default): group by `nfe_per_sample` (the actual
+    network forward-evaluations consumed), which is the real cost axis for
+    the Pareto comparison. Restart at target_nfe=8 actually does 31 NFE per
+    sample (extra cycles); Heun-class samplers like karras_schedule at
+    target_nfe=8 actually do 15. Comparing at the SAME target_nfe is an
+    apples-to-oranges comparison; comparing at the same nfe_per_sample is
+    the honest one.
+
+    use_actual_nfe=False: group by the user-requested target `nfe`. Useful
+    only for debugging or for matching old sweep outputs.
     """
+    nfe_key = "nfe_per_sample" if use_actual_nfe else "nfe"
     bucket: dict[tuple[str, int], list[dict]] = {}
     for r in runs:
-        key = (str(r["sampler"]), int(r["nfe"]))
+        key = (str(r["sampler"]), int(r.get(nfe_key, r["nfe"])))
         bucket.setdefault(key, []).append(r)
     out: list[FrontierPoint] = []
     for (sampler, nfe), rs in sorted(bucket.items()):
