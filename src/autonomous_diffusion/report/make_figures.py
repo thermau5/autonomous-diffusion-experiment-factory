@@ -28,7 +28,7 @@ _COLORS = {
 
 
 _LEGEND_LABEL = {
-    "proposed_control": "(ours)",
+    "proposed_control": "(Ours)",
     "edm_heun":         "EDM-Heun",
     "edm_euler":        "EDM-Euler",
     "karras_schedule":  "Karras schedule",
