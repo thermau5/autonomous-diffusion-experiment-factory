@@ -18,7 +18,11 @@ datasets:
   primary:
     - name: cifar10
       resolution: 32
-      samples_eval: 50000          # locked test
+      samples_eval: 10000          # locked test (reduced from 50000 to fit
+                                   # single-4090 budget; chosen 2026-05-24
+                                   # by user. Relative ordering of samplers
+                                   # is preserved at 10k FID; the gold-
+                                   # standard 50k re-run is a follow-up.)
       samples_validation: 10000
       samples_smoke: 1024
       fid_reference_split: train   # standard convention
@@ -98,26 +102,57 @@ proposed:
   module: autonomous_diffusion.samplers.proposed_control
   tune_on: validation_only          # critic enforces this
   control_class:
+    s:    "solver core"
     rho:  "training/schedule density"
     m:    "sampling-step density"
+    nu:   "terminal transport target"
   certificate: |
-    Q(u) = Q0
-         + (c_stat / n) * integral(a(r)/rho(r) dr)
-         + c_disc * integral(d(r) / m(r)^p dr)
+    Q_s(u) = Q_0
+           + (c_stat / n) * integral(a(r)/rho(r) dr)
+           + c_disc      * integral(d_s(r) / m(r)^p dr)
   optimizers:
     rho_star_KL: "proportional to sqrt(a(r))"
-    m_star_KL:   "proportional to d(r)^(1/(p+1))"
+    m_star_KL:   "proportional to d_s(r)^(1/(p+1))"
     rho_star_W:  "proportional to A_y(r) * sigma_y(r)"
     m_star_W:    "proportional to (A_y(r) * tau_y(r))^(2/(p+1))"
+
+# Per-core calibration choices, frozen by Round 3b ablation
+# (validation-only; see outputs/sweeps/round3b_combined.json).
+proposed_calibration_defaults:
+  proposed_heun:
+    per_core_calib: false           # 'per_core' for heun IS the shared d
+    perceptual_weight_k: 2.0
+    rationale: "Heun's d_s is the reference; no separate per-core branch."
+  proposed_dpmpp:
+    per_core_calib: true
+    perceptual_weight_k: 2.0
+    rationale: "Round 3b: per-core wins -8.12/-3.19/-1.58/-0.43 at NFE 5/8/12/18."
+  proposed_unipc:
+    per_core_calib: true
+    perceptual_weight_k: 2.0
+    rationale: "Round 3b: per-core wins -9.49/-3.36/-1.66/-0.35 at NFE 5/8/12/18."
+  proposed_deis:
+    per_core_calib: false
+    perceptual_weight_k: 2.0
+    rationale: "Round 3b: per-core LOSES +25.5/+13.2/+7.2/+3.7 (extrapolation kernel residual dominates d_DEIS); shared d_Heun is the default."
+  proposed_restart:
+    per_core_calib: false
+    perceptual_weight_k: 2.0
+    rationale: "Restart wraps Heun base + cycle structure; per-core not applicable."
 
 # ---------------------------------------------------------------------------
 # Search budgets.
 # ---------------------------------------------------------------------------
 budgets:
-  nfe_grid: [5, 8, 10, 12, 16, 18, 20, 24, 32, 40, 64]
+  nfe_grid: [5, 8, 12, 18, 32, 64]    # 6-NFE locked-test grid (reduced from
+                                       # the 11-NFE validation grid to fit
+                                       # the 48h single-4090 budget at 10k
+                                       # samples). Matches the validation
+                                       # sweep grid one-for-one.
   seeds: [0, 1, 2, 3, 4]
   max_hours_validation: 10
-  max_hours_locked_test: 24
+  max_hours_locked_test: 48           # raised from 24h to fit 510-run plan
+                                       # at 10k samples/cell on a single 4090.
   per_run_max_minutes: 90
 
 # ---------------------------------------------------------------------------
@@ -176,6 +211,7 @@ locked_test_freeze:
   - forbidden
   - budgets.nfe_grid
   - budgets.seeds
+  - proposed_calibration_defaults    # per-core choices frozen post-ablation
 
 # ---------------------------------------------------------------------------
 # Reporting.

@@ -83,6 +83,10 @@ def main(contract, freeze_record, dataset, samples_root, run_root, test_root,
     forbid_test_split_in_validation(phase="test", split="test")
     log.info("guards passed; contract sha256 matches freeze record.")
 
+    # Sampler list: contract baselines + EVERY registered proposed_<core>.
+    from ..samplers import list_samplers
+    proposed_ids = sorted(s for s in list_samplers() if s.startswith("proposed_"))
+
     dataset_cfg = next(
         d for bucket in ("primary", "secondary")
         for d in (contract_d.get("datasets", {}).get(bucket) or [])
@@ -91,7 +95,7 @@ def main(contract, freeze_record, dataset, samples_root, run_root, test_root,
     samples = int(dataset_cfg["samples_eval"])      # locked test = full eval count
     nfes = list(contract_d["budgets"]["nfe_grid"])
     seed_list = list(contract_d["budgets"]["seeds"])
-    sampler_list = declared_baselines + ["proposed_control"]
+    sampler_list = declared_baselines + proposed_ids
 
     test_id = time.strftime("%Y%m%dT%H%M%S") + f"_{dataset}_locked_test"
     test_dir = Path(test_root) / test_id
