@@ -27,6 +27,23 @@ _COLORS = {
 }
 
 
+_LEGEND_LABEL = {
+    "proposed_control": "(ours)",
+    "edm_heun":         "EDM-Heun",
+    "edm_euler":        "EDM-Euler",
+    "karras_schedule":  "Karras schedule",
+    "uniform_schedule": "Uniform-log schedule",
+    "dpm_solver":       "DPM-Solver",
+    "dpm_solver_pp":    "DPM-Solver++",
+    "unipc":            "UniPC",
+    "deis":             "DEIS",
+    "pndm":             "PNDM",
+    "restart":          "Restart",
+    "ddim":             "DDIM",
+    "ddpm_ancestral":   "DDPM ancestral",
+}
+
+
 def pareto_frontier_figure(
     summary: dict,
     *,
@@ -48,7 +65,8 @@ def pareto_frontier_figure(
         is_proposed = sampler == "proposed_control"
         ax.errorbar(
             xs, ys, yerr=sems, marker="o" if not is_proposed else "D",
-            label=sampler, linewidth=2.0 if is_proposed else 1.0,
+            label=_LEGEND_LABEL.get(sampler, sampler),
+            linewidth=2.0 if is_proposed else 1.0,
             color=color, capsize=2.0, alpha=0.95 if is_proposed else 0.7,
         )
     ax.set_xscale("log")
