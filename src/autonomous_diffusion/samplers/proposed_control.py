@@ -263,13 +263,21 @@ def load_calibration(path: str | Path) -> Calibration:
 # Sampler
 # ---------------------------------------------------------------------------
 
-@register_sampler("proposed_control")
-class ProposedControl(Sampler):
-    """EDM-Heun integration on step sigmas derived from the per-(net,sigma_range)
-    calibration. The calibration is computed once (validation) and cached.
+@register_sampler("proposed_heun")
+class ProposedHeun(Sampler):
+    """Certificate-optimal step density m*(sigma) on an EDM-Heun solver core.
 
-    Calibration cost is amortized over all samples drawn with this net and
-    reported in `metadata['calibration_nfe']` for honest accounting.
+    Renamed from `proposed_control` on 2026-05-24 to match the
+    `proposed_<solver_core>` convention shared by proposed_dpmpp,
+    proposed_unipc, proposed_deis, proposed_restart. The class symbol
+    `ProposedControl` remains as a backward-compat alias below for any
+    external code that imported it by class name.
+
+    The calibration cache is shared with the other proposed_<core> variants
+    (d(sigma) is solver-agnostic at fixed order p; only the integrator
+    differs). Calibration cost is amortized over all samples drawn with this
+    net and reported in `metadata['calibration_nfe_total']` for honest
+    accounting.
     """
 
     def __init__(
@@ -359,3 +367,15 @@ class ProposedControl(Sampler):
                 "calib_meta": calib.meta,
             },
         )
+
+
+# Backward-compat class symbol (the registered sampler id is now
+# "proposed_heun"; this alias lets external code that imports the class
+# by name continue to work).
+ProposedControl = ProposedHeun
+
+# Backward-compat sampler id: get_sampler("proposed_control") resolves to
+# ProposedHeun. The alias is hidden from list_samplers() so future sweep
+# auto-discovery does not double-count this sampler.
+from .base import register_alias  # noqa: E402
+register_alias("proposed_control", "proposed_heun")

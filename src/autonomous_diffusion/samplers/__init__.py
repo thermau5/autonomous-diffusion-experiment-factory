@@ -12,7 +12,7 @@ from . import unipc        # noqa: F401  -- unipc
 from . import deis         # noqa: F401  -- deis
 from . import pndm         # noqa: F401  -- pndm
 from . import restart      # noqa: F401  -- restart
-from . import proposed_control  # noqa: F401  -- proposed_control (Heun core)
+from . import proposed_control  # noqa: F401  -- registers "proposed_heun" (Heun core; file still named proposed_control for backward-compat)
 from . import proposed_dpmpp    # noqa: F401  -- proposed_dpmpp   (DPM-Solver++ 2M core)
 from . import proposed_unipc    # noqa: F401  -- proposed_unipc   (UniPC predictor-corrector core)
 from . import proposed_deis     # noqa: F401  -- proposed_deis    (DEIS tAB-2 core)

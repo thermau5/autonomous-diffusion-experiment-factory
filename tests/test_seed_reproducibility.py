@@ -70,7 +70,7 @@ def test_nfe_accounting_in_output():
     "dpm_solver", "dpm_solver_pp",
     "unipc", "deis", "pndm",
     "restart",
-    "proposed_control",
+    "proposed_heun",
     "proposed_dpmpp",
     "proposed_unipc",
     "proposed_deis",

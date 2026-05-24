@@ -90,7 +90,12 @@ def _latex_sampler(name: str) -> str:
         "deis":             "DEIS",
         "pndm":             "PNDM",
         "restart":          "Restart",
-        "proposed_control": r"\textbf{Proposed}",
+        "proposed_heun":    r"\textbf{(Ours, Heun)}",
+        "proposed_dpmpp":   r"\textbf{(Ours, DPM-Solver++)}",
+        "proposed_unipc":   r"\textbf{(Ours, UniPC)}",
+        "proposed_deis":    r"\textbf{(Ours, DEIS)}",
+        "proposed_restart": r"\textbf{(Ours, Restart)}",
+        "proposed_control": r"\textbf{(Ours, Heun)}",  # back-compat for pre-rename runs
     }
     return pretty.get(name, name.replace("_", r"\_"))
 

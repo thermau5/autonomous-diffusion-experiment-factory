@@ -11,7 +11,7 @@ import numpy as np
 
 
 _COLORS = {
-    "proposed_control": "tab:red",
+    # Baselines (one colour per solver core)
     "edm_heun":         "tab:blue",
     "edm_euler":        "tab:cyan",
     "karras_schedule":  "tab:purple",
@@ -24,11 +24,19 @@ _COLORS = {
     "restart":          "lime",
     "ddim":             "navy",
     "ddpm_ancestral":   "darkgoldenrod",
+    # (Ours) variants: use the SAME colour family as the corresponding
+    # baseline solver core, but with a red tint so they're visible.
+    "proposed_heun":    "tab:red",
+    "proposed_dpmpp":   "crimson",
+    "proposed_unipc":   "firebrick",
+    "proposed_deis":    "deeppink",
+    "proposed_restart": "darkred",
+    # Backward-compat: pre-rename runs labeled "proposed_control"
+    "proposed_control": "tab:red",
 }
 
 
 _LEGEND_LABEL = {
-    "proposed_control": "(Ours)",
     "edm_heun":         "EDM-Heun",
     "edm_euler":        "EDM-Euler",
     "karras_schedule":  "Karras schedule",
@@ -41,6 +49,12 @@ _LEGEND_LABEL = {
     "restart":          "Restart",
     "ddim":             "DDIM",
     "ddpm_ancestral":   "DDPM ancestral",
+    "proposed_heun":    "(Ours, Heun)",
+    "proposed_dpmpp":   "(Ours, DPM-Solver++)",
+    "proposed_unipc":   "(Ours, UniPC)",
+    "proposed_deis":    "(Ours, DEIS)",
+    "proposed_restart": "(Ours, Restart)",
+    "proposed_control": "(Ours, Heun)",
 }
 
 
@@ -62,7 +76,7 @@ def pareto_frontier_figure(
         ys = np.array([f[1] for f in front], dtype=float)
         sems = np.array([(f[2] if len(f) > 2 else 0.0) for f in front], dtype=float)
         color = _COLORS.get(sampler, None)
-        is_proposed = sampler == "proposed_control"
+        is_proposed = sampler.startswith("proposed_")
         ax.errorbar(
             xs, ys, yerr=sems, marker="o" if not is_proposed else "D",
             label=_LEGEND_LABEL.get(sampler, sampler),
