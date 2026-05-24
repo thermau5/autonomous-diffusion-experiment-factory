@@ -55,8 +55,11 @@ class ProposedUniPC(Sampler):
         if perceptual_weight_k is None:
             perceptual_weight_k = float(os.environ.get("AD_PROPOSED_K", "2.0"))
         self.perceptual_weight_k = float(perceptual_weight_k)
+        # Per-core calibration wins on UniPC at every NFE (Round 3b
+        # ablation): -9.49 / -3.36 / -1.66 / -0.35 at NFE 5/8/12/18.
+        # Default ON unless the env var overrides to "shared".
         if per_core_calib is None:
-            per_core_calib = os.environ.get("AD_PROPOSED_CALIB", "shared").lower() == "per_core"
+            per_core_calib = os.environ.get("AD_PROPOSED_CALIB", "per_core").lower() == "per_core"
         self.per_core_calib = bool(per_core_calib)
 
     def _get_calibration(self, net, device, image_shape):

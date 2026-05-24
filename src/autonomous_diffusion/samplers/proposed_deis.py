@@ -59,6 +59,10 @@ class ProposedDEIS(Sampler):
         if perceptual_weight_k is None:
             perceptual_weight_k = float(os.environ.get("AD_PROPOSED_K", "2.0"))
         self.perceptual_weight_k = float(perceptual_weight_k)
+        # Per-core calibration LOSES catastrophically on DEIS in the Round 3b
+        # ablation: +25.5 / +13.2 / +7.2 / +3.7 at NFE 5/8/12/18. The
+        # extrapolation-kernel-dominated single-step error doesn't track FID
+        # sensitivity. Default OFF (use shared Heun calibration).
         if per_core_calib is None:
             per_core_calib = os.environ.get("AD_PROPOSED_CALIB", "shared").lower() == "per_core"
         self.per_core_calib = bool(per_core_calib)
