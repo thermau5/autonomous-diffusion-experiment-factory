@@ -191,6 +191,21 @@ def main(summary, out, contract, run_root):
     (out / "report.tex").write_text(tex)
     click.echo(f"wrote {out / 'report.tex'} + tables/figures/{out}")
 
+    # Auto-compile to PDF when pdflatex is available. Two passes for refs.
+    import shutil, subprocess
+    if shutil.which("pdflatex"):
+        for _ in range(2):
+            r = subprocess.run(
+                ["pdflatex", "-interaction=nonstopmode", "report.tex"],
+                cwd=out, capture_output=True, text=True,
+            )
+        if (out / "report.pdf").exists():
+            click.echo(f"compiled {out / 'report.pdf'}")
+        else:
+            click.echo(f"pdflatex ran but no PDF produced; see {out / 'report.log'}")
+    else:
+        click.echo("pdflatex not on PATH; skipping PDF build (apt/conda install texlive-latex-base)")
+
 
 if __name__ == "__main__":
     main()
