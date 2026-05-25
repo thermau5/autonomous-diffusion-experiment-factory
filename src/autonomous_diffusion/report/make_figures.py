@@ -97,7 +97,6 @@ def pareto_frontier_figure(
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=200)
-    fig.savefig(out_path.with_suffix(".pdf"))
     plt.close(fig)
     return out_path
 

@@ -94,7 +94,7 @@ Generator is the frozen pretrained EDM net; only the sampler/schedule/control is
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.85\linewidth]{pareto_fid_nfe_zoom.pdf}
+\includegraphics[width=0.85\linewidth]{pareto_fid_nfe_zoom.png}
 \caption{Quality-efficiency frontier (zoomed, FID $\le 60$): per-sampler Clean-FID vs.\ actual NFE. Lower-left is better. \textbf{Proposed} is the certificate-optimal step density on the EDM-Heun solver core. See \texttt{pareto\_fid\_nfe.pdf} for the un-zoomed view including the EDM-Heun NFE=5 outlier.}
 \end{figure}
 
