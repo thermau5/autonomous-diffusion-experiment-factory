@@ -1,63 +1,41 @@
-"""AYS-style (Align Your Steps) schedule optimization on EDM CIFAR-10.
+"""AYS (Align Your Steps) schedule optimization on EDM CIFAR-10.
 
-STATUS (2026-05-27): EXPERIMENTAL / NEGATIVE RESULT.
-The simplified pairwise-loss-table implementation in this file
-UNDERPERFORMS the Karras rho=7 baseline at every tested K on 1k
-CIFAR-10 smoke (UniPC core, single seed):
+Reference: Sabour, Fidler, Kreis. "Align Your Steps: Optimizing
+Sampling Schedules in Diffusion Models", ICML 2024.
+research.nvidia.com/labs/toronto-ai/AlignYourSteps/
 
-    K     this_AYS_FID    Karras_FID    (Ours, UniPC) m_s* FID (locked)
-    5     74.42           65.22         21.46
-    8     53.89           39.00          9.18
-   12     44.12           32.74          5.58
-   18     36.91           31.53          4.66
+The AYS objective is the KL upper bound (KLUB) between the continuous
+SDE reverse path and the discrete-sampler-induced path. In sigma
+coordinate (EDM convention, sigma decreasing from sigma_max to 0) the
+KLUB is
 
-This is NOT a refutation of the AYS paper -- it is a refutation of
-this specific pairwise-loss approximation. A faithful AYS reproduction
-requires:
-  - trajectory-level KL objective (not summed pairwise step errors);
-  - differentiable backward-trajectory simulation;
-  - the paper's specific Gaussian local-transition closed form.
-That implementation is the ~1-2 day item this file does NOT achieve.
+    KLUB(Pi_N) = Sum_{i=1}^{N}  int_{sigma_i}^{sigma_{i-1}}
+                   (1 / sigma^3) * E_x || D_theta(x_sigma, sigma)
+                                       - D_theta(x_{sigma_{i-1}},
+                                                 sigma_{i-1}) ||^2 d sigma
 
-Kept as a research artifact and honest negative-result reference. Not
-registered as a sampler.
+where D_theta is the EDM denoiser, Pi_N = {sigma_0 > sigma_1 > ... > sigma_N}
+is the candidate grid, and the expectation is over reverse-process
+samples at level sigma (drawn from the Heun-Karras bootstrap, as in
+proposed_control's calibration).
 
-Reference: Sabour, Hayat, Garg et al. "Align Your Steps: Optimizing
-Sampling Schedules in Diffusion Models", ICLR 2024.
+The 1/sigma^3 weight is the AYS terminal-sensitivity factor; it
+amplifies errors at low sigma, where the data manifold is most rigid.
 
-Original docstring follows.
+The schedule is found by minimising KLUB over the K-1 free interior
+sigmas:
 
-This is NOT a faithful reproduction of the AYS paper (the original
-optimizes a path-KL functional with closed-form Gaussian local
-transitions tied to the SDE). It is the EDM-pretrained ODE analog:
+    Pi_{N}^{AYS} = argmin_{Pi_N} KLUB(Pi_N)
 
-  For each interval [sigma_a, sigma_b], compute the squared
-  prediction-error of one solver step against a high-NFE reference
-  trajectory, weighted by 1 / sigma_next^2 (terminal-sensitivity proxy):
-
-    L_AYS(Pi_K)
-    = Sum_i  ( 1 / sigma_{i+1}^2 ) *
-            || step_solver(x_{Pi(sigma_i)}; sigma_i -> sigma_{i+1})
-               - x^{ref}(sigma_{i+1}) ||^2,
-
-  with x^{ref} drawn from the Heun-Karras-32 bootstrap trajectory used
-  by proposed_control's calibration.
-
-The schedule is then Pi_K^{AYS} = argmin_{Pi_K} L_AYS(Pi_K) under
-monotone-grid constraints. Solved by L-BFGS-B with softmax(deltas)
-parameterisation of K positive log-sigma gaps summing to log_range.
-
-Calibration is cached per (net, target solver) so re-derivation is a
-one-time cost. The result is a fixed schedule -- a learned scheduler in
-the m_phi class (low-dimensional under-the-hood, since we optimize only
-the K-1 free interior sigmas, but conceptually it's optimized end-to-end
-against the path-KL objective rather than against a pointwise truncation
-density).
+with monotone-grid constraints. The reference D_theta(x_sigma, sigma)
+values are precomputed once on a fine log-sigma grid; for any candidate
+Pi_N the KLUB integral is evaluated by trapezoidal rule on the fine
+grid restricted to each interval. This avoids re-running the network
+per optimizer step.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
 
 import numpy as np
 import torch
@@ -72,67 +50,51 @@ from ._common import (
 
 
 # ---------------------------------------------------------------------------
-# Tabulate per-interval AYS loss on a fine grid of (sigma_a, sigma_b) pairs
+# Precompute D_theta(x_sigma, sigma) on a fine log-sigma grid from the
+# Heun-Karras bootstrap trajectory.
 # ---------------------------------------------------------------------------
 
 @dataclass
-class AYSLossTable:
-    """Pre-tabulated AYS per-step loss L(sigma_a, sigma_b)."""
-    sigma_grid: np.ndarray            # length M, fine descending grid
-    L_table: np.ndarray               # shape (M, M), L[i, j] for sigma_a=sigma_grid[i], sigma_b=sigma_grid[j]; j>i
+class DenoisedTable:
+    """Bootstrap denoiser evaluations at each fine sigma."""
+    sigma_grid: np.ndarray              # length M, descending
+    denoised_per_sigma: torch.Tensor    # shape (M, B, C, H, W) on CPU
     meta: dict
 
 
 @torch.inference_mode()
-def tabulate_ays_loss(
+def precompute_denoised_table(
     net,
-    target_step_fn,
     *,
-    num_calib_samples: int = 16,
-    num_fine_sigmas: int = 48,
+    num_calib_samples: int = 8,
+    num_fine_sigmas: int = 128,
     sigma_min_clip: float = 0.002,
     sigma_max_clip: float = 80.0,
     seed: int = 0xA75,
     device: str | torch.device = "cuda",
     image_shape: tuple[int, int, int] | None = None,
-) -> AYSLossTable:
-    """For each pair (i, j) of fine-grid sigmas with i < j (descending), compute
-    the AYS per-step loss
-
-      L(sigma_grid[i], sigma_grid[j]) =
-          mean_B || target_step_fn(x_i; sigma_grid[i] -> sigma_grid[j])
-                  - x_j^{ref} ||^2  /  sigma_grid[j]^2
-
-    where x_i^{ref} are drawn from a Heun-Karras-32 bootstrap trajectory
-    (the same bootstrap as proposed_control's calibration). The factor
-    1/sigma_next^2 is the AYS terminal-sensitivity weight.
-
-    target_step_fn(net, x, sigma_a, sigma_b, prev_history)
-        -> (x_next, new_history)  is the solver's single-step update.
-        For multistep solvers, prev_history is the previous denoised eval;
-        we feed history from the bootstrap trajectory at the previous
-        coarse-grid sigma.
-    """
+) -> DenoisedTable:
+    """Run a Heun-Karras bootstrap, then evaluate D_theta(x_sigma, sigma)
+    at `num_fine_sigmas` log-uniform sigma values."""
     device = torch.device(device)
     shape = resolve_shape(net, image_shape)
     sigma_min_eff, sigma_max_eff = resolve_sigma_range(net)
     sigma_min_eff = max(sigma_min_eff, sigma_min_clip)
     sigma_max_eff = min(sigma_max_eff, sigma_max_clip)
 
-    # Descending fine grid in log sigma.
-    log_lo, log_hi = np.log(sigma_min_eff), np.log(sigma_max_eff)
-    sigma_grid = np.exp(np.linspace(log_hi, log_lo, num_fine_sigmas)).astype(np.float32)
+    sigma_grid = np.exp(np.linspace(
+        np.log(sigma_max_eff), np.log(sigma_min_eff), num_fine_sigmas
+    )).astype(np.float32)
 
-    # Bootstrap reference trajectory on a Karras-32 grid (this is the same
-    # bootstrap proposed_control uses).
-    bootstrap_grid = karras_sigmas(num_fine_sigmas - 1, sigma_min_eff, sigma_max_eff,
-                                    device=device).to(torch.float32)
-    x = sample_initial_noise((num_calib_samples, *shape), float(bootstrap_grid[0]),
+    # Bootstrap Heun-Karras trajectory at the fine sigma grid (treat sigma_grid
+    # as the trajectory grid for simplicity; runs num_fine_sigmas-1 Heun steps).
+    sigma_grid_t = torch.tensor(sigma_grid, dtype=torch.float32, device=device)
+    x = sample_initial_noise((num_calib_samples, *shape), float(sigma_grid_t[0]),
                              seed=seed, device=device)
-    bootstrap_xs = [x]
-    bootstrap_denoised = [denoise(net, x, bootstrap_grid[0])]
+    denoised_per_sigma = []
+    denoised_per_sigma.append(denoise(net, x, sigma_grid_t[0]).cpu())
     for k in range(num_fine_sigmas - 1):
-        sa, sb = bootstrap_grid[k], bootstrap_grid[k + 1]
+        sa, sb = sigma_grid_t[k], sigma_grid_t[k + 1]
         denoised = denoise(net, x, sa)
         d = (x - denoised) / sa
         x_next = x + (sb - sa) * d
@@ -141,142 +103,102 @@ def tabulate_ays_loss(
             d2 = (x_next - denoised2) / sb
             x_next = x + (sb - sa) * 0.5 * (d + d2)
         x = x_next
-        bootstrap_xs.append(x)
-        bootstrap_denoised.append(denoise(net, x, sb))
+        denoised_per_sigma.append(denoise(net, x, sb).cpu())
 
-    bootstrap_sigmas_np = bootstrap_grid.cpu().numpy()
-
-    def nearest_idx(sigma_target):
-        return int(np.argmin(np.abs(bootstrap_sigmas_np - float(sigma_target))))
-
-    # Tabulate L(i, j) for j > i.
-    L_table = np.zeros((num_fine_sigmas, num_fine_sigmas), dtype=np.float64)
-    L_table.fill(np.nan)
-
-    for i in range(num_fine_sigmas - 1):
-        sigma_a = float(sigma_grid[i])
-        idx_a = nearest_idx(sigma_a)
-        x_a = bootstrap_xs[idx_a]
-        # For multistep history, pick the previous bootstrap denoised value.
-        denoised_prev = bootstrap_denoised[max(idx_a - 1, 0)]
-        sigma_prev = bootstrap_grid[max(idx_a - 1, 0)] if idx_a >= 1 else None
-        for j in range(i + 1, num_fine_sigmas):
-            sigma_b = float(sigma_grid[j])
-            sigma_a_t = torch.tensor(sigma_a, device=device, dtype=torch.float32)
-            sigma_b_t = torch.tensor(sigma_b, device=device, dtype=torch.float32)
-            x_next, _ = target_step_fn(
-                net, x_a, sigma_a_t, sigma_b_t,
-                denoised_prev=denoised_prev, sigma_prev=sigma_prev,
-            )
-            # Reference at sigma_b: nearest bootstrap x.
-            idx_b = nearest_idx(sigma_b)
-            x_ref = bootstrap_xs[idx_b]
-            err2 = (x_next - x_ref).pow(2).mean().item()
-            L_table[i, j] = err2 / max(sigma_b ** 2, 1e-12)
-
-    return AYSLossTable(
+    denoised_tensor = torch.stack(denoised_per_sigma, dim=0)
+    return DenoisedTable(
         sigma_grid=sigma_grid,
-        L_table=L_table,
+        denoised_per_sigma=denoised_tensor,
         meta={
             "num_calib_samples": num_calib_samples,
             "num_fine_sigmas": num_fine_sigmas,
             "sigma_min": sigma_min_eff,
             "sigma_max": sigma_max_eff,
             "seed": seed,
-            "bootstrap": "heun_karras_32",
         },
     )
 
 
-# Step-fn for UniPC (single step + 1-NFE corrector reuse)
-def unipc_single_step_for_ays(net, x_cur, sigma_a, sigma_b,
-                               denoised_prev=None, sigma_prev=None):
-    denoised_cur = denoise(net, x_cur, sigma_a)
-    if denoised_prev is None or sigma_prev is None:
-        h_i = sigma_a.log() - sigma_b.log()
-        x_pred = (sigma_b / sigma_a) * x_cur - torch.expm1(-h_i) * denoised_cur
-    else:
-        h_i_1 = sigma_prev.log() - sigma_a.log()
-        h_i = sigma_a.log() - sigma_b.log()
-        r = h_i_1 / h_i
-        D_pred = (1 + 1 / (2 * r)) * denoised_cur - (1 / (2 * r)) * denoised_prev
-        x_pred = (sigma_b / sigma_a) * x_cur - torch.expm1(-h_i) * D_pred
-    denoised_next = denoise(net, x_pred, sigma_b)
-    D_corr = 0.5 * denoised_cur + 0.5 * denoised_next
-    h_i_eff = sigma_a.log() - sigma_b.log()
-    x_next = (sigma_b / sigma_a) * x_cur - torch.expm1(-h_i_eff) * D_corr
-    return x_next, denoised_cur
-
-
 # ---------------------------------------------------------------------------
-# Sequence optimization over Pi_K = (sigma_0, ..., sigma_K)
+# KLUB loss for a candidate grid Pi_N
 # ---------------------------------------------------------------------------
 
-def _interp_L(ays: AYSLossTable, sigma_a: float, sigma_b: float) -> float:
-    """Bilinear interpolation of L(sigma_a, sigma_b) on the (log-sigma_a,
-    log-sigma_b) grid. The table only has entries for j > i (sigma_a >
-    sigma_b on a descending grid); we constrain the lookup likewise.
+def _D_at_sigma_via_interp(table: DenoisedTable, sigma_target: float) -> torch.Tensor:
+    """Linear log-sigma interpolation of D_theta into table. Returns shape (B,C,H,W)."""
+    grid = table.sigma_grid
+    log_grid = np.log(grid)        # descending in i
+    log_t = np.log(max(sigma_target, grid.min()))
+    # log_grid is monotone-decreasing; find bracketing pair
+    i = int(np.clip(np.searchsorted(-log_grid, -log_t) - 1, 0, len(log_grid) - 2))
+    log_lo, log_hi = log_grid[i], log_grid[i + 1]    # log_lo > log_hi (since descending)
+    if log_lo == log_hi:
+        return table.denoised_per_sigma[i]
+    f = (log_lo - log_t) / (log_lo - log_hi)
+    f = float(np.clip(f, 0.0, 1.0))
+    return (1 - f) * table.denoised_per_sigma[i] + f * table.denoised_per_sigma[i + 1]
+
+
+def klub_loss(sigmas: np.ndarray, table: DenoisedTable) -> float:
+    """KLUB(Pi_N) = sum_i integral over [sigma_i, sigma_{i-1}] of
+        (1/sigma^3) * mean_B ||D(x_sigma, sigma) - D(x_{sigma_{i-1}}, sigma_{i-1})||^2
+    where the inner expectation uses the bootstrap fine-grid evaluations.
+
+    Trapezoidal integration on the subset of fine-grid points that fall
+    inside each interval (plus interpolated endpoints).
     """
-    grid = ays.sigma_grid
-    if sigma_b >= sigma_a:
-        return 0.0   # not a valid descending interval
-    log_grid = np.log(grid)            # length M, monotone-decreasing in i
-    log_a = np.log(max(sigma_a, grid.min()))
-    log_b = np.log(max(sigma_b, grid.min()))
-    # bracketing indices: find i_a such that log_grid[i_a] >= log_a >= log_grid[i_a+1]
-    # since log_grid is descending, use searchsorted on the negated array
-    i_a = int(np.clip(np.searchsorted(-log_grid, -log_a) - 1, 0, len(log_grid) - 2))
-    i_b = int(np.clip(np.searchsorted(-log_grid, -log_b) - 1, 0, len(log_grid) - 2))
-    # ensure i_b > i_a (since j > i in the table)
-    if i_b <= i_a:
-        i_b = min(i_a + 1, len(log_grid) - 1)
-    # bilinear fractions in log-sigma
-    log_a_lo, log_a_hi = log_grid[i_a], log_grid[i_a + 1]    # log_a_lo > log_a_hi
-    log_b_lo, log_b_hi = log_grid[i_b], log_grid[min(i_b + 1, len(log_grid) - 1)]
-    fa = (log_a_lo - log_a) / max(log_a_lo - log_a_hi, 1e-9)
-    fa = float(np.clip(fa, 0.0, 1.0))
-    fb = (log_b_lo - log_b) / max(log_b_lo - log_b_hi, 1e-9)
-    fb = float(np.clip(fb, 0.0, 1.0))
-    # corner values (clip i_b+1 to last)
-    M = ays.L_table.shape[0]
-    ib1 = min(i_b + 1, M - 1)
-    # All four corners must satisfy j > i. If i_a + 1 >= i_b, we're at the
-    # diagonal edge -- use the safe pair (i_a, i_b).
-    if i_a + 1 >= i_b:
-        return float(ays.L_table[i_a, i_b])
-    L00 = ays.L_table[i_a,     i_b]
-    L01 = ays.L_table[i_a,     ib1]
-    L10 = ays.L_table[i_a + 1, i_b]
-    L11 = ays.L_table[i_a + 1, ib1]
-    if np.isnan(L00) or np.isnan(L01) or np.isnan(L10) or np.isnan(L11):
-        return float(L00 if not np.isnan(L00) else ays.L_table[i_a, i_b])
-    L_a_lo = (1 - fb) * L00 + fb * L01
-    L_a_hi = (1 - fb) * L10 + fb * L11
-    return float((1 - fa) * L_a_lo + fa * L_a_hi)
-
-
-def ays_total_loss(sigmas: np.ndarray, ays: AYSLossTable) -> float:
-    """Sum L over intervals of Pi_K = sigmas[0] > ... > sigmas[K] > 0."""
-    K = sigmas.shape[0] - 1
-    if K < 1:
-        return 0.0
+    grid = table.sigma_grid
+    N_intervals = sigmas.shape[0] - 1
+    sigma_floor = float(grid.min())
     total = 0.0
-    sigma_floor = float(ays.sigma_grid.min())
-    for i in range(K):
-        sa, sb = float(sigmas[i]), float(sigmas[i + 1])
-        if sb <= sigma_floor * 0.9999:
+    for i in range(N_intervals):
+        sigma_lo = float(sigmas[i + 1])           # right endpoint (smaller)
+        sigma_hi = float(sigmas[i])               # left endpoint (larger)
+        if sigma_hi <= sigma_floor:
             continue
-        total += _interp_L(ays, sa, sb)
+        sigma_lo = max(sigma_lo, sigma_floor)
+        if sigma_lo >= sigma_hi:
+            continue
+        D_ref = _D_at_sigma_via_interp(table, sigma_hi)         # holds at left endpoint
+        # Fine-grid sigmas inside this interval
+        in_interval = (grid >= sigma_lo) & (grid <= sigma_hi)
+        sigma_inside = grid[in_interval]
+        D_inside = table.denoised_per_sigma[in_interval]
+        # Always include endpoints
+        sigma_lo_arr = np.array([sigma_lo])
+        sigma_hi_arr = np.array([sigma_hi])
+        sigma_full = np.concatenate([sigma_hi_arr, sigma_inside[::-1] if sigma_inside.size else sigma_inside, sigma_lo_arr])
+        D_lo = _D_at_sigma_via_interp(table, sigma_lo).unsqueeze(0)
+        D_hi = D_ref.unsqueeze(0)
+        if D_inside.shape[0] == 0:
+            D_full = torch.cat([D_hi, D_lo], dim=0)
+        else:
+            D_full = torch.cat([D_hi, D_inside.flip(0), D_lo], dim=0)
+        # Integrate (1/sigma^3) * mean_pixel_batch ||D_full[j] - D_ref||^2 d sigma
+        # over sigma_full (descending from sigma_hi to sigma_lo).
+        # Take sigma_full ascending for stable trapezoidal:
+        order = np.argsort(sigma_full)
+        sigma_sorted = sigma_full[order]
+        D_sorted = D_full[order]
+        # squared error per fine sigma, averaged over batch and pixels
+        err_sq = (D_sorted - D_ref.unsqueeze(0)).pow(2).mean(dim=tuple(range(1, D_sorted.dim())))
+        weight = 1.0 / (sigma_sorted ** 3 + 1e-12)
+        integrand = err_sq.numpy() * weight
+        # trapezoidal
+        seg = 0.5 * (integrand[:-1] + integrand[1:]) * np.diff(sigma_sorted)
+        total += float(seg.sum())
     return total
 
 
-def optimal_ays_grid(ays: AYSLossTable, K: int, *, init: str = "karras",
-                     maxiter: int = 200) -> np.ndarray:
-    """Find Pi_K of K+2 points (sigma_max, K-1 interior, sigma_min, 0) that
-    minimize L_AYS via L-BFGS-B."""
+# ---------------------------------------------------------------------------
+# Optimize the K-1 free interior sigmas
+# ---------------------------------------------------------------------------
+
+def optimal_ays_grid(table: DenoisedTable, K: int, *, init: str = "karras",
+                     maxiter: int = 100) -> np.ndarray:
+    """Return Pi_K = (sigma_max, K-1 interior, sigma_min, 0) minimising KLUB."""
     from scipy import optimize as _opt
-    sigma_min = float(ays.sigma_grid.min())
-    sigma_max = float(ays.sigma_grid.max())
+    sigma_min = float(table.sigma_grid.min())
+    sigma_max = float(table.sigma_grid.max())
     log_range = np.log(sigma_max) - np.log(sigma_min)
 
     def params_to_sigmas(deltas: np.ndarray) -> np.ndarray:
@@ -291,7 +213,7 @@ def optimal_ays_grid(ays: AYSLossTable, K: int, *, init: str = "karras",
         return sigmas
 
     def loss(deltas):
-        return ays_total_loss(params_to_sigmas(deltas), ays)
+        return klub_loss(params_to_sigmas(deltas), table)
 
     if init == "karras":
         with torch.no_grad():
@@ -307,6 +229,10 @@ def optimal_ays_grid(ays: AYSLossTable, K: int, *, init: str = "karras",
     else:
         deltas_init = np.zeros(K, dtype=np.float64)
 
-    res = _opt.minimize(loss, deltas_init, method="L-BFGS-B",
-                        options=dict(maxiter=maxiter, disp=False))
+    # Use a derivative-free optimizer since the loss is piecewise from
+    # trapezoidal integration on a fine grid (gradients are noisy but
+    # the loss surface is smooth in deltas at a coarser resolution).
+    res = _opt.minimize(loss, deltas_init, method="Nelder-Mead",
+                        options=dict(maxiter=maxiter * (K + 2), xatol=1e-3, fatol=1e-6,
+                                     adaptive=True, disp=False))
     return params_to_sigmas(res.x).astype(np.float32)

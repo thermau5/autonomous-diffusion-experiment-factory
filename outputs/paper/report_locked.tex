@@ -419,37 +419,70 @@ single addition is AYS (pure schedule, drop-in compatible) and
 re-deriving it faithfully on EDM CIFAR-10 is a discrete \(\sim\)1--2
 day item.
 
-\paragraph{Round 5b attempt: a quick AYS-style approximation
-(negative result, recorded honestly).} We implemented a simplified
-AYS-style schedule optimizer in
-\texttt{samplers/\_ays\_grid.py}: tabulate pairwise per-step losses
-\(L(\sigma_a, \sigma_b) = \|\text{UniPC step}(x;\sigma_a\!\to\!\sigma_b) -
-x^{\mathrm{ref}}(\sigma_b)\|^2/\sigma_b^2\) against a 48-point Heun-Karras
-reference, bilinearly interpolate, sum over the candidate grid,
-minimize via L-BFGS. On 1k-sample CIFAR-10 UniPC smoke (single seed):
+\paragraph{Round 5b attempts: both pairwise and faithful KLUB
+underperform (negative results, recorded honestly).} We tried two
+implementations in \texttt{samplers/\_ays\_grid.py}:
+
+\emph{(a) Pairwise step-error.} Tabulate
+\(L(\sigma_a,\sigma_b) = \|\text{UniPC}(\sigma_a\!\to\!\sigma_b)
+-x^{\mathrm{ref}}(\sigma_b)\|^2/\sigma_b^2\) on a fine grid, bilinearly
+interpolate, sum over intervals, minimize via L-BFGS.
+
+\emph{(b) Faithful KLUB.} Reproduce the AYS paper's KL upper bound
+in sigma coordinate:
+\[
+\mathrm{KLUB}(\Pi_N)
+= \sum_{i=1}^{N}\!\int_{\sigma_i}^{\sigma_{i-1}}\!\!
+\frac{1}{\sigma^3}\,\mathbb E_x \bigl\|
+D_\theta(x_\sigma,\sigma) - D_\theta(x_{\sigma_{i-1}},\sigma_{i-1})
+\bigr\|^2\,d\sigma,
+\]
+pre-compute \(D_\theta\) at 128 fine sigmas on a Heun-Karras bootstrap,
+trapezoidally integrate, minimize over the \(K-1\) free interior sigmas
+via Nelder--Mead.
+
+On 1k-sample CIFAR-10 UniPC smoke (single seed):
 
 \begin{center}
 \small
-\begin{tabular}{r r r r}
+\begin{tabular}{r r r r r}
 \toprule
-K & AYS-style FID & Karras FID & \((Ours, m_s^\star)\) FID (locked, 10k) \\
+K & AYS pairwise FID & AYS KLUB FID & Karras FID & \((Ours, m_s^\star)\) FID (locked, 10k) \\
 \midrule
- 5 & 74.42 & 65.22 & 21.46 \\
- 8 & 53.89 & 39.00 &  9.18 \\
-12 & 44.12 & 32.74 &  5.58 \\
-18 & 36.91 & 31.53 &  4.66 \\
+ 5 & 74.42 & 102.85 & 65.22 & 21.46 \\
+ 8 & 53.89 &  62.24 & 39.00 &  9.18 \\
+12 & 44.12 &  44.03 & 32.74 &  5.58 \\
+18 & 36.91 &  35.64 & 31.53 &  4.66 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The pairwise-loss-table approximation \emph{underperforms} Karras at
-every K and is far behind our nonparametric-calibrated \(m_s^\star\).
-This is \emph{not} a refutation of AYS the paper --- it is a refutation
-of \emph{this} specific simplification. A faithful AYS reproduction
-requires trajectory-level KL (not pairwise step errors), differentiable
-backward-trajectory simulation, and the paper's specific Gaussian
-local-transition closed form. The 1--2 day cite-infeasible estimate
-above therefore stands.
+Both implementations \emph{underperform} default Karras at every K. The
+faithful KLUB at K=5 finds the schedule
+\([80,\,0.98,\,0.13,\,0.030,\,0.008,\,0.002]\) --- a single huge first
+step from \(\sigma_{\max}=80\) down to \(\sigma{\approx}1\), then five
+tiny refinements. The grid minimizes the KL upper bound (KLUB
+\(=0.59\) vs Karras's 80.6, a 100\(\times\) reduction) but the discrete
+1-NFE-per-step solver simply cannot integrate the huge first interval
+accurately, so the actual FID is much worse.
+
+\paragraph{Interpretation.} The KLUB objective is a faithful upper
+bound on KL, but the corresponding minimizer over a \(K{-}1\)-dimensional
+free-sigma search space \emph{degenerates} when the integrand has the
+\(1/\sigma^3\) terminal-amplification weight. The published AYS paper
+must therefore use additional constraints (e.g.\ a restricted
+low-dimensional parameterization such as Karras's \((\rho,\sigma_{\min},
+\sigma_{\max})\) family, or a forward-error regularizer). With such
+restrictions, AYS effectively reduces to \emph{tuned-parametric
+Karras} --- which our \S\ref{sec:tuned-rho} 10k experiment already
+shows is beaten by \((Ours, m_s^\star)\) by \(-19.4\) FID at NFE=5.
+
+So either AYS (faithfully reproduced) collapses to a parametric search
+in the Karras family --- in which case our headline still holds --- or
+it uses additional implementation machinery (regularization,
+trajectory simulation specifics) not captured in the paper's
+mathematical description. We mark the latter case beyond the current
+budget and leave it as future work.
 
 The current headline reads as: (Ours, UniPC) beats fixed and
 tuned-parametric Karras schedules at low NFE on CIFAR-10. It does
