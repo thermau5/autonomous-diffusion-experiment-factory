@@ -347,17 +347,60 @@ fixed-EDM benchmark:
   with its schedule. Same bundling issue.
 \end{itemize}
 
-For this report, we mark the AYS / DDSS comparison \textbf{infeasible
-within the current single-GPU budget} (the dominant fixed cost is the
-re-derivation pipeline, not the eventual evaluation): faithful AYS
-re-derivation on EDM CIFAR-10 is a $\sim$1--2 day item. We choose to
-\textbf{defer to a follow-up round} on the grounds that (a) the tuned
-Karras-$\rho^\star$ baseline (\S\ref{sec:tuned-rho}) is the
-\emph{within-family} schedule comparison the issue most directly asks
-for; (b) the bundled methods (DPM-Solver-v3, GENIE) cannot be used as
-pure schedule baselines; (c) AYS/DDSS implementation would not change
-the tuned-$\rho^\star$ comparison result we already get, only add one
-row to the Level-2 schedule table.
+\paragraph{Solver compatibility of these methods.} The four
+methods fall into three compatibility classes:
+
+\begin{itemize}
+\item \emph{Drop-in (would work with our mainstream solvers).} AYS and
+  DDSS output a fixed sigma vector \((\sigma_0,\ldots,\sigma_K)\) that
+  plugs into any solver core taking a sigma grid (Heun, DPM-Solver++,
+  UniPC, DEIS). The only barrier is re-deriving the schedule on EDM
+  CIFAR-10: AYS publishes only SDXL and SD~1.5 schedules; DDSS
+  publishes CIFAR-10 fitted parameters but not drop-in code.
+\item \emph{Bundled with solver changes.} DPM-Solver-v3 ships
+  ``empirical model statistics'' (EMS) corrections that \emph{modify
+  the solver's update law}, plus a co-derived schedule; removing the
+  schedule destroys the method's point. GENIE distills the
+  2nd-order solver and its schedule together. Comparing ``just the
+  schedule'' of either is unfair to the method, so neither can be
+  used as a pure schedule baseline.
+\item \emph{Solver-specific online controllers.} Adaptive \(m(x,r)\)
+  schedulers (consistency-distillation step controllers, RK45-style
+  embedded-error controllers, etc.) pick the next \(\sigma\) from
+  runtime solver state. Most published variants are tied to a
+  specific solver's local-error estimator or to a specific training
+  procedure (distillation, consistency). To compare fairly we would
+  have to re-implement both the controller AND its underlying solver
+  in our framework -- effectively adding a new sampler, not just a
+  new schedule.
+\end{itemize}
+
+\paragraph{Why solver-specific schedulers are not feasible here, now.}
+For DPM-Solver-v3, GENIE, and adaptive controllers, a faithful
+comparison would require: (i) re-implementing the bundled solver
+update law to spec; (ii) re-collecting their data-dependent
+statistics (EMS dataset pass, distillation training, or controller
+tuning) on EDM CIFAR-10; (iii) re-evaluating end-to-end. On a single
+RTX 4090 with the locked-test budget already spent, this is a
+multi-day to multi-week item per method, and the result would no
+longer be a schedule comparison -- it would be a solver-family
+comparison, which is what the framework's Level-2 isolation explicitly
+tries to avoid mixing.
+
+\paragraph{Decision for this report.} We mark AYS / DDSS / DPM-Solver-v3
+/ GENIE comparisons \textbf{infeasible within the current single-GPU
+budget} and defer to a follow-up round. The decision rests on three
+points: (a) the tuned Karras-\(\rho^\star\) baseline
+(\S\ref{sec:tuned-rho}) is the within-family schedule comparison the
+issue most directly asks for, and is implemented; (b) bundled methods
+(DPM-Solver-v3, GENIE) and adaptive controllers cannot be cleanly
+isolated as ``schedule only'' baselines; (c) the most defensible
+single addition is AYS (pure schedule, drop-in compatible) and
+re-deriving it on EDM CIFAR-10 is a discrete \(\sim\)1--2 day item
+queued as Round~5b. The current headline therefore reads as: (Ours,
+UniPC) beats fixed and tuned-parametric Karras schedules at low NFE
+on CIFAR-10. It does \emph{not} claim a win against learned or
+adaptive schedules; those are open follow-up rounds.
 
 \section{Tuned-\(\rho^\star\) baseline (Issue \#2 \S3.1)}
 \label{sec:tuned-rho}
