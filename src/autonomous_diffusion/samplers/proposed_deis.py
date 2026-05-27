@@ -1,14 +1,33 @@
 """Proposed control on a DEIS tAB-2 core.
 
-Same certificate calibration as proposed_control / proposed_dpmpp /
-proposed_unipc (solver-agnostic d(sigma) at 2nd order). The integration
-uses the DEIS Adams-Bashforth-2 update in lambda-space; for VE the
-eps-space step is
-
-    x_next = x + (sigma_next - sigma_i) * eps_extrap,
-    eps_extrap = (1 + h_i/(2 h_prev)) * eps_i  -  (h_i/(2 h_prev)) * eps_{i-1}.
-
 NFE = num_steps (1 NFE/step).
+
+THEORETICAL NOTE (corrected appendix A, 2026-05-26):
+====================================================
+DEIS tAB-2 is an Adams-Bashforth-class multistep solver. Per the corrected
+PDF 1 appendix, the local AB residual is the interpolation-kernel residual
+
+    e_i^AB2 = [h_i^2 (2 h_i + 3 h_{i-1}) / 12] * g''(xi_i),
+
+which is HISTORY-COUPLED in (h_i, h_{i-1}). The pointwise grid rule
+m_s*(r) ∝ d_s(r)^{1/(p+1)} from the single-step certificate is NOT a
+theorem for AB-class solvers. The Round 3b ablation confirmed this
+empirically: per-core d_DEIS estimated from one-step DEIS-vs-Heun-substep
+error puts mass at mid-sigma (where the AB kernel coefficients dominate)
+rather than at low-sigma (where g'' actually peaks for FID-sensitive
+detail).
+
+The corrected certificate is a SEQUENCE-LEVEL program:
+
+    Pi_{N,s}^* = argmin_{Pi_N} D_s^AB(Pi_N),  D_s^AB = Sum_i A_i^2 |K_{s,i}^q g|^2
+
+with monotone-grid constraints. Implementing this is Round 3c.
+
+Until Round 3c is implemented, this sampler defaults to per_core_calib=False
+i.e. uses the shared d_Heun grid. The Round 3b ablation showed shared-d
+DEIS still wins at low NFE vs. baseline DEIS by reintroducing low-sigma
+sensitivity, but this is not a per-core DEIS certificate -- it's a working
+suboptimal grid.
 """
 from __future__ import annotations
 
