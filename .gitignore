@@ -2,6 +2,22 @@
 outputs/
 samples/
 *.npz
+
+# Exception: track the LaTeX report sources, freeze record, and locked-test
+# summary so the report can be regenerated and the contract-freeze evidence
+# is in git.
+!outputs/
+outputs/*
+!outputs/paper/
+outputs/paper/*
+!outputs/paper/*.tex
+!outputs/locked_test/
+outputs/locked_test/*
+!outputs/locked_test/*/
+outputs/locked_test/*/*
+!outputs/locked_test/*/header.json
+!outputs/locked_test/*/summary.json
+!outputs/freeze_record.yaml
 *.pkl
 *.pt
 *.ckpt

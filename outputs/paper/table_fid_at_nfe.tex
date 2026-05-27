@@ -1,0 +1,23 @@
+\begin{tabular}{lcccccc}
+\toprule
+Sampler & NFE=5 & NFE=8 & NFE=12 & NFE=18 & NFE=32 & NFE=64 \\
+\midrule
+DDIM & 74.10 {\scriptsize $\pm$ 0.27} & 38.27 {\scriptsize $\pm$ 0.28} & 28.40 {\scriptsize $\pm$ 0.20} & 24.04 {\scriptsize $\pm$ 0.08} & 20.79 {\scriptsize $\pm$ 0.05} & 18.54 {\scriptsize $\pm$ 0.07} \\
+DDPM ancestral & 119.55 {\scriptsize $\pm$ 0.35} & 68.31 {\scriptsize $\pm$ 0.76} & 48.19 {\scriptsize $\pm$ 0.03} & 37.17 {\scriptsize $\pm$ 0.10} & 29.85 {\scriptsize $\pm$ 0.27} & 24.69 {\scriptsize $\pm$ 0.26} \\
+DEIS & 46.12 {\scriptsize $\pm$ 0.30} & 24.07 {\scriptsize $\pm$ 0.22} & 18.65 {\scriptsize $\pm$ 0.10} & 16.82 {\scriptsize $\pm$ 0.07} & 16.08 {\scriptsize $\pm$ 0.03} & 15.85 {\scriptsize $\pm$ 0.02} \\
+DPM-Solver & 165.43 {\scriptsize $\pm$ 0.40} & -- & -- & -- & -- & -- \\
+DPM-Solver++ & 51.12 {\scriptsize $\pm$ 0.38} & 24.66 {\scriptsize $\pm$ 0.24} & 18.13 {\scriptsize $\pm$ 0.03} & 16.41 {\scriptsize $\pm$ 0.04} & 15.93 {\scriptsize $\pm$ 0.01} & 15.82 {\scriptsize $\pm$ 0.02} \\
+EDM-Euler & 79.54 {\scriptsize $\pm$ 0.37} & 41.79 {\scriptsize $\pm$ 0.20} & 27.41 {\scriptsize $\pm$ 0.33} & 21.23 {\scriptsize $\pm$ 0.23} & 17.80 {\scriptsize $\pm$ 0.10} & 16.46 {\scriptsize $\pm$ 0.06} \\
+EDM-Heun & 343.40 {\scriptsize $\pm$ 0.41} & -- & -- & -- & -- & -- \\
+Karras schedule & 56.01 {\scriptsize $\pm$ 0.19} & 19.64 {\scriptsize $\pm$ 0.07} & 16.29 {\scriptsize $\pm$ 0.08} & 15.83 {\scriptsize $\pm$ 0.03} & 15.79 {\scriptsize $\pm$ 0.03} & 15.79 {\scriptsize $\pm$ 0.03} \\
+PNDM & 19.43 {\scriptsize $\pm$ 0.07} & 19.31 {\scriptsize $\pm$ 0.10} & 16.58 {\scriptsize $\pm$ 0.04} & 15.99 {\scriptsize $\pm$ 0.02} & 15.80 {\scriptsize $\pm$ 0.03} & 15.79 {\scriptsize $\pm$ 0.02} \\
+\textbf{(Ours, DEIS)} & 39.64 {\scriptsize $\pm$ 0.30} & 22.95 {\scriptsize $\pm$ 0.14} & 18.84 {\scriptsize $\pm$ 0.06} & 16.87 {\scriptsize $\pm$ 0.05} & 16.06 {\scriptsize $\pm$ 0.03} & 15.84 {\scriptsize $\pm$ 0.02} \\
+\textbf{(Ours, DPM-Solver++)} & 42.55 {\scriptsize $\pm$ 0.41} & 24.31 {\scriptsize $\pm$ 0.11} & 19.04 {\scriptsize $\pm$ 0.03} & 16.63 {\scriptsize $\pm$ 0.01} & 15.90 {\scriptsize $\pm$ 0.02} & 15.80 {\scriptsize $\pm$ 0.02} \\
+\textbf{(Ours, Heun)} & 25.41 {\scriptsize $\pm$ 0.15} & 17.88 {\scriptsize $\pm$ 0.07} & 16.32 {\scriptsize $\pm$ 0.06} & 15.88 {\scriptsize $\pm$ 0.05} & 15.80 {\scriptsize $\pm$ 0.03} & 15.78 {\scriptsize $\pm$ 0.02} \\
+\textbf{(Ours, Restart)} & 16.83 {\scriptsize $\pm$ 0.12} & 15.86 {\scriptsize $\pm$ 0.04} & 15.76 {\scriptsize $\pm$ 0.02} & 15.75 {\scriptsize $\pm$ 0.03} & 15.73 {\scriptsize $\pm$ 0.04} & 15.73 {\scriptsize $\pm$ 0.04} \\
+\textbf{(Ours, UniPC)} & 42.14 {\scriptsize $\pm$ 0.40} & 23.86 {\scriptsize $\pm$ 0.06} & -- & -- & -- & -- \\
+Restart & 20.17 {\scriptsize $\pm$ 0.03} & 15.98 {\scriptsize $\pm$ 0.03} & 15.74 {\scriptsize $\pm$ 0.03} & 15.74 {\scriptsize $\pm$ 0.03} & 15.74 {\scriptsize $\pm$ 0.04} & 15.72 {\scriptsize $\pm$ 0.04} \\
+Uniform-log schedule & 73.61 {\scriptsize $\pm$ 0.71} & 20.99 {\scriptsize $\pm$ 0.12} & 16.53 {\scriptsize $\pm$ 0.11} & 15.93 {\scriptsize $\pm$ 0.04} & 15.81 {\scriptsize $\pm$ 0.02} & 15.80 {\scriptsize $\pm$ 0.02} \\
+UniPC & 51.28 {\scriptsize $\pm$ 0.37} & 23.76 {\scriptsize $\pm$ 0.21} & 17.39 {\scriptsize $\pm$ 0.03} & 16.18 {\scriptsize $\pm$ 0.04} & 15.86 {\scriptsize $\pm$ 0.02} & 15.80 {\scriptsize $\pm$ 0.02} \\
+\bottomrule
+\end{tabular}

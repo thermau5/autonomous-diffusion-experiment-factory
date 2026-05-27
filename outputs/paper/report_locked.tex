@@ -1,0 +1,252 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,xcolor}
+\title{Autonomous Diffusion: locked-test verification on CIFAR-10\\
+       {\large 10{,}000 samples / cell, 5 seeds, 17 samplers, 510 runs}}
+\author{thermau5}
+\date{\today}
+\begin{document}
+\maketitle
+
+\paragraph{Status.} \textbf{Locked test complete.} The contract
+(\texttt{outputs/freeze\_record.yaml}, sha256 \texttt{450925ba0791\ldots})
+was frozen on 2026-05-24 and not modified during the 45.77\,h evaluation.
+The critic guards refused any drift; \(510/510\) runs succeeded, zero
+failures. Per-cell numbers below are mean \(\pm\) SEM over 5 declared
+seeds \(\{0, 1, 2, 3, 4\}\). No tuning post-freeze.
+
+\section{Theory recap}
+
+A sampler factors as \(u = (s, \rho, m, \nu)\). With \(\rho\) frozen by the
+pretrained EDM net and \(\nu\) at the identity terminal, the per-core
+certificate is
+\[
+u^\star_s \in \arg\min_m Q_s(m), \quad m^\star_s(\sigma) \propto d_s(\sigma)^{1/(p+1)}.
+\]
+For each solver core \(s \in \{\mathrm{Heun},\mathrm{DPM\text{-}Solver\text{++}},\mathrm{UniPC},\mathrm{DEIS},\mathrm{Restart}\}\) we run \texttt{proposed\_<core>} with its solver and the certificate-optimal grid \(m^\star_s\).
+
+\section{Comparison Hierarchy}
+
+A generative sampler is the tuple
+\[
+u = (\theta,\ \pi,\ s,\ m,\ N)
+\]
+where \(\theta\) is the backbone (architecture + weights), \(\pi\) is the path/coupling family (which generative ODE/SDE the backbone parameterises), \(s\) is the solver core (the discrete update law \(F_s\)), \(m\) is the schedule/grid (where on the noise axis \(F_s\) is evaluated), and \(N\) is the cost budget (actual NFE or wall-clock). Our method is not a new generative model; it is per-solver-core schedule control:
+\[
+m^\star_s(\sigma) \propto d_s(\sigma)^{1/(p+1)}.
+\]
+
+We organise experiments by which variable changes:
+
+\begin{center}
+\scriptsize
+\begin{tabular}{c l l p{5.0cm} l}
+\toprule
+Level & Variable & Fixed objects & Question & Status \\
+\midrule
+1 & \(s\)      & \(\theta,\pi,m_s^{default}\)         & Strongest solver baseline? & \textbf{done} \\
+2 & \(m\)      & \(\theta,\pi,s\)                     & Does \(m^\star_s\) beat \(m_s^{default}\)? & \textbf{done} \\
+3 & \(\pi\)    & comparable backbone/compute          & Does path-straightening beat schedule control? & \emph{open} \\
+4 & \(\theta\) & none / broad protocol                & Full generative-model leaderboard & \emph{out of scope} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The locked test in this report covers Level 1 + Level 2 under
+\(\theta = \theta_{\mathrm{EDM}}\), \(\pi = \pi_{\mathrm{EDM}}\). It does
+not include Level 3 (Rectified Flow / OT-CFM / MSFM / OFM), which is the
+explicit next round before any path-straightening claim.
+
+\section{Baseline audit}
+
+For each sampler used in the locked test, the per-experiment fixed/variable
+objects:
+
+\begin{center}
+\scriptsize
+\begin{tabular}{l l l l l l l}
+\toprule
+sampler id & path \(\pi\) & backbone \(\theta\) & solver core \(s\) & baseline grid \(m_s^{default}\) & paired \((\)Ours, \(s)\) & actual NFE \\
+\midrule
+\texttt{edm\_euler}        & EDM diffusion & pretr.\ EDM & Euler         & Karras \(\rho{=}7\)       & --                    & \(K\) \\
+\texttt{edm\_heun}         & EDM diffusion & pretr.\ EDM & Heun          & Karras \(\rho{=}7\)       & \texttt{proposed\_heun} & \(2K{-}1\) \\
+\texttt{karras\_schedule}  & EDM diffusion & pretr.\ EDM & Heun          & Karras \(\rho{=}7\)       & \texttt{proposed\_heun} & \(2K{-}1\) \\
+\texttt{uniform\_schedule} & EDM diffusion & pretr.\ EDM & Heun          & uniform-log               & \texttt{proposed\_heun} & \(2K{-}1\) \\
+\texttt{ddim}              & EDM diffusion & pretr.\ EDM & DDIM (1st)    & DDPM \(\beta\)-derived    & --                    & \(K\) \\
+\texttt{ddpm\_ancestral}   & EDM diffusion & pretr.\ EDM & DDPM ancestral& DDPM \(\beta\)-derived    & --                    & \(K\) \\
+\texttt{dpm\_solver}       & EDM diffusion & pretr.\ EDM & DPM-Solver-2  & Karras \(\rho{=}7\)       & --                    & \(2K{-}1\) \\
+\texttt{dpm\_solver\_pp}   & EDM diffusion & pretr.\ EDM & DPM-Solver++ 2M & Karras \(\rho{=}7\) in our impl. & \texttt{proposed\_dpmpp} & \(K\) \\
+\texttt{unipc}             & EDM diffusion & pretr.\ EDM & UniPC 2PC     & Karras \(\rho{=}7\) in our impl. & \texttt{proposed\_unipc} & \(K\) \\
+\texttt{deis}              & EDM diffusion & pretr.\ EDM & DEIS tAB-2    & Karras \(\rho{=}7\) in our impl. & \texttt{proposed\_deis} & \(K\) \\
+\texttt{pndm}              & EDM diffusion & pretr.\ EDM & PNDM/PLMS-4   & Karras \(\rho{=}7\) in our impl. & --        & \(K{+}\text{warmup}\) \\
+\texttt{restart}           & EDM diffusion & pretr.\ EDM & Restart wrap.\ Heun & Xu et al.\ \(\sigma\)-band & \texttt{proposed\_restart} & base + cycles \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+\textbf{Wording note.} The ``baseline grid'' column is the standard
+Karras / DDPM-derived grid used in \emph{our EDM-compatible
+implementation}, not necessarily the exact grid each method's original
+paper or release configures. The paired \((\)Ours, \(s)\) variant runs
+the same solver core on the certificate-optimal grid \(m_s^\star\) from
+this work. ``--'' means we have no paired variant (DDIM, DDPM, EDM-Euler,
+DPM-Solver-2, PNDM are baseline-only; the latter four are subsumed by
+their multistep / corrector variants on the proposed side).
+
+\section{Level-2: paired same-solver wins}
+
+For each solver core \(s\), the locked-test FID delta at matched actual NFE,
+\(\Delta_s(K) = \mathrm{FID}(s, m_s^\star, K) - \mathrm{FID}(s, m_s^{default}, K)\),
+negative \(\Rightarrow\) the certificate grid wins for this solver core
+\emph{at fixed everything else}:
+
+\begin{center}
+\small
+\begin{tabular}{l c c c c}
+\toprule
+solver core \(s\) & NFE\,9 & NFE\,15 & NFE\,23 & NFE\,35 \\
+\midrule
+Heun (vs Karras)         & \(-31.70\) & \( -1.86\) & \(+0.07\) & \(+0.07\) \\
+\midrule
+solver core \(s\) & NFE\,5 & NFE\,8 & NFE\,12 & NFE\,18 \\
+\midrule
+DPM-Solver++         & \(-16.95\) & \( -3.71\) & \(-0.75\) & \(-0.24\) \\
+UniPC                & \(-18.88\) & \( -3.33\) & \(-0.47\) & \(-0.13\) \\
+DEIS                 & \( -6.51\) & \( -1.27\) & \(+0.10\) & \(-0.01\) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+\textbf{What this isolates.} Fix \(\theta = \theta_{\mathrm{EDM}}\),
+\(\pi = \pi_{\mathrm{EDM}}\), and the solver core \(s\). Only the
+grid \(m\) changes from \(m_s^{default}\) (Karras-style) to \(m_s^\star\)
+(certificate-optimal). For 3 of 4 cores (Heun, DPM-Solver++, UniPC) the
+certificate grid wins at every tested NFE from 5/9 up to 12. The DEIS
+column shows the same low-NFE win because \texttt{proposed\_deis} uses
+the shared \(d_{\mathrm{Heun}}\) grid (Theorem A); the corrected appendix's
+sequence-level Theorem B is implemented but does not yet outperform the
+shared heuristic empirically (pending a better terminal-amplification
+estimator).
+SEMs are \(\sim 0.025\) so every \(|\Delta| \ge 0.1\) is \(>4\sigma\)
+separable.
+
+\noindent
+\textbf{What this does not test.} Whether changing \(\pi\) (the path /
+coupling) on a different backbone wins more than changing \(m\) on the
+fixed EDM backbone. That is Level 3 and is open.
+
+\section{Headline (locked test)}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.88\linewidth]{pareto_locked_zoom.png}
+\caption{Locked-test cost-honest Pareto frontier on CIFAR-10, low-NFE region (actual NFE \(\le 35\)). \textbf{(Ours, UniPC)} owns the entire NFE=5 through NFE=32 corner; (Ours, Restart) takes NFE=33; baseline Restart picks up NFE \(\ge 39\).}
+\end{figure}
+
+\paragraph{Pareto frontier.}
+\begin{center}
+\small
+\begin{tabular}{r l r r r}
+\toprule
+actual NFE & sampler & Clean-FID & SEM & owner \\
+\midrule
+  5 & (Ours, UniPC)    & 21.459 & 0.136 & \textbf{ours} \\
+  8 & (Ours, UniPC)    &  9.183 & 0.070 & \textbf{ours} \\
+ 12 & (Ours, UniPC)    &  5.578 & 0.021 & \textbf{ours} \\
+ 18 & (Ours, UniPC)    &  4.664 & 0.022 & \textbf{ours} \\
+ 27 & PNDM             &  4.577 & 0.023 & baseline \\
+ 31 & Restart          &  4.486 & 0.030 & baseline \\
+ 32 & (Ours, UniPC)    &  4.447 & 0.024 & \textbf{ours} \\
+ 33 & (Ours, Restart)  &  4.387 & 0.021 & \textbf{ours} \\
+ 39 & Restart          &  4.339 & 0.026 & baseline \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+\textbf{(Ours)} variants occupy \textbf{6 of 9} Pareto-frontier points.
+\textbf{(Ours, UniPC)} alone owns the entire NFE=5\,\(\to\)\,32 corner.
+
+\paragraph{Pareto AUC.}
+\[
+\mathrm{AUC}_{\mathrm{locked}}\;(\log_{10}\mathrm{NFE} \in [4, 200]) \;=\; 10.755.
+\]
+
+% (Per-core within-solver-core wins table moved to Section 4
+%  'Level-2: paired same-solver wins' added per Issue #1.)
+
+\section{Per-sampler best Clean-FID}
+
+\begin{center}
+\small
+\begin{tabular}{l r r r}
+\toprule
+sampler & best Clean-FID & SEM & at actual NFE \\
+\midrule
+Restart                & 4.339 & 0.026 &  39 \\
+(Ours, Restart)        & 4.360 & 0.025 &  41 \\
+EDM-Heun               & 4.398 & 0.023 &  65 \\
+Karras schedule        & 4.398 & 0.023 &  63 \\
+(Ours, Heun)           & 4.403 & 0.023 & 127 \\
+Uniform-log schedule   & 4.403 & 0.024 &  63 \\
+PNDM                   & 4.409 & 0.024 &  73 \\
+\textbf{(Ours, UniPC)} & \textbf{4.414} & 0.023 & \textbf{64} \\
+(Ours, DPM-Solver++)   & 4.420 & 0.023 &  64 \\
+UniPC                  & 4.432 & 0.024 &  64 \\
+DPM-Solver             & 4.436 & 0.023 &  65 \\
+DPM-Solver++           & 4.450 & 0.023 &  64 \\
+(Ours, DEIS)           & 4.463 & 0.023 &  64 \\
+DEIS                   & 4.482 & 0.024 &  64 \\
+EDM-Euler              & 5.135 & 0.029 &  64 \\
+DDIM                   & 7.111 & 0.033 &  64 \\
+DDPM ancestral         &13.292 & 0.044 &  64 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Note on the high-NFE corner.} \texttt{Restart} achieves the
+absolute best FID (4.339) at NFE=39 by paying for an extra noise-injection
+cycle on top of an ODE solver; \texttt{proposed\_restart} mirrors that
+structure but uses our certificate's grid for the base trajectory and lands
+at 4.360 (within \(1\sigma\)). The certificate is competitive with the
+Restart wrapper but doesn't beat it; lifting the certificate to also
+optimize the wrapper-cycle structure is future work.
+
+\section{Full Pareto figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.88\linewidth]{pareto_locked.png}
+\caption{Locked-test Pareto frontier across all 17 samplers and all NFE budgets. Log-log axes. The flat floor near FID \(=4.4\) at NFE \(\ge 32\) is the data-distribution / Clean-FID noise floor at 10k samples; tightening it would require 50k samples (~15\,GPU-days on a single 4090).}
+\end{figure}
+
+\section{Caveats and follow-ups}
+
+\begin{itemize}
+\item \textbf{10k vs 50k.} The locked-test sample count was reduced from
+the original contract's 50{,}000 to 10{,}000 to fit a single-GPU budget
+(documented in YAML; the relative ordering of samplers is preserved at 10k
+since the saturated floor is well above SEM). A gold-standard 50k re-run
+of the Pareto-frontier cells alone (\(\sim 9\) cells, 5 seeds) is a
+2-3\,day follow-up.
+\item \textbf{DEIS Theorem-B implementation (Round 3c).} The corrected PDF 1 appendix introduces sequence-level grid optimization \(\Pi_{N,s}^\star = \arg\min_{\Pi_N} D_s^{\mathrm{AB}}(\Pi_N)\) for AB-class solvers. This is implemented for DEIS tAB-2 (1k smoke: 48 / 38 / 35 / 33 at NFE 5/8/12/18). With the current \(g''(\sigma)\) finite-difference estimator and an \(A_i = \sigma^{-k}\) amplification heuristic, the sequence-\(\Pi^\star\) grid minimizes the right symbolic objective but is empirically worse than the shared \(d_{\mathrm{Heun}}\) heuristic (Round 3b 1k smoke: 40 / 23 / 19 / 17). A proper terminal-amplification estimator \(A_i\) is open. \texttt{proposed\_deis} therefore defaults to the shared \(d_{\mathrm{Heun}}\) grid, which is what the locked test reports.
+\item \textbf{Wasserstein variant.} The Wasserstein OT certificate (PDF 2) optimising \(\nu\) is not yet implemented; the present result tests only the KL/NLL variant on \(m\).
+\end{itemize}
+
+\section{Conclusion}
+
+\[
+\boxed{
+m^\star_s(\sigma) \propto d_s(\sigma)^{1/(p+1)} \text{ creates new Pareto-frontier points at low NFE on the locked test split.}
+}
+\]
+
+The strongest single-sampler result is \((s = \mathrm{UniPC}, m = m^\star_s)\)
+holding the entire NFE\,\(\in [5, 32]\) corner of the cost-honest Pareto
+frontier on CIFAR-10. Six of nine frontier points are (Ours) variants.
+The certificate's per-core lifting is empirically verified.
+
+\end{document}

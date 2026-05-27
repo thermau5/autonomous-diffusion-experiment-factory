@@ -1,0 +1,23 @@
+\begin{tabular}{lcc}
+\toprule
+Sampler & Best NFE & Clean-FID $\downarrow$ \\
+\midrule
+Restart & 143 & 15.72 {\scriptsize $\pm$ 0.04} \\
+\textbf{(Ours, Restart)} & 145 & 15.73 {\scriptsize $\pm$ 0.04} \\
+\textbf{(Ours, Heun)} & 127 & 15.78 {\scriptsize $\pm$ 0.02} \\
+PNDM & 73 & 15.79 {\scriptsize $\pm$ 0.02} \\
+EDM-Heun & 65 & 15.79 {\scriptsize $\pm$ 0.03} \\
+Karras schedule & 127 & 15.79 {\scriptsize $\pm$ 0.03} \\
+Uniform-log schedule & 127 & 15.80 {\scriptsize $\pm$ 0.02} \\
+UniPC & 64 & 15.80 {\scriptsize $\pm$ 0.02} \\
+\textbf{(Ours, DPM-Solver++)} & 64 & 15.80 {\scriptsize $\pm$ 0.02} \\
+DPM-Solver++ & 64 & 15.82 {\scriptsize $\pm$ 0.02} \\
+DPM-Solver & 65 & 15.83 {\scriptsize $\pm$ 0.02} \\
+\textbf{(Ours, DEIS)} & 64 & 15.84 {\scriptsize $\pm$ 0.02} \\
+DEIS & 64 & 15.85 {\scriptsize $\pm$ 0.02} \\
+EDM-Euler & 64 & 16.46 {\scriptsize $\pm$ 0.06} \\
+DDIM & 64 & 18.54 {\scriptsize $\pm$ 0.07} \\
+\textbf{(Ours, UniPC)} & 8 & 23.86 {\scriptsize $\pm$ 0.06} \\
+DDPM ancestral & 64 & 24.69 {\scriptsize $\pm$ 0.26} \\
+\bottomrule
+\end{tabular}

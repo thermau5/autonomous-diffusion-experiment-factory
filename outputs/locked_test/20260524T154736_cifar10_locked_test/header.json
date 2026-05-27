@@ -1,0 +1,67 @@
+{
+  "test_id": "20260524T154736_cifar10_locked_test",
+  "dataset": "cifar10",
+  "samples_per_run": 10000,
+  "nfe_grid": [
+    5,
+    8,
+    12,
+    18,
+    32,
+    64
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "samplers": [
+    "edm_euler",
+    "edm_heun",
+    "ddim",
+    "ddpm_ancestral",
+    "dpm_solver",
+    "dpm_solver_pp",
+    "unipc",
+    "deis",
+    "pndm",
+    "restart",
+    "uniform_schedule",
+    "karras_schedule",
+    "proposed_deis",
+    "proposed_dpmpp",
+    "proposed_heun",
+    "proposed_restart",
+    "proposed_unipc"
+  ],
+  "contract_path": "contracts/benchmark_contract.yaml",
+  "contract_version": 1,
+  "freeze_sha256": "450925ba07910f5d1c09d3136e2663c91dee29e118ddc6795a28b6c0643dd139",
+  "env": {
+    "python": "3.11.15",
+    "argv": [
+      "/home/thomaslin/Autonomous-Diffusion/src/autonomous_diffusion/experiments/run_locked_test.py",
+      "--contract",
+      "contracts/benchmark_contract.yaml",
+      "--freeze-record",
+      "outputs/freeze_record.yaml",
+      "--dataset",
+      "cifar10",
+      "--samples-root",
+      "outputs/samples",
+      "--run-root",
+      "outputs/runs",
+      "--test-root",
+      "outputs/locked_test",
+      "--hours",
+      "48"
+    ],
+    "cwd": "/home/thomaslin/Autonomous-Diffusion",
+    "hostname": "rtx225",
+    "git_commit": "0669c817956fcee6579487b40bceed6bb11b49ed",
+    "pid": 740333,
+    "env": {}
+  }
+}
