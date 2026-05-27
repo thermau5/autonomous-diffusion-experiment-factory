@@ -36,9 +36,14 @@ from .base import Sampler, SamplerOutput, register_sampler
 @register_sampler("unipc")
 class UniPC(Sampler):
     def sample(self, *, net, num_samples, num_steps, seed, device="cuda", batch_size=64, image_shape=None):
+        import os
         device = torch.device(device)
         sigma_min, sigma_max = resolve_sigma_range(net)
-        sigmas = karras_sigmas(num_steps, sigma_min, sigma_max, device=device).to(torch.float32)
+        # Karras-family rho is configurable via env var for Issue #2 tuned-rho
+        # ablation. Default 7.0 (the EDM/Karras paper recommendation, what
+        # the locked test ran).
+        rho = float(os.environ.get("AD_KARRAS_RHO", "7.0"))
+        sigmas = karras_sigmas(num_steps, sigma_min, sigma_max, rho=rho, device=device).to(torch.float32)
         shape = resolve_shape(net, image_shape)
 
         out: list[torch.Tensor] = []

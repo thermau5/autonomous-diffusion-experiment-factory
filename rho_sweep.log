@@ -1,0 +1,14 @@
+=== tuned-Karras-rho* sweep on UniPC ===
+start: Tue May 26 06:26:33 PM PDT 2026
+2026-05-26 18:26:45,066 INFO wrote samples to outputs/samples/20260526T182634_validation_cifar10_unipc_nfe5_seed0_7b1368/samples.npz (6.1 MB)
+rho=1 nfe=5 seed=0: 2026-05-26 18:26:57,141 INFO FID = 213.5154  (n=2000)
+2026-05-26 18:27:09,066 INFO wrote samples to outputs/samples/20260526T182658_validation_cifar10_unipc_nfe5_seed1_596d97/samples.npz (6.1 MB)
+rho=1 nfe=5 seed=1: 2026-05-26 18:27:21,247 INFO FID = 214.4750  (n=2000)
+2026-05-26 18:27:33,190 INFO wrote samples to outputs/samples/20260526T182723_validation_cifar10_unipc_nfe5_seed2_9da4e9/samples.npz (6.1 MB)
+rho=1 nfe=5 seed=2: 2026-05-26 18:27:45,462 INFO FID = 215.2842  (n=2000)
+2026-05-26 18:28:03,056 INFO wrote samples to outputs/samples/20260526T182747_validation_cifar10_unipc_nfe8_seed0_c28b4d/samples.npz (6.1 MB)
+rho=1 nfe=8 seed=0: 2026-05-26 18:28:15,286 INFO FID = 163.8120  (n=2000)
+2026-05-26 18:28:32,887 INFO wrote samples to outputs/samples/20260526T182817_validation_cifar10_unipc_nfe8_seed1_877f9a/samples.npz (6.1 MB)
+rho=1 nfe=8 seed=1: 2026-05-26 18:28:45,037 INFO FID = 163.8977  (n=2000)
+2026-05-26 18:29:02,588 INFO wrote samples to outputs/samples/20260526T182846_validation_cifar10_unipc_nfe8_seed2_782b4a/samples.npz (6.1 MB)
+rho=1 nfe=8 seed=2: 2026-05-26 18:29:14,740 INFO FID = 163.5213  (n=2000)

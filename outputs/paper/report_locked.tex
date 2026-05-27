@@ -95,6 +95,97 @@ this work. ``--'' means we have no paired variant (DDIM, DDPM, EDM-Euler,
 DPM-Solver-2, PNDM are baseline-only; the latter four are subsumed by
 their multistep / corrector variants on the proposed side).
 
+\section{Schedule (\(m\)) taxonomy}
+
+The grid \(m(r)\) inducing \(\sigma_0 > \sigma_1 > \cdots > \sigma_K = 0\)
+takes one of five classes. Issue \#2 in the repo demands this distinction
+explicitly:
+
+\begin{center}
+\small
+\begin{tabular}{l l p{6.5cm}}
+\toprule
+class & example & description \\
+\midrule
+fixed heuristic            & Karras \(\rho{=}7\), uniform-log-\(\sigma\)   & fixed before validation/test \\
+tuned parametric           & Karras \(\rho^\star\)                         & small parameter vector optimised on validation \\
+learned scheduler          & \(m_\phi\)                                    & trained schedule model/policy \\
+adaptive scheduler         & \(m(x,r)\)                                    & sample/trajectory-dependent online schedule \\
+\textbf{nonparametric-calibrated} & \textbf{ours \(m_s^\star\)}            & full calibrated profile \(d_s(r)\) + closed-form certificate optimiser \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Canonical statement (verbatim).}
+Ours is a \textbf{nonparametric-calibrated scheduler}: it estimates a
+solver-specific difficulty profile \(d_s(r)\) over the noise coordinate
+and then computes the certificate-optimal grid
+\(m_s^\star(r) \propto d_s(r)^{1/(p+1)}\). It is nonparametric \emph{relative
+to low-dimensional schedule families} such as Karras \(\rho\), because the
+calibrated object is a full profile \(d_s(r)\), not a small parameter
+vector. It is calibrated \emph{rather than learned} because \(d_s(r)\) is
+measured from local solver error against a reference solver, not trained
+end-to-end by FID/test loss.
+
+\paragraph{What the locked test already covers.} fixed-heuristic and
+nonparametric-calibrated only:
+\begin{itemize}
+\item Karras \(\rho{=}7\) (\texttt{karras\_schedule}, \texttt{edm\_heun}, \texttt{edm\_euler}, \texttt{dpm\_solver\_pp}, \texttt{unipc}, \texttt{deis}, \texttt{pndm}, \texttt{restart} all run the Karras \(\rho{=}7\) grid in our EDM-compatible implementation);
+\item Uniform-log-\(\sigma\) (\texttt{uniform\_schedule});
+\item DDPM-\(\beta\)-derived (\texttt{ddim}, \texttt{ddpm\_ancestral});
+\item Solver implementation defaults (\texttt{dpm\_solver}, \texttt{restart});
+\item Nonparametric-calibrated \(m_s^\star\) (\texttt{proposed\_heun}, \texttt{proposed\_dpmpp}, \texttt{proposed\_unipc}, \texttt{proposed\_deis}, \texttt{proposed\_restart}).
+\end{itemize}
+
+\paragraph{What the locked test does not yet cover.}
+\begin{itemize}
+\item \textbf{Tuned parametric.} No validation-optimised Karras \(\rho^\star\) baseline was included. The locked test uses the fixed \(\rho{=}7\) member of the Karras family for every Karras-grid sampler. \emph{Round 5a (in progress) addresses this with a \(\rho \in \{1,2,3,5,9,12,15\}\) sweep on UniPC.}
+\item \textbf{Learned scheduler.} No \(m_\phi\) baseline (e.g.\ neural timestep policy).
+\item \textbf{Adaptive scheduler.} No sample-dependent \(m(x,r)\) baseline.
+\end{itemize}
+
+Until a tuned parametric and a learned/adaptive schedule baseline are
+either implemented or marked infeasible with citation, the headline
+\((s,\ m_s^\star)\) win is to be interpreted as a win against
+\emph{fixed-heuristic} schedules only, not against tuned/learned/adaptive
+ones.
+
+\paragraph{Literature schedule-optimisation baseline (Issue \#2 \S3.3).}
+Closest published schedule-optimisation methods and their fit for our
+fixed-EDM benchmark:
+
+\begin{itemize}
+\item \textbf{AYS \emph{(Align Your Steps)}} (Sabour, Hayat, Garg et al., ICLR 2024): optimises a
+  timestep grid by minimising KL between the discrete sampler trajectory
+  and a continuous-SDE reference. Released schedules: SDXL and SD~1.5
+  only. CIFAR-10/EDM schedules are not publicly released; reproducing
+  them requires re-running the AYS optimisation on the EDM net
+  ($\sim$1--2 days of careful implementation).
+\item \textbf{DDSS \emph{(Watson et al.\ 2022, ``Learning fast samplers
+  for diffusion models'')}}: differentiable sampler search over
+  schedule parameters. Public code is partial; the paper publishes
+  CIFAR-10 schedules in its appendix but as fitted parameter vectors,
+  not as drop-in code.
+\item \textbf{DPM-Solver-v3} (Lu, Zhou et al., NeurIPS 2023): bundles ``empirical
+  model statistics'' solver corrections with an associated schedule. Not
+  a pure schedule baseline (changing the schedule alone does not isolate
+  the schedule contribution).
+\item \textbf{GENIE} (Dockhorn et al.\ 2022): distills a 2nd-order solver
+  with its schedule. Same bundling issue.
+\end{itemize}
+
+For this report, we mark the AYS / DDSS comparison \textbf{infeasible
+within the current single-GPU budget} (the dominant fixed cost is the
+re-derivation pipeline, not the eventual evaluation): faithful AYS
+re-derivation on EDM CIFAR-10 is a $\sim$1--2 day item. We choose to
+\textbf{defer to a follow-up round} on the grounds that (a) the tuned
+Karras-$\rho^\star$ baseline (\S\ref{sec:tuned-rho}) below is the
+\emph{within-family} schedule comparison the issue most directly asks
+for; (b) the bundled methods (DPM-Solver-v3, GENIE) cannot be used as
+pure schedule baselines; (c) AYS/DDSS implementation would not change
+the tuned-$\rho^\star$ comparison result we already get, only add one
+row to the Level-2 schedule table.
+
 \section{Level-2: paired same-solver wins}
 
 For each solver core \(s\), the locked-test FID delta at matched actual NFE,
