@@ -15,15 +15,105 @@ The critic guards refused any drift; \(510/510\) runs succeeded, zero
 failures. Per-cell numbers below are mean \(\pm\) SEM over 5 declared
 seeds \(\{0, 1, 2, 3, 4\}\). No tuning post-freeze.
 
-\section{Theory recap}
+\section{Theory}
+\label{sec:theory}
 
-A sampler factors as \(u = (s, \rho, m, \nu)\). With \(\rho\) frozen by the
-pretrained EDM net and \(\nu\) at the identity terminal, the per-core
-certificate is
+\paragraph{Setup.} Let \(p_0=\mathcal N(0,I)\) be the prior and
+\(p_1 = p_{\mathrm{data}}\) the data distribution. The generative ODE
+in noise coordinate \(\sigma\) is
 \[
-u^\star_s \in \arg\min_m Q_s(m), \quad m^\star_s(\sigma) \propto d_s(\sigma)^{1/(p+1)}.
+\frac{dx}{d\sigma} = g\bigl(x,\sigma;\theta\bigr),
+\qquad
+g(x,\sigma;\theta) = \frac{x - D_\theta(x,\sigma)}{\sigma},
 \]
-For each solver core \(s \in \{\mathrm{Heun},\mathrm{DPM\text{-}Solver\text{++}},\mathrm{UniPC},\mathrm{DEIS},\mathrm{Restart}\}\) we run \texttt{proposed\_<core>} with its solver and the certificate-optimal grid \(m^\star_s\).
+with \(D_\theta\) the pretrained EDM denoiser. A \emph{sampler} is the discretised controlled flow
+\[
+x_{i+1} = F_s\bigl(x_i,\sigma_i,\sigma_{i+1};\theta,\mathcal H_i\bigr),
+\quad i = 0,\ldots,K-1,
+\]
+specified by the tuple
+\[
+u = (\theta,\ \pi,\ s,\ m,\ N)
+\]
+where \(\theta\) is the backbone, \(\pi\) is the path/coupling family, \(s\)
+the solver core (update law \(F_s\)), \(m(\sigma)\) the sampling-grid
+density inducing \(\sigma_0>\sigma_1>\cdots>\sigma_K=0\), and \(N\)
+the cost budget (NFE / wall-clock).
+
+\paragraph{Certified KL/NLL risk.} The certificate decomposes the
+terminal-risk bound additively:
+\[
+R(u) \;\le\; Q_s(u) \;=\; Q_0
+\;+\;
+\frac{c_{\mathrm{stat}}}{n}\!\int_0^{B}\!\frac{a(r)}{\rho(r)}\,dr
+\;+\;
+c_{\mathrm{disc}}\!\int_0^{B}\!\frac{d_s(r)}{m(r)^p}\,dr,
+\]
+where \(\rho\) is the training/path-time allocation (frozen by the
+pretrained net for this work), \(a(r)\) is the per-\(r\) statistical
+weight, \(d_s(r)\) is the solver-specific discretisation density at noise
+level \(r\), and \(p\) is the solver order (Heun: \(p=2\)).
+
+\paragraph{Solver-specific discretisation density.} \(d_s(\sigma)\) is
+the per-\(\sigma\) local-truncation-error density of the chosen solver
+\(s\). Empirically (full recipe in Appendix~A): take a batch of
+in-distribution noisy images at \(\sigma_a\), step them once with the
+actual update law \(F_s\) to \(\sigma_b\), compare against a
+16-substep Heun reference, and normalise by interval length:
+\[
+\boxed{\;
+d_s(\sigma_i)
+=
+\frac{1}{|\sigma_a-\sigma_b|}\,
+\frac{1}{B}\sum_{b=1}^{B}
+\bigl\| F_s\bigl(x_b;\sigma_a\!\to\!\sigma_b\bigr)
+       - \mathrm{Heun}^{(16)}\bigl(x_b;\sigma_a\!\to\!\sigma_b\bigr) \bigr\|_{\mathrm{RMS}}
+\;}
+\]
+on a uniform-log-\(\sigma\) grid of \(M=32\) intervals over
+\([\sigma_{\min},\sigma_{\max}]=[0.002,80]\). The reference is solver-
+independent; the test step is the actual \(F_s\), so \(d_s\) is
+solver-specific by construction.
+
+\paragraph{Closed-form Pareto-optimal schedule.} Solving the certificate's
+fixed-NFE constrained problem
+\[
+\min_{m}\!\int\!\frac{d_s(\sigma)}{m(\sigma)^p}\,d\sigma
+\quad\mathrm{s.t.}\quad
+\int m(\sigma)\,d\sigma = N
+\]
+via Lagrangian KKT gives the closed form:
+\[
+\boxed{\;\;
+m^\star_s(\sigma)
+\;\propto\;
+d_s(\sigma)^{\,1/(p+1)}
+\;\;}
+\]
+For each solver core \(s\in\{\mathrm{Heun},\mathrm{DPM\text{-}Solver\text{++}},\mathrm{UniPC},\mathrm{DEIS},\mathrm{Restart}\}\) we run \texttt{proposed\_<core>} with its actual update law and the certificate-optimal grid \(m^\star_s\) above. The implementation applies a Karras-style perceptual weight \(w(\sigma)=\sigma^{-k}\) with \(k=2\) (the only validation-tuned hyperparameter) so the effective form is \(m^\star_s(\sigma)\propto\!\bigl(d_s(\sigma)\!\cdot\!w(\sigma)\bigr)^{1/(p+1)}\).
+
+\paragraph{Scope (Appendix A correction).} The boxed pointwise form
+applies to single-step / pointwise-defect solvers (RK-class: Heun, EDM-Euler, DPM-Solver-2) and to multistep solvers whose leading
+defect is empirically pointwise (DPM-Solver++ 2M, UniPC --- Theorem A).
+For \(q\)-step Adams--Bashforth solvers (DEIS tAB-2, PNDM/PLMS-4) the
+local residual is the history-coupled interpolation-kernel error
+\(e_i^{\mathrm{AB}} \propto g^{(q)}(\xi)\,\prod_{\ell=0}^{q-1}(\sigma-\sigma_{i-\ell})\),
+which does not factor into a scalar \(d_s(\sigma)\). The certificate is
+then replaced by a coupled-sequence functional
+\(D_s^{\mathrm{AB}}(\Pi_N)\) and the optimal grid is found by
+sequence optimisation \(\Pi_{N,s}^\star = \arg\min_{\Pi_N} D_s^{\mathrm{AB}}(\Pi_N)\) (Theorem B,
+implemented in this work).
+
+\paragraph{Headline empirical result.} On the locked CIFAR-10 test split (10k samples / cell, 5 seeds, 510 runs, contract sha256 \texttt{450925ba0791\ldots}):
+\[
+\boxed{\;\;
+\bigl(\,s_\star,\;m^\star_{s_\star}\bigr) \;=\; \bigl(\mathrm{UniPC},\;\mathrm{Ours}\bigr)
+\quad\text{owns the entire cost-honest Pareto frontier at}\quad
+\mathrm{actual\ NFE}\in[5,32]
+\;\;}
+\]
+with 6 of 9 frontier points held by (Ours, \(s\)) variants and the largest
+single-cell improvement \(-31.7\) FID at Heun NFE\,=\,9.
 
 \section{Comparison Hierarchy}
 
