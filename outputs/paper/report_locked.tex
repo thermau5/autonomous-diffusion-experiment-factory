@@ -850,26 +850,29 @@ actual NFE & sampler & Clean-FID & SEM & owner \\
 
 \paragraph{Full per-sampler grid (the data behind the frontier).}
 The Pareto frontier above shows only the 9 non-dominated cells. The
-full locked-test grid is 17 samplers \(\times\) 6 budget steps; each
-sampler's row below lists its six budget cells in ascending actual NFE
-order (the parenthesised number is the actual NFE consumed, which
-differs across solver classes: multistep cores cost \(K\) NFE,
-Heun-class cores cost \(2K{-}1\), Restart and PNDM follow their own
-NFE schedules). Rows are sorted by each sampler's own best Clean-FID
-across the row.
+full locked-test grid is 17 samplers \(\times\) 6 budget steps. Below,
+the column header \(K\) is the \emph{requested} \texttt{num\_steps}
+from the contract (the budget knob the user sets); the subscript in
+each cell is the \emph{actual} NFE consumed by that sampler at that
+\(K\), which differs across solver classes: multistep cores cost
+\(K\) NFE per step, Heun-class cores cost \(2K{-}1\), Restart adds
+its restart-cycle cost, PNDM adds a warmup offset. \emph{Within-column
+comparisons across rows are therefore at matched \(K\) but at slightly
+different actual NFE} --- the per-cell subscript carries the exact
+compute. Rows sorted by per-sampler best Clean-FID.
 
 \noindent\textit{Setup:} \textsc{fix} \(\theta_{\mathrm{EDM}},
-\pi_{\mathrm{EDM}}\); \textsc{variable} = \((s,\) requested \(K \in \{5,8,12,18,32,64\})\)
+\pi_{\mathrm{EDM}}\); \textsc{variable} = \((s,\ K \in \{5,8,12,18,32,64\})\)
 over 17 samplers \(\times\) 5 seeds \(\times\) 10\,k samples;
 \textsc{select} = none (full enumeration). Cells are Clean-FID mean;
-SEMs are 0.02--0.14 (smaller at higher FID floor, larger at low-NFE
+SEMs are 0.02--0.14 (smaller at the FID floor, larger at the low-NFE
 high-FID tail), so any \(|\Delta| \ge 0.1\) is \(>3\sigma\) separable.
 
 \begin{center}
 \scriptsize
 \begin{tabular}{l r r r r r r}
 \toprule
-sampler & budget 1 & budget 2 & budget 3 & budget 4 & budget 5 & budget 6 \\
+sampler & \(K{=}5\) & \(K{=}8\) & \(K{=}12\) & \(K{=}18\) & \(K{=}32\) & \(K{=}64\) \\
 \midrule
 \texttt{restart}              & 8.49\,\scriptsize(25)   & 4.49\,\scriptsize(31)   & 4.34\,\scriptsize(39)   & --                     & --                      & --                       \\
 \texttt{proposed\_restart}    & 5.24\,\scriptsize(27)   & 4.39\,\scriptsize(33)   & 4.36\,\scriptsize(41)   & --                     & --                      & --                       \\
@@ -894,16 +897,15 @@ sampler & budget 1 & budget 2 & budget 3 & budget 4 & budget 5 & budget 6 \\
 
 \noindent
 Bold row is the headline \texttt{proposed\_unipc} = (Ours, UniPC).
-Within-column comparisons across rows are approximate compute-parity
-because actual NFE varies by solver class; the per-cell actual NFE
-annotation gives the exact compute. The Pareto-frontier table above
-is the non-dominated subset of these cells under
-\((\mathrm{actual\ NFE}, \mathrm{FID})\) Pareto-filtering. \texttt{Restart}
-and \texttt{proposed\_restart} have only three cells because their
-NFE-per-step structure (base trajectory plus restart cycles) makes the
-higher-\(K\) cells redundant under the same actual-NFE budget.
-\texttt{pndm} has five cells because its warmup costs an extra
-fixed-NFE offset.
+The Pareto-frontier table above is the non-dominated subset of these
+cells under \((\mathrm{actual\ NFE}, \mathrm{FID})\) Pareto-filtering.
+\texttt{Restart} and \texttt{proposed\_restart} have only three cells
+because their actual NFE at \(K\ge 18\) duplicates lower-\(K\)
+multistep cells (the locked-test runner skipped them as redundant).
+\texttt{pndm} has five cells because the \(K{=}64\) case (actual
+NFE\,\(\approx 137\)) was skipped for the same reason. \texttt{karras\_schedule}
+and \texttt{uniform\_schedule} are Heun-class but the locked-test
+runner did not bump their \(K{=}64\) cell to actual NFE\,=\,127.
 
 \paragraph{Pareto AUC.}
 \[
