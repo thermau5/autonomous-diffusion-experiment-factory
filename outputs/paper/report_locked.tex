@@ -848,6 +848,63 @@ actual NFE & sampler & Clean-FID & SEM & owner \\
 \textbf{(Ours)} variants occupy \textbf{6 of 9} Pareto-frontier points.
 \textbf{(Ours, UniPC)} alone owns the entire NFE=5\,\(\to\)\,32 corner.
 
+\paragraph{Full per-sampler grid (the data behind the frontier).}
+The Pareto frontier above shows only the 9 non-dominated cells. The
+full locked-test grid is 17 samplers \(\times\) 6 budget steps; each
+sampler's row below lists its six budget cells in ascending actual NFE
+order (the parenthesised number is the actual NFE consumed, which
+differs across solver classes: multistep cores cost \(K\) NFE,
+Heun-class cores cost \(2K{-}1\), Restart and PNDM follow their own
+NFE schedules). Rows are sorted by each sampler's own best Clean-FID
+across the row.
+
+\noindent\textit{Setup:} \textsc{fix} \(\theta_{\mathrm{EDM}},
+\pi_{\mathrm{EDM}}\); \textsc{variable} = \((s,\) requested \(K \in \{5,8,12,18,32,64\})\)
+over 17 samplers \(\times\) 5 seeds \(\times\) 10\,k samples;
+\textsc{select} = none (full enumeration). Cells are Clean-FID mean;
+SEMs are 0.02--0.14 (smaller at higher FID floor, larger at low-NFE
+high-FID tail), so any \(|\Delta| \ge 0.1\) is \(>3\sigma\) separable.
+
+\begin{center}
+\scriptsize
+\begin{tabular}{l r r r r r r}
+\toprule
+sampler & budget 1 & budget 2 & budget 3 & budget 4 & budget 5 & budget 6 \\
+\midrule
+\texttt{restart}              & 8.49\,\scriptsize(25)   & 4.49\,\scriptsize(31)   & 4.34\,\scriptsize(39)   & --                     & --                      & --                       \\
+\texttt{proposed\_restart}    & 5.24\,\scriptsize(27)   & 4.39\,\scriptsize(33)   & 4.36\,\scriptsize(41)   & --                     & --                      & --                       \\
+\texttt{edm\_heun}            & 338.43\,\scriptsize(5)  & 45.24\,\scriptsize(9)   & 11.77\,\scriptsize(13)  & 5.61\,\scriptsize(19)  & 4.46\,\scriptsize(33)   & 4.40\,\scriptsize(65)    \\
+\texttt{karras\_schedule}     & 45.24\,\scriptsize(9)   & 8.31\,\scriptsize(15)   & 4.85\,\scriptsize(23)   & 4.43\,\scriptsize(35)  & 4.40\,\scriptsize(63)   & --                       \\
+\texttt{proposed\_heun}       & 13.54\,\scriptsize(9)   & 6.45\,\scriptsize(15)   & 4.92\,\scriptsize(23)   & 4.50\,\scriptsize(35)  & 4.41\,\scriptsize(63)   & 4.40\,\scriptsize(127)   \\
+\texttt{uniform\_schedule}    & 62.48\,\scriptsize(9)   & 9.17\,\scriptsize(15)   & 5.00\,\scriptsize(23)   & 4.47\,\scriptsize(35)  & 4.40\,\scriptsize(63)   & --                       \\
+\texttt{pndm}                 & 7.83\,\scriptsize(14)   & 5.24\,\scriptsize(21)   & 4.58\,\scriptsize(27)   & 4.41\,\scriptsize(41)  & 4.41\,\scriptsize(73)   & --                       \\
+\texttt{proposed\_unipc}      & \textbf{21.46}\,\scriptsize(5)  & \textbf{9.18}\,\scriptsize(8)  & \textbf{5.58}\,\scriptsize(12)  & \textbf{4.66}\,\scriptsize(18)  & \textbf{4.45}\,\scriptsize(32)  & \textbf{4.41}\,\scriptsize(64)  \\
+\texttt{proposed\_dpmpp}      & 23.19\,\scriptsize(5)   & 9.75\,\scriptsize(8)    & 6.07\,\scriptsize(12)   & 4.82\,\scriptsize(18)  & 4.49\,\scriptsize(32)   & 4.42\,\scriptsize(64)    \\
+\texttt{unipc}                & 40.34\,\scriptsize(5)   & 12.51\,\scriptsize(8)   & 6.05\,\scriptsize(12)   & 4.79\,\scriptsize(18)  & 4.49\,\scriptsize(32)   & 4.43\,\scriptsize(64)    \\
+\texttt{dpm\_solver}          & 155.60\,\scriptsize(5)  & 16.17\,\scriptsize(9)   & 6.02\,\scriptsize(13)   & 4.76\,\scriptsize(19)  & 4.48\,\scriptsize(33)   & 4.44\,\scriptsize(65)    \\
+\texttt{dpm\_solver\_pp}      & 40.14\,\scriptsize(5)   & 13.45\,\scriptsize(8)   & 6.82\,\scriptsize(12)   & 5.06\,\scriptsize(18)  & 4.56\,\scriptsize(32)   & 4.45\,\scriptsize(64)    \\
+\texttt{proposed\_deis}       & 28.61\,\scriptsize(5)   & 11.63\,\scriptsize(8)   & 7.49\,\scriptsize(12)   & 5.50\,\scriptsize(18)  & 4.68\,\scriptsize(32)   & 4.46\,\scriptsize(64)    \\
+\texttt{deis}                 & 35.12\,\scriptsize(5)   & 12.91\,\scriptsize(8)   & 7.39\,\scriptsize(12)   & 5.51\,\scriptsize(18)  & 4.70\,\scriptsize(32)   & 4.48\,\scriptsize(64)    \\
+\texttt{edm\_euler}           & 69.32\,\scriptsize(5)   & 30.70\,\scriptsize(8)   & 16.30\,\scriptsize(12)  & 10.06\,\scriptsize(18) & 6.51\,\scriptsize(32)   & 5.13\,\scriptsize(64)    \\
+\texttt{ddim}                 & 63.41\,\scriptsize(5)   & 27.12\,\scriptsize(8)   & 17.12\,\scriptsize(12)  & 12.66\,\scriptsize(18) & 9.34\,\scriptsize(32)   & 7.11\,\scriptsize(64)    \\
+\texttt{ddpm\_ancestral}      & 109.18\,\scriptsize(5)  & 57.71\,\scriptsize(8)   & 36.97\,\scriptsize(12)  & 26.45\,\scriptsize(18) & 18.74\,\scriptsize(32)  & 13.29\,\scriptsize(64)   \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+Bold row is the headline \texttt{proposed\_unipc} = (Ours, UniPC).
+Within-column comparisons across rows are approximate compute-parity
+because actual NFE varies by solver class; the per-cell actual NFE
+annotation gives the exact compute. The Pareto-frontier table above
+is the non-dominated subset of these cells under
+\((\mathrm{actual\ NFE}, \mathrm{FID})\) Pareto-filtering. \texttt{Restart}
+and \texttt{proposed\_restart} have only three cells because their
+NFE-per-step structure (base trajectory plus restart cycles) makes the
+higher-\(K\) cells redundant under the same actual-NFE budget.
+\texttt{pndm} has five cells because its warmup costs an extra
+fixed-NFE offset.
+
 \paragraph{Pareto AUC.}
 \[
 \mathrm{AUC}_{\mathrm{locked}}\;(\log_{10}\mathrm{NFE} \in [4, 200]) \;=\; 10.755.
