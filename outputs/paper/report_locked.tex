@@ -405,46 +405,38 @@ fixed-EDM benchmark:
 \item \textbf{DDSS \emph{(Watson et al.\ 2022, ICLR, arXiv:2202.05830)}}:
   differentiable sampler search by backpropagating through sample-quality
   scores. \emph{Code-availability triage (2026-05-27):} no public GitHub
-  released; paper headlines LSUN-church not CIFAR-10. Reimplementation
-  cost \(\sim 2\text{--}3\) days (gradient rematerialization through
-  the full sampling chain) plus heavy training GPU. \emph{Status:
-  cite-infeasible at this round (deferred).}
+  released; paper headlines LSUN-church, not CIFAR-10.
+  \emph{Status: no public code, mentioned for completeness.}
 \item \textbf{ACS / OC schedule}
   (Kong, Wang, Srikant 2026, arXiv:2605.21911, ``Noise Schedule Design
   for Diffusion Models: An Optimal Control Perspective''; Issue \#3
   \S1). Closed-form expressions for the optimal noise schedule under
   affine-coupled \((f,g)\) parametrization, Corollary~1, under either
   strongly-log-concave or Gaussian-mixture data assumptions.
-  Solver-agnostic. \emph{Code-availability triage:} no public GitHub
-  released; CIFAR-10 hyperparameters \((\theta,\omega,g_0,\gamma)\)
+  Solver-agnostic. \emph{Code-availability triage (2026-05-27):} no
+  public GitHub released; CIFAR-10 hyperparameters \((\theta,\omega,g_0,\gamma)\)
   not published. The schedule has a free scalar \(\gamma\) (parameterized
   via \(c = \gamma \lambda_\star\) where \(\lambda_\star = W(Kn)\) is a
   Lambert-W function of NFE budget). This places ACS at the
   \emph{tuned-parametric} level of the \(m\)-taxonomy alongside
   Karras-\(\rho^\star\) --- not the learned or nonparametric-calibrated
-  levels. Reimpl cost: 1--2 days (Lambert-W, \(f/g \to \sigma\)
-  conversion, \(\gamma\) validation tuning). \emph{Status: cite-
-  infeasible at this round (deferred to Round 6 alongside RF/Reflow
-  Level-3 baselines).}
+  levels. \emph{Status: no public code, mentioned for completeness.}
 \item \textbf{HSO} (Zhu et al.\ 2025, arXiv:2511.11688, ``Hierarchical
   Schedule Optimization for Fast and Robust Diffusion Model Sampling'').
   Bi-level optimization with the Midpoint Error Proxy (MEP, solver-
   agnostic local objective) and Spacing-Penalized Fitness (SPF, global
-  fitness with closeness penalty). \emph{Code-availability triage:} no
-  public GitHub released; paper headlines LAION-Aesthetics + SD~2.1,
-  no CIFAR-10 result published. Method is inference-time only
-  (\(<8\) sec per schedule). Reimpl cost: 1--2 days (MEP + SPF + outer
-  bi-level loop). \emph{Status: cite-infeasible at this round.}
+  fitness with closeness penalty). \emph{Code-availability triage
+  (2026-05-27):} no public GitHub released; paper headlines
+  LAION-Aesthetics + SD~2.1, no CIFAR-10 result published.
+  \emph{Status: no public code, mentioned for completeness.}
 \item \textbf{ART / ART-RL} (Huang, Tang, Zhou 2026, arXiv:2601.18681,
   ``ART for Diffusion Sampling: A Reinforcement Learning Approach to
   Timestep Schedule''). Adaptive Reparameterized Time + continuous-time
   RL with Gaussian policies; transfers from CIFAR-10 to FFHQ/AFHQv2/
   ImageNet without retraining. ``Within the official EDM pipeline''
-  --- likely Heun-class--bound. \emph{Code-availability triage:} no
-  public GitHub released; arXiv'd 2026-01-26 (very recent). RL
-  reproduction is fragile; reimpl cost \(\sim 1\text{--}2\) weeks plus
-  RL training GPU. \emph{Status: cite-infeasible at this round (the
-  highest reimpl cost of the four).}
+  --- likely Heun-class--bound. \emph{Code-availability triage
+  (2026-05-27):} no public GitHub released; arXiv'd 2026-01-26 (very
+  recent). \emph{Status: no public code, mentioned for completeness.}
 \item \textbf{DPM-Solver-v3} (Lu, Zhou et al., NeurIPS 2023): bundles
   ``empirical model statistics'' solver corrections with an associated
   schedule. Not a pure schedule baseline --- the schedule cannot be
@@ -455,18 +447,21 @@ fixed-EDM benchmark:
 \end{itemize}
 
 \paragraph{Triage summary.} Of the six published schedule-optimization
-methods, only AYS has been reimplemented in this report (\S\ref{sec:ays}).
-DDSS, ACS, HSO, and ART are each \(\sim 1\text{--}2\) days to
-\(\sim 1\text{--}2\) weeks of careful reimplementation with non-trivial
-reproduction risk (\textbf{the AYS reimpl itself surfaced the
-non-obvious finding that KLUB-optimal schedules degenerate on
-deterministic ODE solvers --- a result invisible from the AYS abstract
-alone}). DPM-Solver-v3 and GENIE are cite-infeasible by construction
-(schedule bundled with solver). The honest position is therefore:
-\((Ours, m_s^\star)\) is the only nonparametric-calibrated schedule in
-the master Level-2 comparison; AYS is the only learned-schedule baseline
-reproduced here; the remaining four are cite-acknowledged and queued
-for Round 6.
+methods, only AYS has been reimplemented in this report (\S\ref{sec:ays})
+because it is the only one with a paper-specified algorithm we could
+reproduce end-to-end from the published equations alone (Sec.~3,
+Lemma~3.3, hierarchical subdivision Sec.~3.3). DDSS, ACS, HSO, and ART
+have no public code as of the audit date (2026-05-27) and are mentioned
+here for completeness only --- not queued for reimplementation, because
+without released schedules or code the comparison would be against
+\emph{our reinterpretation} of each method rather than against the
+method itself. DPM-Solver-v3 and GENIE bundle solver and schedule into a
+single artifact and cannot be isolated as schedule-only baselines.
+The honest position is therefore: \((Ours, m_s^\star)\) is the only
+nonparametric-calibrated schedule in the master Level-2 comparison; AYS
+(faithfully reproduced) is the only learned-schedule baseline we
+evaluate; ACS / HSO / ART / DDSS / DPM-Solver-v3 / GENIE are cited but
+not benchmarked.
 
 \paragraph{Solver compatibility of these methods.} The four
 methods fall into three compatibility classes:
