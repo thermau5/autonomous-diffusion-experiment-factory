@@ -40,6 +40,26 @@ the solver core (update law \(F_s\)), \(m(\sigma)\) the sampling-grid
 density inducing \(\sigma_0>\sigma_1>\cdots>\sigma_K=0\), and \(N\)
 the cost budget (NFE / wall-clock).
 
+\paragraph{Schedule equivalence under coordinate change.} The names
+\emph{noise schedule}, \emph{time schedule}, and \emph{grid schedule}
+refer to the same mathematical object \(m\) viewed in different
+coordinates. A noise schedule specifies \(\sigma(t)\) along a continuous
+time axis; the inverse \(t(\sigma)\) is the time schedule on the noise
+axis; and the discrete grid \(\{\sigma_i\}_{i=0}^{K}\) is the
+quantile sampling of either, related to \(m\) by inverse-CDF
+\(\sigma_i = M^{-1}(i/K)\) where \(M(\sigma)=\int_\sigma^B m(s)\,ds\).
+Under any smooth monotone reparameterization
+\(\varphi:\sigma\mapsto\sigma'\), the certificate's two integrals
+transform covariantly --- \(m\), \(d_s\), and \(a\) all transform as
+densities --- and the closed-form optimizer
+\(m^\star_s(\sigma)\propto d_s(\sigma)^{1/(p+1)}\) is invariant up to
+the same change of variable. So Karras's \(\rho\)-parameterized noise
+schedule, the DDPM \(\beta\)-schedule on time, and our discrete grid
+\(\{\sigma_i\}\) are equivalent control objects; the theory and the
+implementation can be stated in whichever coordinate is most
+convenient for a given solver. We use \(\sigma\)-density throughout
+because the EDM net is naturally parameterized in \(\sigma\).
+
 \paragraph{Certified KL/NLL risk.} The certificate decomposes the
 terminal-risk bound additively:
 \[
