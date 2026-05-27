@@ -416,11 +416,46 @@ issue most directly asks for, and is implemented; (b) bundled methods
 (DPM-Solver-v3, GENIE) and adaptive controllers cannot be cleanly
 isolated as ``schedule only'' baselines; (c) the most defensible
 single addition is AYS (pure schedule, drop-in compatible) and
-re-deriving it on EDM CIFAR-10 is a discrete \(\sim\)1--2 day item
-queued as Round~5b. The current headline therefore reads as: (Ours,
-UniPC) beats fixed and tuned-parametric Karras schedules at low NFE
-on CIFAR-10. It does \emph{not} claim a win against learned or
-adaptive schedules; those are open follow-up rounds.
+re-deriving it faithfully on EDM CIFAR-10 is a discrete \(\sim\)1--2
+day item.
+
+\paragraph{Round 5b attempt: a quick AYS-style approximation
+(negative result, recorded honestly).} We implemented a simplified
+AYS-style schedule optimizer in
+\texttt{samplers/\_ays\_grid.py}: tabulate pairwise per-step losses
+\(L(\sigma_a, \sigma_b) = \|\text{UniPC step}(x;\sigma_a\!\to\!\sigma_b) -
+x^{\mathrm{ref}}(\sigma_b)\|^2/\sigma_b^2\) against a 48-point Heun-Karras
+reference, bilinearly interpolate, sum over the candidate grid,
+minimize via L-BFGS. On 1k-sample CIFAR-10 UniPC smoke (single seed):
+
+\begin{center}
+\small
+\begin{tabular}{r r r r}
+\toprule
+K & AYS-style FID & Karras FID & \((Ours, m_s^\star)\) FID (locked, 10k) \\
+\midrule
+ 5 & 74.42 & 65.22 & 21.46 \\
+ 8 & 53.89 & 39.00 &  9.18 \\
+12 & 44.12 & 32.74 &  5.58 \\
+18 & 36.91 & 31.53 &  4.66 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The pairwise-loss-table approximation \emph{underperforms} Karras at
+every K and is far behind our nonparametric-calibrated \(m_s^\star\).
+This is \emph{not} a refutation of AYS the paper --- it is a refutation
+of \emph{this} specific simplification. A faithful AYS reproduction
+requires trajectory-level KL (not pairwise step errors), differentiable
+backward-trajectory simulation, and the paper's specific Gaussian
+local-transition closed form. The 1--2 day cite-infeasible estimate
+above therefore stands.
+
+The current headline reads as: (Ours, UniPC) beats fixed and
+tuned-parametric Karras schedules at low NFE on CIFAR-10. It does
+\emph{not} claim a win against a faithfully reproduced AYS / DDSS, or
+against learned or adaptive schedulers more broadly; those are open
+follow-up rounds.
 
 \section{Level-3 baseline plan (Issue \#1 \S5)}
 \label{sec:level3-plan}
