@@ -26,7 +26,7 @@ in noise coordinate \(\sigma\) is
 \qquad
 g(x,\sigma;\theta) = \frac{x - D_\theta(x,\sigma)}{\sigma},
 \]
-with \(D_\theta\) the pretrained EDM denoiser. A \emph{sampler} is the discretised controlled flow
+with \(D_\theta\) the pretrained EDM denoiser. A \emph{sampler} is the discretized controlled flow
 \[
 x_{i+1} = F_s\bigl(x_i,\sigma_i,\sigma_{i+1};\theta,\mathcal H_i\bigr),
 \quad i = 0,\ldots,K-1,
@@ -51,15 +51,100 @@ c_{\mathrm{disc}}\!\int_0^{B}\!\frac{d_s(r)}{m(r)^p}\,dr,
 \]
 where \(\rho\) is the training/path-time allocation (frozen by the
 pretrained net for this work), \(a(r)\) is the per-\(r\) statistical
-weight, \(d_s(r)\) is the solver-specific discretisation density at noise
+weight, \(d_s(r)\) is the solver-specific discretization density at noise
 level \(r\), and \(p\) is the solver order (Heun: \(p=2\)).
 
-\paragraph{Solver-specific discretisation density.} \(d_s(\sigma)\) is
+\paragraph{Derivation of \(\rho^\star\) (Cauchy--Schwarz).} The statistical
+sub-problem is
+\(\min_{\rho}\!\int_0^B a(r)/\rho(r)\,dr\) subject to \(\int_0^B \rho(r)\,dr = 1\).
+By Cauchy--Schwarz,
+\[
+\Bigl(\int_0^B \!\sqrt{a(r)}\,dr\Bigr)^{\!2}
+=
+\Bigl(\int_0^B \!\sqrt{\tfrac{a(r)}{\rho(r)}}\,\sqrt{\rho(r)}\,dr\Bigr)^{\!2}
+\le
+\Bigl(\int_0^B \!\tfrac{a(r)}{\rho(r)}\,dr\Bigr)
+\Bigl(\int_0^B \!\rho(r)\,dr\Bigr),
+\]
+so \(\int a/\rho\,dr \ge (\!\int\!\sqrt{a}\,dr)^{2}\) with equality iff
+\[
+\rho^\star(r) \;=\; \frac{\sqrt{a(r)}}{\int_0^B \sqrt{a(s)}\,ds}.
+\]
+Equivalently the optimal noise schedule satisfies
+\(\beta^\star(t)=\frac{dr}{dt}=\frac{\int_0^B\sqrt{a(s)}\,ds}{\sqrt{a(r(t))}}\),
+which strictly subsumes hand-crafted families: constant \(a\) gives
+uniform noise-time, \(a\) peaking near log-SNR\,=\,0 recovers
+log-SNR-focused schedules, and endpoint-difficulty \(a\) adapts off the
+cosine/Karras fixed curves. In this work \(\rho\) is frozen by the
+pretrained EDM net, but the bound is exact when the training distribution
+matches \(\rho^\star\).
+
+\paragraph{Derivation of \(m^\star_s\) (Lagrangian KKT).} The
+discretization sub-problem is
+\(\min_{m}\!\int_0^B d_s(r)/m(r)^p\,dr\) subject to \(\int_0^B m(r)\,dr = N\).
+The Lagrangian
+\(\mathcal L = \int d_s/m^p\,dr - \lambda\bigl(\int m\,dr - N\bigr)\)
+has stationary point \(-p\,d_s(r)/m(r)^{p+1} - \lambda = 0\), giving
+\[
+m^\star_s(r) \;=\; \frac{N\,d_s(r)^{1/(p+1)}}{\int_0^B d_s(s)^{1/(p+1)}\,ds},
+\qquad
+\Delta r^\star(r) \;\propto\; d_s(r)^{-1/(p+1)}.
+\]
+Hence the closed-form Pareto-optimal sampling-grid density is
+\[
+\boxed{\;\;
+m^\star_s(\sigma)
+\;\propto\;
+d_s(\sigma)^{\,1/(p+1)}
+\;\;}
+\]
+For each solver core \(s\in\{\mathrm{Heun},\mathrm{DPM\text{-}Solver\text{++}},\mathrm{UniPC},\mathrm{DEIS},\mathrm{Restart}\}\) we run \texttt{proposed\_<core>} with its actual update law and the certificate-optimal grid \(m^\star_s\) above. The implementation also applies a Karras-style perceptual weight \(w(\sigma)=\sigma^{-k}\) with \(k=2\) (the only validation-tuned hyperparameter) so the effective form is \(m^\star_s(\sigma)\propto\!\bigl(d_s(\sigma)\!\cdot\!w(\sigma)\bigr)^{1/(p+1)}\). For Euler (\(p=1\)) the optimal local step satisfies \(\Delta r^\star(r) \propto d_s(r)^{-1/2}\).
+
+\paragraph{Minimized certificate and minimum NFE.} Substituting
+\(\rho^\star\) and \(m^\star_s\) into \(Q_s\) gives the minimized
+certificate
+\[
+Q_s^\star(N)
+=
+Q_0
++ \frac{c_{\mathrm{stat}}}{n}\!\Bigl(\!\int_0^B\!\sqrt{a(r)}\,dr\!\Bigr)^{\!2}
++ c_{\mathrm{disc}}\,
+\frac{\bigl(\int_0^B d_s(r)^{1/(p+1)}\,dr\bigr)^{p+1}}{N^p}.
+\]
+Inverting for a target accuracy \(\varepsilon\) yields the
+accuracy-constrained minimum NFE
+\[
+N^\star(\varepsilon)
+=
+\Biggl[\,
+\frac{c_{\mathrm{disc}}\,\bigl(\int_0^B d_s(r)^{1/(p+1)}\,dr\bigr)^{p+1}}
+     {\varepsilon - Q_0 - \tfrac{c_{\mathrm{stat}}}{n}\bigl(\!\int_0^B\!\sqrt{a(r)}\,dr\!\bigr)^{\!2}}
+\,\Biggr]^{1/p}.
+\]
+
+\paragraph{Pareto-domination theorem.} For any baseline schedule/grid
+\(u_b=(\rho_b,m_b)\) with NFE \(N_b\), Cauchy--Schwarz gives
+\(\int a/\rho_b\,dr \ge (\!\int\!\sqrt{a}\,dr)^{2}\), and the KKT step
+gives
+\(\int d_s/m_b^p\,dr \ge (\!\int d_s^{1/(p+1)}\,dr)^{p+1}/N_b^p\),
+so \(Q_s(u_b) \ge Q_s^\star(N_b)\). Setting \(\varepsilon = Q_s(u_b)\)
+makes
+\[
+N^\star(\varepsilon) \;\le\; N_b,
+\qquad
+Q_s(u^\star) \;\le\; Q_s(u_b),
+\]
+i.e.\ the certificate-optimal scheduler weakly Pareto-dominates the
+baseline under the certified accuracy--efficiency criterion. The
+inequality is strict unless the baseline itself is the optimizer of the
+same certificate.
+
+\paragraph{Solver-specific discretization density.} \(d_s(\sigma)\) is
 the per-\(\sigma\) local-truncation-error density of the chosen solver
 \(s\). Empirically (full recipe in Appendix~A): take a batch of
 in-distribution noisy images at \(\sigma_a\), step them once with the
 actual update law \(F_s\) to \(\sigma_b\), compare against a
-16-substep Heun reference, and normalise by interval length:
+16-substep Heun reference, and normalize by interval length:
 \[
 \boxed{\;
 d_s(\sigma_i)
@@ -75,23 +160,6 @@ on a uniform-log-\(\sigma\) grid of \(M=32\) intervals over
 independent; the test step is the actual \(F_s\), so \(d_s\) is
 solver-specific by construction.
 
-\paragraph{Closed-form Pareto-optimal schedule.} Solving the certificate's
-fixed-NFE constrained problem
-\[
-\min_{m}\!\int\!\frac{d_s(\sigma)}{m(\sigma)^p}\,d\sigma
-\quad\mathrm{s.t.}\quad
-\int m(\sigma)\,d\sigma = N
-\]
-via Lagrangian KKT gives the closed form:
-\[
-\boxed{\;\;
-m^\star_s(\sigma)
-\;\propto\;
-d_s(\sigma)^{\,1/(p+1)}
-\;\;}
-\]
-For each solver core \(s\in\{\mathrm{Heun},\mathrm{DPM\text{-}Solver\text{++}},\mathrm{UniPC},\mathrm{DEIS},\mathrm{Restart}\}\) we run \texttt{proposed\_<core>} with its actual update law and the certificate-optimal grid \(m^\star_s\) above. The implementation applies a Karras-style perceptual weight \(w(\sigma)=\sigma^{-k}\) with \(k=2\) (the only validation-tuned hyperparameter) so the effective form is \(m^\star_s(\sigma)\propto\!\bigl(d_s(\sigma)\!\cdot\!w(\sigma)\bigr)^{1/(p+1)}\).
-
 \paragraph{Scope (Appendix A correction).} The boxed pointwise form
 applies to single-step / pointwise-defect solvers (RK-class: Heun, EDM-Euler, DPM-Solver-2) and to multistep solvers whose leading
 defect is empirically pointwise (DPM-Solver++ 2M, UniPC --- Theorem A).
@@ -101,7 +169,7 @@ local residual is the history-coupled interpolation-kernel error
 which does not factor into a scalar \(d_s(\sigma)\). The certificate is
 then replaced by a coupled-sequence functional
 \(D_s^{\mathrm{AB}}(\Pi_N)\) and the optimal grid is found by
-sequence optimisation \(\Pi_{N,s}^\star = \arg\min_{\Pi_N} D_s^{\mathrm{AB}}(\Pi_N)\) (Theorem B,
+sequence optimization \(\Pi_{N,s}^\star = \arg\min_{\Pi_N} D_s^{\mathrm{AB}}(\Pi_N)\) (Theorem B,
 implemented in this work).
 
 \paragraph{Headline empirical result.} On the locked CIFAR-10 test split (10k samples / cell, 5 seeds, 510 runs, contract sha256 \texttt{450925ba0791\ldots}):
@@ -121,12 +189,12 @@ A generative sampler is the tuple
 \[
 u = (\theta,\ \pi,\ s,\ m,\ N)
 \]
-where \(\theta\) is the backbone (architecture + weights), \(\pi\) is the path/coupling family (which generative ODE/SDE the backbone parameterises), \(s\) is the solver core (the discrete update law \(F_s\)), \(m\) is the schedule/grid (where on the noise axis \(F_s\) is evaluated), and \(N\) is the cost budget (actual NFE or wall-clock). Our method is not a new generative model; it is per-solver-core schedule control:
+where \(\theta\) is the backbone (architecture + weights), \(\pi\) is the path/coupling family (which generative ODE/SDE the backbone parameterizes), \(s\) is the solver core (the discrete update law \(F_s\)), \(m\) is the schedule/grid (where on the noise axis \(F_s\) is evaluated), and \(N\) is the cost budget (actual NFE or wall-clock). Our method is not a new generative model; it is per-solver-core schedule control:
 \[
 m^\star_s(\sigma) \propto d_s(\sigma)^{1/(p+1)}.
 \]
 
-We organise experiments by which variable changes:
+We organize experiments by which variable changes:
 
 \begin{center}
 \scriptsize
@@ -198,10 +266,10 @@ explicitly:
 class & example & description \\
 \midrule
 fixed heuristic            & Karras \(\rho{=}7\), uniform-log-\(\sigma\)   & fixed before validation/test \\
-tuned parametric           & Karras \(\rho^\star\)                         & small parameter vector optimised on validation \\
+tuned parametric           & Karras \(\rho^\star\)                         & small parameter vector optimized on validation \\
 learned scheduler          & \(m_\phi\)                                    & trained schedule model/policy \\
 adaptive scheduler         & \(m(x,r)\)                                    & sample/trajectory-dependent online schedule \\
-\textbf{nonparametric-calibrated} & \textbf{ours \(m_s^\star\)}            & full calibrated profile \(d_s(r)\) + closed-form certificate optimiser \\
+\textbf{nonparametric-calibrated} & \textbf{ours \(m_s^\star\)}            & full calibrated profile \(d_s(r)\) + closed-form certificate optimizer \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -229,7 +297,7 @@ nonparametric-calibrated only:
 
 \paragraph{What the locked test does not yet cover.}
 \begin{itemize}
-\item \textbf{Tuned parametric.} No validation-optimised Karras \(\rho^\star\) baseline was included. The locked test uses the fixed \(\rho{=}7\) member of the Karras family for every Karras-grid sampler. \emph{Round 5a (in progress) addresses this with a \(\rho \in \{1,2,3,5,9,12,15\}\) sweep on UniPC.}
+\item \textbf{Tuned parametric.} No validation-optimized Karras \(\rho^\star\) baseline was included. The locked test uses the fixed \(\rho{=}7\) member of the Karras family for every Karras-grid sampler. \emph{Round 5a (in progress) addresses this with a \(\rho \in \{1,2,3,5,9,12,15\}\) sweep on UniPC.}
 \item \textbf{Learned scheduler.} No \(m_\phi\) baseline (e.g.\ neural timestep policy).
 \item \textbf{Adaptive scheduler.} No sample-dependent \(m(x,r)\) baseline.
 \end{itemize}
@@ -240,16 +308,16 @@ either implemented or marked infeasible with citation, the headline
 \emph{fixed-heuristic} schedules only, not against tuned/learned/adaptive
 ones.
 
-\paragraph{Literature schedule-optimisation baseline (Issue \#2 \S3.3).}
-Closest published schedule-optimisation methods and their fit for our
+\paragraph{Literature schedule-optimization baseline (Issue \#2 \S3.3).}
+Closest published schedule-optimization methods and their fit for our
 fixed-EDM benchmark:
 
 \begin{itemize}
-\item \textbf{AYS \emph{(Align Your Steps)}} (Sabour, Hayat, Garg et al., ICLR 2024): optimises a
+\item \textbf{AYS \emph{(Align Your Steps)}} (Sabour, Hayat, Garg et al., ICLR 2024): optimizes a
   timestep grid by minimising KL between the discrete sampler trajectory
   and a continuous-SDE reference. Released schedules: SDXL and SD~1.5
   only. CIFAR-10/EDM schedules are not publicly released; reproducing
-  them requires re-running the AYS optimisation on the EDM net
+  them requires re-running the AYS optimization on the EDM net
   ($\sim$1--2 days of careful implementation).
 \item \textbf{DDSS \emph{(Watson et al.\ 2022, ``Learning fast samplers
   for diffusion models'')}}: differentiable sampler search over
