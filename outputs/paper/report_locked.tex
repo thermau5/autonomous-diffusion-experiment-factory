@@ -437,30 +437,46 @@ fixed-EDM benchmark:
   --- likely Heun-class--bound. \emph{Code-availability triage
   (2026-05-27):} no public GitHub released; arXiv'd 2026-01-26 (very
   recent). \emph{Status: no public code, mentioned for completeness.}
-\item \textbf{DPM-Solver-v3} (Lu, Zhou et al., NeurIPS 2023): bundles
-  ``empirical model statistics'' solver corrections with an associated
-  schedule. Not a pure schedule baseline --- the schedule cannot be
-  isolated. \emph{Status: cite-infeasible by bundling.}
-\item \textbf{GENIE} (Dockhorn et al.\ 2022): distills a 2nd-order
-  solver with its schedule. Same bundling issue.
-  \emph{Status: cite-infeasible by bundling.}
+\item \textbf{DPM-Solver-v3} (Zheng, Lu et al., NeurIPS 2023,
+  arXiv:2310.13268). EMS-corrected ODE solver: three model-specific
+  empirical statistics \((l_\lambda, s_\lambda, b_\lambda)\) are
+  precomputed once from the pretrained model and inserted into the
+  solver's update law. The EMS lives \emph{inside the solver}; the
+  schedule is fully separable (the EMS solver can be run with any
+  sigma grid). \emph{Code-availability triage (2026-05-27):} public
+  code at \texttt{github.com/thu-ml/DPM-Solver-v3}. Paper reports
+  unconditional CIFAR-10 FID 12.21 at NFE=5 and 2.51 at NFE=10
+  (protocol unverified vs our Clean-FID/10k). \emph{Status: this is
+  a Level-1 (new solver core) baseline, not Level-2; queued for
+  Round 6 along with \texttt{proposed\_dpm\_solver\_v3} (our
+  \(m_s^\star\) on the same EMS-corrected core).}
+\item \textbf{GENIE} (Dockhorn et al.\ 2022). Distills a 2nd-order
+  solver via training, learning solver weights and a schedule jointly
+  at a specific NFE. The distilled solver expects its trained schedule;
+  running it on a different schedule is not well-defined without
+  redoing distillation. \emph{Status: cite-only by genuine bundling
+  (and additionally a different \(\theta\), so closer to Level-4).}
 \end{itemize}
 
-\paragraph{Triage summary.} Of the six published schedule-optimization
-methods, only AYS has been reimplemented in this report (\S\ref{sec:ays})
+\paragraph{Triage summary.} Of the seven published methods reviewed,
+only AYS has been reimplemented in this report (\S\ref{sec:ays})
 because it is the only one with a paper-specified algorithm we could
 reproduce end-to-end from the published equations alone (Sec.~3,
 Lemma~3.3, hierarchical subdivision Sec.~3.3). DDSS, ACS, HSO, and ART
 have no public code as of the audit date (2026-05-27) and are mentioned
-here for completeness only --- not queued for reimplementation, because
+for completeness only --- not queued for reimplementation, because
 without released schedules or code the comparison would be against
 \emph{our reinterpretation} of each method rather than against the
-method itself. DPM-Solver-v3 and GENIE bundle solver and schedule into a
-single artifact and cannot be isolated as schedule-only baselines.
-The honest position is therefore: \((Ours, m_s^\star)\) is the only
-nonparametric-calibrated schedule in the master Level-2 comparison; AYS
-(faithfully reproduced) is the only learned-schedule baseline we
-evaluate; ACS / HSO / ART / DDSS / DPM-Solver-v3 / GENIE are cited but
+method itself. \textbf{DPM-Solver-v3 is a Level-1 baseline (new solver
+core) with public code and is queued for Round 6}; its EMS lives inside
+the solver, not the schedule, so \((Ours, m_s^\star)\) on the
+EMS-corrected core is the natural follow-on comparison. GENIE bundles
+solver+schedule with distilled weights (closer to Level-4) and is cite-
+only. The honest position is therefore: \((Ours, m_s^\star)\) is the
+only nonparametric-calibrated schedule in the master Level-2 comparison;
+AYS (faithfully reproduced) is the only learned-schedule baseline
+evaluated here; DPM-Solver-v3 is the only further code-public Level-1
+baseline pending Round 6; ACS / HSO / ART / DDSS / GENIE are cited but
 not benchmarked.
 
 \paragraph{Solver compatibility of these methods.} The four
