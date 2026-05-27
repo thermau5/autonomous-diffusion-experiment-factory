@@ -19,8 +19,26 @@ class SamplerOutput:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass
+class SamplerProvenance:
+    """Backbone-training provenance for a sampler. Captured in
+    generate_summary.json and metrics.json so Level-3 (trained-path)
+    baselines can be compared on training + sampling compute, not just
+    sampling NFE. See Phase A item 3 of the Round-5b plan."""
+    pretrained_reuse: bool = True          # True iff the backbone is the locked EDM ckpt
+    training_gpu_hours: float = 0.0        # Reported GPU-hours to train the backbone
+    n_train_steps: int = 0                 # Train iterations (paper-reported or actual)
+    backbone_source: str = "edm_pretrained"  # Free-text id of the backbone artefact
+
+
 class Sampler(ABC):
     id: str = "abstract"
+
+    def provenance(self) -> SamplerProvenance:
+        """Defaults to the pretrained EDM backbone (Level 1+2 samplers).
+        Level-3 / trained-path samplers override this method to declare
+        their training cost."""
+        return SamplerProvenance()
 
     @abstractmethod
     def sample(

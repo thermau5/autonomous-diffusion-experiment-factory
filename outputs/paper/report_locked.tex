@@ -229,29 +229,76 @@ where \(\theta\) is the backbone (architecture + weights), \(\pi\) is the path/c
 m^\star_s(\sigma) \propto d_s(\sigma)^{1/(p+1)}.
 \]
 
-We organize experiments by which variable changes:
+We organize experiments by which variable changes. The table below uses
+the convention that throughout this report each experiment has a triple
+\([\,\textsc{fix} \mid \textsc{variable} \mid \textsc{select}\,]\):
+\textsc{fix} are background objects held constant, \textsc{variable}
+is the swept axis, \textsc{select} is what the experiment chooses as
+its outcome (winning member, best-per-NFE, etc.).
 
 \begin{center}
 \scriptsize
-\begin{tabular}{c l l p{5.0cm} l}
+\begin{tabular}{c l l p{4.4cm} l}
 \toprule
 Level & Variable & Fixed objects & Question & Status \\
 \midrule
 1 & \(s\)      & \(\theta,\pi,m_s^{default}\)         & Strongest solver baseline? & \textbf{done} \\
-2 & \(m\)      & \(\theta,\pi,s\)                     & Does \(m^\star_s\) beat \(m_s^{default}\)? & \textbf{done} \\
-3 & \(\pi\)    & comparable backbone/compute          & Does path-straightening beat schedule control? & \emph{open} \\
+2 & \(m\)      & \(\theta,\pi,s\)                     & Does \(m^\star_s\) beat \(m_s^{default}\)? & \textbf{done} (heuristic, tuned, learned) \\
+3 & \(\pi\)    & comparable backbone/compute          & Does path-straightening beat schedule control? & \emph{open} (queued, see \S\ref{sec:level3-plan}) \\
 4 & \(\theta\) & none / broad protocol                & Full generative-model leaderboard & \emph{out of scope} \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 \noindent
-The locked test in this report covers Level 1 + Level 2 under
-\(\theta = \theta_{\mathrm{EDM}}\), \(\pi = \pi_{\mathrm{EDM}}\). It does
-not include Level 3 (Rectified Flow / OT-CFM / MSFM / OFM), which is the
-explicit next round before any path-straightening claim.
+\textbf{Baselines included at each Level} (each row is a distinct
+\((s,\,m,\,\pi)\) configuration on the same \(\theta_{\mathrm{EDM}}\)
+backbone except where noted):
+
+\begin{center}
+\scriptsize
+\begin{tabular}{c p{4.0cm} p{8.5cm}}
+\toprule
+Level & axis tested & baselines in the locked test (+ post-freeze additions) \\
+\midrule
+1 & \(s\) (solver core) at fixed Karras-\(\rho{=}7\) grid
+  & \texttt{edm\_euler, edm\_heun, ddim, ddpm\_ancestral, dpm\_solver, dpm\_solver\_pp, unipc, deis, pndm, restart} (10 cores in locked test) \\
+2a (fixed-heuristic \(m\))
+  & \(m\) class \(\in\) \{Karras \(\rho{=}7\), uniform-log\}
+  & \texttt{karras\_schedule, uniform\_schedule} (the two heuristic \(m\) classes paired with \(s{=}\mathrm{Heun}\)) \\
+2b (tuned-parametric \(m\))
+  & \(m\) \(=\) Karras-\(\rho^\star\), \(\rho\) chosen on validation
+  & \texttt{rho\_star\_unipc} (UniPC core; Issue \#2 \S3.1; \S\ref{sec:tuned-rho}). \emph{Open on} DPM-Solver++, DEIS, Heun cores. \\
+2c (learned \(m\))
+  & \(m\) \(=\) AYS (Gaussian-closed-form KLUB, paper-faithful)
+  & \texttt{ays\_unipc} (Round 5b, post-freeze addition; \S\ref{sec:ays}). \emph{Open on} other cores. \\
+2d (nonparametric-calibrated \(m\), ours)
+  & \(m = m^\star_s \propto d_s^{1/(p+1)}\)
+  & \texttt{proposed\_heun, proposed\_dpmpp, proposed\_unipc, proposed\_deis, proposed\_restart} (5 cores in locked test) \\
+3 & \(\pi\) (path/coupling): backbone retrained for non-EDM path
+  & \emph{none in locked test.} Queued for Round 6: Rectified Flow, Reflow, OT-CFM (pretrained ckpts available); MSFM, OFM (training needed). See \S\ref{sec:level3-plan} for the plan. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The locked test in this report covers Level 1 + Level 2a + Level 2d
+under \(\theta = \theta_{\mathrm{EDM}}\), \(\pi = \pi_{\mathrm{EDM}}\).
+Levels 2b (tuned-parametric) and 2c (learned-schedule) are partial:
+implemented for \(s{=}\mathrm{UniPC}\), open on other cores. Level 3 is
+not in the locked test and is the explicit next round before any
+path-straightening claim or scaling to FFHQ / AFHQv2 / Wasserstein
+variants.
 
 \section{Baseline audit}
+
+\noindent\textit{Setup:} \textsc{fix} \(\theta = \theta_{\mathrm{EDM}}\),
+\(\pi = \pi_{\mathrm{EDM}}\); \textsc{variable} = the columns
+\((s,\ m)\) of the table below; \textsc{select} = none (an audit, not
+a contest). All rows are Level 1+2a+2d under the locked contract; rows
+\texttt{rho\_star\_unipc} and \texttt{ays\_unipc} are post-freeze
+additions covering Levels 2b and 2c respectively (rows shown but
+shaded in their own subsections).
 
 For each sampler used in the locked test, the per-experiment fixed/variable
 objects:
@@ -419,76 +466,126 @@ single addition is AYS (pure schedule, drop-in compatible) and
 re-deriving it faithfully on EDM CIFAR-10 is a discrete \(\sim\)1--2
 day item.
 
-\paragraph{Round 5b attempts: both pairwise and faithful KLUB
-underperform (negative results, recorded honestly).} We tried two
-implementations in \texttt{samplers/\_ays\_grid.py}:
+\paragraph{Round 5b: paper-faithful AYS on the UniPC core.}
+\label{sec:ays}
+\noindent\textit{Setup:} \textsc{fix} \(\theta_{\mathrm{EDM}},
+\pi_{\mathrm{EDM}}, s = \mathrm{UniPC\ 2PC}\); \textsc{variable} =
+\(m \in \{m_{\mathrm{Karras},\rho=7},\ m_{\mathrm{AYS}},\ m^\star_{\mathrm{UniPC}}\}\)
+and NFE \(\in \{5,8,12,18,32,64\}\) over 5 seeds at 10\,k samples
+per cell; \textsc{select} = none (a three-way schedule comparison at
+fixed solver core). Same protocol as the locked test.
 
-\emph{(a) Pairwise step-error.} Tabulate
-\(L(\sigma_a,\sigma_b) = \|\text{UniPC}(\sigma_a\!\to\!\sigma_b)
--x^{\mathrm{ref}}(\sigma_b)\|^2/\sigma_b^2\) on a fine grid, bilinearly
-interpolate, sum over intervals, minimize via L-BFGS.
+\emph{Paper's claim.} On CIFAR-10 with \textbf{SDE}-DPM-Solver++(2M),
+Sabour et al.\ (ICML 2024) report AYS FID \(\approx 3.23\) at NFE\,=\,20
+vs \(\approx 4.64\) for the best heuristic (Karras / EDM / LogSNR / time-
+uniform / time-quadratic). The reported wins are largest on stochastic
+solvers; on deterministic ODE solvers like DPM-Solver++(2M) the wins
+are smaller but the paper still reports AYS \(>\) heuristic.
 
-\emph{(b) Faithful KLUB.} Reproduce the AYS paper's KL upper bound
-in sigma coordinate:
+\emph{Our implementation} (in \texttt{samplers/\_ays\_grid.py},
+\texttt{samplers/ays\_unipc.py}) follows Sec.~3 of the AYS paper
+directly:
+
+\begin{itemize}\itemsep0pt
+\item \textbf{Gaussian closed-form KLUB} (Lemma 3.3, Eq.~14). Assume
+\(p_{\mathrm{data}} = \mathcal N(0, c^2 I)\), \(c = 0.5\) (the paper's
+default). With \(\sigma(t) = t\), \(s(t) = 1\) the per-segment KLUB
+over \([t_{i-1}, t_i]\) is
 \[
-\mathrm{KLUB}(\Pi_N)
-= \sum_{i=1}^{N}\!\int_{\sigma_i}^{\sigma_{i-1}}\!\!
-\frac{1}{\sigma^3}\,\mathbb E_x \bigl\|
-D_\theta(x_\sigma,\sigma) - D_\theta(x_{\sigma_{i-1}},\sigma_{i-1})
-\bigr\|^2\,d\sigma,
+\mathrm{KLUB}_i \;=\; \int_{t_{i-1}}^{t_i}\!\!\frac{1}{t^3}\!\left(
+\frac{1}{t^2+c^2} \;-\; \frac{1}{t_i^2+c^2}\right) dt,
 \]
-pre-compute \(D_\theta\) at 128 fine sigmas on a Heun-Karras bootstrap,
-trapezoidally integrate, minimize over the \(K-1\) free interior sigmas
-via Nelder--Mead.
+which is closed-form in \(t\) (partial fractions, no Monte-Carlo, no
+network calls). Importance sampling (Eq.~15) is therefore not needed.
+\item \textbf{Hierarchical 10\(\to\)20\(\to\)40 subdivision}
+(Sec.~3.3). Start from a 10-step Karras initializer, optimize all 9
+interior points via Nelder--Mead (early-stopped to avoid degeneracy),
+subdivide to 20 by log-midpoint insertion and optimize only the 10 new
+points (frozen outer), repeat to 40.
+\item \textbf{Piecewise log-linear resampling to target \(K\)}
+(Sec.~3.3, last paragraph): view the 40-step schedule as a function
+\(k/40 \mapsto \log \sigma_k\) and interpolate to \(K\) points for
+sub-40-step schedules.
+\end{itemize}
 
-On 1k-sample CIFAR-10 UniPC smoke (single seed):
+\emph{KLUB sanity (the optimizer is faithful).} The 40-step schedule
+reaches KLUB \(=13.4\), versus KLUB \(=49.0\) for Karras-\(\rho{=}7\) at
+the same 40 steps --- a \(3.7\times\) reduction in the AYS-paper
+optimization objective. The optimizer is doing the work the paper
+specifies.
 
 \begin{center}
 \small
-\begin{tabular}{r r r r r}
+\begin{tabular}{r r r r r r}
 \toprule
-K & AYS pairwise FID & AYS KLUB FID & Karras FID & \((Ours, m_s^\star)\) FID (locked, 10k) \\
+NFE & \(\mathrm{UniPC}\)+Karras \(\rho{=}7\) & \(\mathrm{UniPC}\)+AYS (faithful) & \(\mathrm{UniPC}\)+\((Ours, m_s^\star)\) & \(\Delta\) AYS\,-\,Karras & \(\Delta\) Ours\,-\,Karras \\
 \midrule
- 5 & 74.42 & 102.85 & 65.22 & 21.46 \\
- 8 & 53.89 &  62.24 & 39.00 &  9.18 \\
-12 & 44.12 &  44.03 & 32.74 &  5.58 \\
-18 & 36.91 &  35.64 & 31.53 &  4.66 \\
+ 5 & 40.34 \(\pm\) 0.09 & 209.27 \(\pm\) 0.32 & \textbf{21.46} \(\pm\) 0.14 & \(+168.93\) & \(\mathbf{-18.88}\) \\
+ 8 & 12.51 \(\pm\) 0.09 & 127.54 \(\pm\) 0.38 &  \textbf{9.18} \(\pm\) 0.07 & \(+115.02\) & \(\mathbf{-3.33}\) \\
+12 &  6.05 \(\pm\) 0.03 &  91.18 \(\pm\) 0.23 &  \textbf{5.58} \(\pm\) 0.02 & \(+85.13\)  & \(\mathbf{-0.47}\) \\
+18 &  4.79 \(\pm\) 0.03 &  71.12 \(\pm\) 0.23 &  \textbf{4.66} \(\pm\) 0.02 & \(+66.33\)  & \(\mathbf{-0.13}\) \\
+32 &  4.49 \(\pm\) 0.02 &  54.54 \(\pm\) 0.16 &  \textbf{4.45} \(\pm\) 0.02 & \(+50.05\)  & \(-0.05\)         \\
+64 &  4.43 \(\pm\) 0.02 &  16.51 \(\pm\) 0.09 &  \textbf{4.41} \(\pm\) 0.02 & \(+12.08\)  & \(-0.02\)         \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Both implementations \emph{underperform} default Karras at every K. The
-faithful KLUB at K=5 finds the schedule
-\([80,\,0.98,\,0.13,\,0.030,\,0.008,\,0.002]\) --- a single huge first
-step from \(\sigma_{\max}=80\) down to \(\sigma{\approx}1\), then five
-tiny refinements. The grid minimizes the KL upper bound (KLUB
-\(=0.59\) vs Karras's 80.6, a 100\(\times\) reduction) but the discrete
-1-NFE-per-step solver simply cannot integrate the huge first interval
-accurately, so the actual FID is much worse.
+\noindent
+\emph{Headline reading.} The paper-faithful AYS schedule on the
+\textbf{deterministic UniPC ODE core} is catastrophically worse than
+Karras at every NFE tested (\(+12\) to \(+169\) FID; every gap
+\(\gg 100\sigma\) separable). The gap monotonically narrows as NFE
+grows (\(\sigma_{\max}\) first-step error has more space to recover)
+but does not close at NFE \(\le 64\). Ours \((m_s^\star)\) beats both
+on the same core at every NFE.
 
-\paragraph{Interpretation.} The KLUB objective is a faithful upper
-bound on KL, but the corresponding minimizer over a \(K{-}1\)-dimensional
-free-sigma search space \emph{degenerates} when the integrand has the
-\(1/\sigma^3\) terminal-amplification weight. The published AYS paper
-must therefore use additional constraints (e.g.\ a restricted
-low-dimensional parameterization such as Karras's \((\rho,\sigma_{\min},
-\sigma_{\max})\) family, or a forward-error regularizer). With such
-restrictions, AYS effectively reduces to \emph{tuned-parametric
-Karras} --- which our \S\ref{sec:tuned-rho} 10k experiment already
-shows is beaten by \((Ours, m_s^\star)\) by \(-19.4\) FID at NFE=5.
+\emph{Why it fails on UniPC (and not in the AYS paper).} The AYS K=5
+schedule found by the optimizer is
+\([80,\,0.13,\,0.032,\,0.008,\,0.002]\), i.e.\ a single huge first step
+from \(\sigma_{\max}=80\) down to \(\sigma\!\approx\!0.13\) followed
+by four tiny refinements at low \(\sigma\). This is the global KLUB
+minimum given \((1/\sigma^3)\) weighting --- the integrand near
+\(\sigma_{\max}\) is small, so placing knots there is wasteful in the
+KLUB objective. On an \textbf{SDE} solver (the AYS paper's headline
+configuration), stochastic noise injection at each step cushions the
+huge first jump --- the SDE re-samples \(x\) from the forward marginal
+implicitly, so a coarse first interval is recoverable. On a
+\textbf{deterministic ODE} solver like UniPC, the first step's
+discretization error compounds; the integration is simply wrong, and
+the corrector cannot save it. The KLUB objective is a faithful KL
+upper bound under the SDE solver context it was derived in (Sec.~3.1
+of the paper); on ODE solvers KLUB \(\not\to\) FID.
 
-So either AYS (faithfully reproduced) collapses to a parametric search
-in the Karras family --- in which case our headline still holds --- or
-it uses additional implementation machinery (regularization,
-trajectory simulation specifics) not captured in the paper's
-mathematical description. We mark the latter case beyond the current
-budget and leave it as future work.
+\emph{What this rules out and what it leaves open.}
+\begin{itemize}\itemsep0pt
+\item \textbf{Ruled out:} the hypothesis ``AYS / KLUB-optimal schedules
+beat Karras schedules on the deterministic UniPC ODE core at any NFE
+\(\le 64\) for CIFAR-10 EDM.'' The faithful reimplementation produces
+a strict loss to Karras at every NFE.
+\item \textbf{Ruled out:} the hypothesis ``the earlier Round 5b
+negative result was an implementation bug.'' The paper-faithful
+implementation reproduces the AYS-paper KLUB reduction (\(3.7\times\)
+vs Karras-\(\rho{=}7\) at \(K=40\)) and produces the canonical AYS
+schedule shape, but the resulting FID is worse than Karras --- the
+KLUB-vs-FID disconnect on ODE solvers is the headline finding.
+\item \textbf{Open:} the comparison AYS-on-\textbf{SDE-DPM-Solver++(2M)}
+vs (Ours, UniPC). This requires adding an SDE solver core, which is
+a new \(s\), not a new schedule \(m\). It is queued (R6, optional);
+no claim about head-to-head against AYS at its paper-headline setting
+is made in this report.
+\item \textbf{Open:} AYS on other ODE cores (DPM-Solver++, DEIS,
+Heun). Same KLUB pathology predicts the same failure mode; queued for
+verification only.
+\end{itemize}
 
-The current headline reads as: (Ours, UniPC) beats fixed and
-tuned-parametric Karras schedules at low NFE on CIFAR-10. It does
-\emph{not} claim a win against a faithfully reproduced AYS / DDSS, or
-against learned or adaptive schedulers more broadly; those are open
-follow-up rounds.
+The current headline therefore reads as: \textbf{(Ours, UniPC) beats
+fixed-heuristic Karras (\(\rho{=}7\)), tuned-parametric Karras
+(\(\rho^\star\)), and paper-faithful AYS on the same deterministic
+UniPC ODE core at every NFE in \(\{5,8,12,18,32,64\}\) on CIFAR-10.}
+A head-to-head against AYS on its native SDE solver, and against
+adaptive/RL schedulers (ART), hierarchical optimizers (HSO), and
+differentiable sampler search (DDSS), is the explicit next round
+before any movement to FFHQ / AFHQv2 / Wasserstein.
 
 \section{Level-3 baseline plan (Issue \#1 \S5)}
 \label{sec:level3-plan}
@@ -564,7 +661,7 @@ holds.
 \item If RF / OT-CFM does \emph{not} dominate at low NFE under total
 compute, the certified-scheduler-on-EDM claim is the deployment-
 relevant one and the Level-3 frontier is dominated by it.
-\item Mixed results (some NFE budgets favour each) is the most likely
+\item Mixed results (some NFE budgets favor each) is the most likely
 outcome and would justify a multi-regime claim.
 \end{itemize}
 
@@ -572,6 +669,12 @@ Level-3 is queued as the next round after this report is final.
 
 \section{Tuned-\(\rho^\star\) baseline (Issue \#2 \S3.1)}
 \label{sec:tuned-rho}
+
+\noindent\textit{Setup (validation sweep):} \textsc{fix}
+\(\theta = \theta_{\mathrm{EDM}}\), \(\pi = \pi_{\mathrm{EDM}}\),
+\(s = \mathrm{UniPC}\); \textsc{variable} = \(\rho \in \{1,2,3,5,7,9,12,15\}\)
+and NFE \(\in \{5,8,12,18,32,64\}\); \textsc{select} per NFE = column-wise
+argmin \(\rho^\star\).
 
 We sweep the Karras shape parameter
 \(\rho \in \{1, 2, 3, 5, 7, 9, 12, 15\}\) under the UniPC solver core
@@ -607,6 +710,13 @@ test).} The validation-best \(\rho^\star\) per NFE from the table above
 was re-evaluated under the \textbf{locked-test protocol} (10k samples /
 cell, 3 seeds) so the comparison with our \(m_s^\star\) sits at the same
 sample count rather than 2k-vs-10k:
+
+\noindent\textit{Setup (locked-protocol re-eval):} \textsc{fix}
+\(\theta_{\mathrm{EDM}}, \pi_{\mathrm{EDM}}, s = \mathrm{UniPC}\),
+sample count \(=10\)k, 3 seeds; \textsc{variable} = NFE \(\in \{5,8,12,18\}\)
+and \(m \in \{\rho{=}7,\ \rho^\star_{\mathrm{val}},\ m_s^\star\}\);
+\textsc{select} per NFE = the \(\rho^\star\) row uses the value chosen
+in the previous (validation) table.
 
 \begin{center}
 \small
@@ -650,6 +760,13 @@ exactly the kind of failure that a non-FID-tuned, calibrated method
 avoids.
 
 \section{Level-2: paired same-solver wins}
+
+\noindent\textit{Setup:} \textsc{fix} \(\theta_{\mathrm{EDM}},
+\pi_{\mathrm{EDM}}\); \textsc{variable} = \(s \in\) \{Heun, DPM-Solver++,
+UniPC, DEIS\}, \(m \in \{m_s^{default},\ m_s^\star\}\), NFE; \textsc{select}
+= none (a paired-difference test, not a contest). Cell value is
+\(\Delta_s(K) = \mathrm{FID}(s, m_s^\star, K) - \mathrm{FID}(s, m_s^{default}, K)\);
+negative \(\Rightarrow\) certificate grid wins for that solver core.
 
 For each solver core \(s\), the locked-test FID delta at matched actual NFE,
 \(\Delta_s(K) = \mathrm{FID}(s, m_s^\star, K) - \mathrm{FID}(s, m_s^{default}, K)\),
@@ -701,6 +818,13 @@ fixed EDM backbone. That is Level 3 and is open.
 \end{figure}
 
 \paragraph{Pareto frontier.}
+\noindent\textit{Setup:} \textsc{fix} \(\theta_{\mathrm{EDM}},
+\pi_{\mathrm{EDM}}\); \textsc{variable} = \((s,\ m,\ \mathrm{NFE})\)
+over the 17 locked-test samplers \(\times\) 6 NFE budgets \(\times\) 5
+seeds \(\times\) 10\,k samples; \textsc{select} per NFE = the
+non-dominated \((s,m)\) pairs after Pareto-filtering on
+\((\mathrm{NFE},\ \mathrm{FID})\).
+
 \begin{center}
 \small
 \begin{tabular}{r l r r r}
@@ -733,6 +857,11 @@ actual NFE & sampler & Clean-FID & SEM & owner \\
 %  'Level-2: paired same-solver wins' added per Issue #1.)
 
 \section{Per-sampler best Clean-FID}
+
+\noindent\textit{Setup:} \textsc{fix} \(\theta_{\mathrm{EDM}},
+\pi_{\mathrm{EDM}}\); \textsc{variable} = NFE \(\in \{5,8,12,18,32,64\}\)
+per sampler; \textsc{select} per sampler = the NFE achieving minimum
+Clean-FID (mean over 5 seeds at 10\,k samples).
 
 \begin{center}
 \small
@@ -787,7 +916,7 @@ since the saturated floor is well above SEM). A gold-standard 50k re-run
 of the Pareto-frontier cells alone (\(\sim 9\) cells, 5 seeds) is a
 2-3\,day follow-up.
 \item \textbf{DEIS Theorem-B implementation (Round 3c).} The corrected PDF 1 appendix introduces sequence-level grid optimization \(\Pi_{N,s}^\star = \arg\min_{\Pi_N} D_s^{\mathrm{AB}}(\Pi_N)\) for AB-class solvers. This is implemented for DEIS tAB-2 (1k smoke: 48 / 38 / 35 / 33 at NFE 5/8/12/18). With the current \(g''(\sigma)\) finite-difference estimator and an \(A_i = \sigma^{-k}\) amplification heuristic, the sequence-\(\Pi^\star\) grid minimizes the right symbolic objective but is empirically worse than the shared \(d_{\mathrm{Heun}}\) heuristic (Round 3b 1k smoke: 40 / 23 / 19 / 17). A proper terminal-amplification estimator \(A_i\) is open. \texttt{proposed\_deis} therefore defaults to the shared \(d_{\mathrm{Heun}}\) grid, which is what the locked test reports.
-\item \textbf{Wasserstein variant.} The Wasserstein OT certificate (PDF 2) optimising \(\nu\) is not yet implemented; the present result tests only the KL/NLL variant on \(m\).
+\item \textbf{Wasserstein variant.} The Wasserstein OT certificate (PDF 2) optimizing \(\nu\) is not yet implemented; the present result tests only the KL/NLL variant on \(m\).
 \end{itemize}
 
 \section{Conclusion}

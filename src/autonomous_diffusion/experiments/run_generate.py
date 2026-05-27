@@ -149,11 +149,14 @@ def main(
     np.savez_compressed(sample_dir / "samples.npz", samples=x, nfe=out.nfe)
     log.info(f"wrote samples to {sample_dir / 'samples.npz'} ({x.nbytes/1e6:.1f} MB)")
 
+    from dataclasses import asdict
+    prov = sampler.provenance()
     run_summary = {
         "run_id":          run_id,
         "samples_path":    str(sample_dir / "samples.npz"),
         "nfe_per_sample":  int(out.nfe),
         "wall_seconds":    float(sw.elapsed),
+        "provenance":      asdict(prov),
         "metadata":        out.metadata,
     }
     write_json(run_dir / "generate_summary.json", run_summary)

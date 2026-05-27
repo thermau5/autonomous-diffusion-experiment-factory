@@ -120,6 +120,18 @@ def main(
         sample_path, seed=int(cfg_used["seed"]), retention=retention, log=log,
     )
 
+    # Provenance: default to pretrained-EDM if generate_summary.json predates
+    # the schema change (Phase A item 3). New runs always populate it.
+    prov = gen_summary.get("provenance") or {
+        "pretrained_reuse": True,
+        "training_gpu_hours": 0.0,
+        "n_train_steps": 0,
+        "backbone_source": "edm_pretrained",
+    }
+    wall_seconds = float(gen_summary.get("wall_seconds") or 0.0)
+    sampling_gpu_hours = wall_seconds / 3600.0
+    training_gpu_hours = float(prov.get("training_gpu_hours", 0.0))
+
     metrics = {
         "run_id":         cfg_used["run_id"],
         "phase":          phase,
@@ -133,6 +145,16 @@ def main(
         "clean_fid":      fid_out["fid"],
         "fid_mode":       fid_out["mode"],
         "fid_ref_split":  fid_out["split"],
+        # Phase A item 3: compute-honest accounting (training + sampling).
+        # Level 1+2 samplers reuse the locked EDM ckpt -> training_gpu_hours=0.
+        # Level 3 (trained-path) samplers override Sampler.provenance() to
+        # declare their backbone training cost.
+        "sampling_gpu_hours":       sampling_gpu_hours,
+        "training_gpu_hours":       training_gpu_hours,
+        "total_compute_gpu_hours":  sampling_gpu_hours + training_gpu_hours,
+        "pretrained_reuse":         bool(prov.get("pretrained_reuse", True)),
+        "n_train_steps":            int(prov.get("n_train_steps", 0)),
+        "backbone_source":          str(prov.get("backbone_source", "edm_pretrained")),
         "retention":      {"policy": retention, "action": retention_action,
                            "sample_path": str(sample_path) if retention_action in ("kept","kept_seed0") else None},
     }

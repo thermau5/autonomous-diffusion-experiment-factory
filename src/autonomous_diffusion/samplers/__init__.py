@@ -17,3 +17,4 @@ from . import proposed_dpmpp    # noqa: F401  -- proposed_dpmpp   (DPM-Solver++ 
 from . import proposed_unipc    # noqa: F401  -- proposed_unipc   (UniPC predictor-corrector core)
 from . import proposed_deis     # noqa: F401  -- proposed_deis    (DEIS tAB-2 core)
 from . import proposed_restart  # noqa: F401  -- proposed_restart (Restart wrapper + Heun)
+from . import ays_unipc          # noqa: F401  -- ays_unipc        (AYS learned schedule on UniPC core)

@@ -1,238 +1,251 @@
-"""AYS (Align Your Steps) schedule optimization on EDM CIFAR-10.
+"""AYS (Align Your Steps) schedule optimization -- faithful reimplementation.
 
-Reference: Sabour, Fidler, Kreis. "Align Your Steps: Optimizing
-Sampling Schedules in Diffusion Models", ICML 2024.
-research.nvidia.com/labs/toronto-ai/AlignYourSteps/
+Reference: Sabour, Fidler, Kreis. "Align Your Steps: Optimizing Sampling
+Schedules in Diffusion Models", ICML 2024.  arXiv:2404.14507.
 
-The AYS objective is the KL upper bound (KLUB) between the continuous
-SDE reverse path and the discrete-sampler-induced path. In sigma
-coordinate (EDM convention, sigma decreasing from sigma_max to 0) the
-KLUB is
+This implementation follows Sec. 3 of the paper directly:
 
-    KLUB(Pi_N) = Sum_{i=1}^{N}  int_{sigma_i}^{sigma_{i-1}}
-                   (1 / sigma^3) * E_x || D_theta(x_sigma, sigma)
-                                       - D_theta(x_{sigma_{i-1}},
-                                                 sigma_{i-1}) ||^2 d sigma
+  (1) Gaussian closed-form KLUB (Lemma 3.3, Eq. 14).  Assume p_data =
+      N(0, c**2 I) and use the analytic ideal-denoiser integrand --
+      not a Monte-Carlo estimate from the trained network.  With
+      sigma(t) = t and s(t) = 1 (EDM convention), the per-segment KLUB
+      over [t_{i-1}, t_i] is
 
-where D_theta is the EDM denoiser, Pi_N = {sigma_0 > sigma_1 > ... > sigma_N}
-is the candidate grid, and the expectation is over reverse-process
-samples at level sigma (drawn from the Heun-Karras bootstrap, as in
-proposed_control's calibration).
+          KLUB_i = integral_{t_{i-1}}^{t_i} (1/t^3) *
+                       (1/(t^2 + c^2) - 1/(t_i^2 + c^2)) dt
 
-The 1/sigma^3 weight is the AYS terminal-sensitivity factor; it
-amplifies errors at low sigma, where the data manifold is most rigid.
+      which is closed-form in t via partial fractions (see _klub_segment
+      below).
 
-The schedule is found by minimising KLUB over the K-1 free interior
-sigmas:
+  (2) Hierarchical subdivision (Sec. 3.3, last paragraph).  Start with
+      a K0 = 10-step schedule initialized from a heuristic, optimize all
+      9 interior points.  Then double to 20 by inserting log-midpoints,
+      freeze the original 11 points, and optimize only the 10 new
+      midpoints.  Double again to 40 and optimize only the 20 newest
+      midpoints.
 
-    Pi_{N}^{AYS} = argmin_{Pi_N} KLUB(Pi_N)
+  (3) Piecewise log-linear interpolation to arbitrary target K.  The
+      paper's released schedules are produced by viewing the 40-step
+      schedule as a function K0 = 40 -> sigma_k, sampling K+1 points
+      from a log-linear interpolation between (k/K0, log(sigma_k)) pairs.
 
-with monotone-grid constraints. The reference D_theta(x_sigma, sigma)
-values are precomputed once on a fine log-sigma grid; for any candidate
-Pi_N the KLUB integral is evaluated by trapezoidal rule on the fine
-grid restricted to each interval. This avoids re-running the network
-per optimizer step.
+The c parameter is fixed at c = 0.5 per Fig. 3 of the paper -- the
+authors use this value across datasets after observing that c = 1
+(unit-variance data) over-collapses the optimal schedule.
+
+We work internally in *ascending* t (paper convention: t_0 = t_min <
+t_1 < ... < t_K = t_max).  The public entry point
+`ays_descending_sigmas` flips and appends 0 to match our Karras-style
+convention.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 import numpy as np
-import torch
-
-from ._common import (
-    denoise,
-    karras_sigmas,
-    resolve_shape,
-    resolve_sigma_range,
-    sample_initial_noise,
-)
 
 
 # ---------------------------------------------------------------------------
-# Precompute D_theta(x_sigma, sigma) on a fine log-sigma grid from the
-# Heun-Karras bootstrap trajectory.
+# Gaussian closed-form KLUB integrand (Lemma 3.3, Eq. 14)
 # ---------------------------------------------------------------------------
+
+def _I1_antideriv(u: np.ndarray, c2: float) -> np.ndarray:
+    """Antiderivative of 1 / (u^3 (u^2 + c^2)) -- partial fractions.
+
+    1/(u^3 (u^2+c^2)) = -1/(c^4 u) + 1/(c^2 u^3) + u/(c^4 (u^2+c^2))
+    => integral = (1/(2 c^4)) ln(1 + c^2/u^2) - 1/(2 c^2 u^2)
+    """
+    return 0.5 / (c2 * c2) * np.log1p(c2 / (u * u)) - 0.5 / (c2 * u * u)
+
+
+def _klub_segment(t_lo: float, t_hi: float, c2: float) -> float:
+    """Closed-form integral over [t_lo, t_hi] (t_lo < t_hi) of
+        (1/u^3) * (1/(u^2 + c^2) - 1/(t_hi^2 + c^2))   du
+    """
+    # integral of 1/(u^3 (u^2+c^2)) du
+    a = _I1_antideriv(np.asarray(t_hi, dtype=np.float64), c2) \
+        - _I1_antideriv(np.asarray(t_lo, dtype=np.float64), c2)
+    # integral of (1/(t_hi^2+c^2)) * (1/u^3) du = (1/(t_hi^2+c^2)) * (-1/(2 u^2))
+    b_anti_hi = -0.5 / (t_hi * t_hi)
+    b_anti_lo = -0.5 / (t_lo * t_lo)
+    b = (b_anti_hi - b_anti_lo) / (t_hi * t_hi + c2)
+    return float(a - b)
+
+
+def klub_total(t_grid: np.ndarray, c2: float) -> float:
+    """KLUB of an ascending schedule t_0 < t_1 < ... < t_K.
+
+    Sum of per-segment closed-form integrals.  No network calls.
+    """
+    total = 0.0
+    for i in range(t_grid.shape[0] - 1):
+        total += _klub_segment(float(t_grid[i]), float(t_grid[i + 1]), c2)
+    return total
+
+
+# ---------------------------------------------------------------------------
+# Hierarchical subdivision optimizer (Sec. 3.3)
+# ---------------------------------------------------------------------------
+
+def _optimize_full_grid(t_min: float, t_max: float, K: int, c2: float,
+                        init: np.ndarray | None = None, maxiter: int = 400) -> np.ndarray:
+    """Optimize the K-1 free interior points of an ascending K-step schedule.
+
+    Parameterization: log-gaps as softmax over K free deltas summing to
+    log(t_max / t_min).  Always monotone by construction.
+    """
+    from scipy import optimize as _opt
+    log_range = np.log(t_max) - np.log(t_min)
+
+    def deltas_to_grid(deltas: np.ndarray) -> np.ndarray:
+        d = deltas - np.max(deltas)
+        ex = np.exp(d)
+        gaps = ex / ex.sum()
+        log_pts = np.log(t_min) + np.cumsum(gaps) * log_range
+        grid = np.empty(K + 1, dtype=np.float64)
+        grid[0] = t_min
+        grid[1:K + 1] = np.exp(log_pts)
+        # last point should equal t_max up to fp noise -- force it
+        grid[K] = t_max
+        return grid
+
+    def loss(deltas: np.ndarray) -> float:
+        return klub_total(deltas_to_grid(deltas), c2)
+
+    if init is None:
+        # Karras rho=7 init (their default initializer)
+        rho = 7.0
+        idx = np.arange(K + 1)
+        log_kar = (t_max ** (1 / rho)
+                   + (idx / K) * (t_min ** (1 / rho) - t_max ** (1 / rho))) ** rho
+        kar_asc = log_kar[::-1].astype(np.float64)
+        gaps0 = np.diff(np.log(kar_asc))
+        gaps0 = np.clip(gaps0, 1e-9, None)
+        gaps0 = gaps0 / gaps0.sum()
+        deltas0 = np.log(gaps0 + 1e-12)
+        deltas0 -= deltas0.mean()
+    else:
+        deltas0 = init.copy()
+
+    res = _opt.minimize(
+        loss, deltas0, method="Nelder-Mead",
+        options=dict(maxiter=maxiter * (K + 1), xatol=1e-5, fatol=1e-8,
+                     adaptive=True, disp=False),
+    )
+    return deltas_to_grid(res.x)
+
+
+def _subdivide_and_finetune(grid: np.ndarray, c2: float, maxiter: int = 200) -> np.ndarray:
+    """Insert a log-midpoint between every consecutive pair, then optimize
+    ONLY the inserted points (frozen-old, free-new).
+
+    Parameterization of each new point: sigmoid in log-coordinate between
+    its two frozen neighbors, so monotonicity is preserved.
+    """
+    from scipy import optimize as _opt
+    log_grid = np.log(grid)
+    N = grid.shape[0] - 1                       # number of segments before subdivide
+    # Insert log-midpoints; new grid has 2N+1 points (= K' + 1 with K' = 2K)
+    new_log = np.empty(2 * N + 1, dtype=np.float64)
+    new_log[0::2] = log_grid                     # frozen points at even indices
+    new_log[1::2] = 0.5 * (log_grid[:-1] + log_grid[1:])  # initial guess for new midpoints
+    # Each new midpoint i (at index 2i+1) lies between frozen neighbors
+    # log_grid[i] and log_grid[i+1].  Parameterize log_t_new = log_left +
+    # sigmoid(delta) * (log_right - log_left).
+    log_left = log_grid[:-1]
+    log_right = log_grid[1:]
+
+    def sigmoid(x):
+        return 1.0 / (1.0 + np.exp(-x))
+
+    def deltas_to_grid(deltas: np.ndarray) -> np.ndarray:
+        out = new_log.copy()
+        out[1::2] = log_left + sigmoid(deltas) * (log_right - log_left)
+        return np.exp(out)
+
+    def loss(deltas: np.ndarray) -> float:
+        return klub_total(deltas_to_grid(deltas), c2)
+
+    # Init at midpoint (sigmoid(0) = 0.5)
+    deltas0 = np.zeros(N, dtype=np.float64)
+    res = _opt.minimize(
+        loss, deltas0, method="Nelder-Mead",
+        options=dict(maxiter=maxiter * (N + 1), xatol=1e-5, fatol=1e-8,
+                     adaptive=True, disp=False),
+    )
+    return deltas_to_grid(res.x)
+
 
 @dataclass
-class DenoisedTable:
-    """Bootstrap denoiser evaluations at each fine sigma."""
-    sigma_grid: np.ndarray              # length M, descending
-    denoised_per_sigma: torch.Tensor    # shape (M, B, C, H, W) on CPU
+class AysSchedule:
+    """Container for an AYS 40-step ascending schedule and resampling helpers."""
+    t_grid: np.ndarray        # ascending, length 41, t_0 = t_min, t_40 = t_max
+    c2: float                 # squared importance-sampling scale (= c^2)
     meta: dict
 
+    def resample_to_K(self, K: int) -> np.ndarray:
+        """Piecewise log-linear interpolation in index domain from the
+        cached 40-step schedule to K+1 ascending points.
+        """
+        K0 = self.t_grid.shape[0] - 1
+        if K == K0:
+            return self.t_grid.copy()
+        x_src = np.arange(K0 + 1, dtype=np.float64) / K0
+        y_src = np.log(self.t_grid)
+        x_tgt = np.arange(K + 1, dtype=np.float64) / K
+        y_tgt = np.interp(x_tgt, x_src, y_src)
+        return np.exp(y_tgt)
 
-@torch.inference_mode()
-def precompute_denoised_table(
-    net,
-    *,
-    num_calib_samples: int = 8,
-    num_fine_sigmas: int = 128,
-    sigma_min_clip: float = 0.002,
-    sigma_max_clip: float = 80.0,
-    seed: int = 0xA75,
-    device: str | torch.device = "cuda",
-    image_shape: tuple[int, int, int] | None = None,
-) -> DenoisedTable:
-    """Run a Heun-Karras bootstrap, then evaluate D_theta(x_sigma, sigma)
-    at `num_fine_sigmas` log-uniform sigma values."""
-    device = torch.device(device)
-    shape = resolve_shape(net, image_shape)
-    sigma_min_eff, sigma_max_eff = resolve_sigma_range(net)
-    sigma_min_eff = max(sigma_min_eff, sigma_min_clip)
-    sigma_max_eff = min(sigma_max_eff, sigma_max_clip)
 
-    sigma_grid = np.exp(np.linspace(
-        np.log(sigma_max_eff), np.log(sigma_min_eff), num_fine_sigmas
-    )).astype(np.float32)
+def optimize_ays_40step(t_min: float, t_max: float, c: float = 0.5,
+                        maxiter_full: int = 400,
+                        maxiter_subdivide: int = 200) -> AysSchedule:
+    """Run the full 10 -> 20 -> 40 subdivision protocol (Sec. 3.3).
 
-    # Bootstrap Heun-Karras trajectory at the fine sigma grid (treat sigma_grid
-    # as the trajectory grid for simplicity; runs num_fine_sigmas-1 Heun steps).
-    sigma_grid_t = torch.tensor(sigma_grid, dtype=torch.float32, device=device)
-    x = sample_initial_noise((num_calib_samples, *shape), float(sigma_grid_t[0]),
-                             seed=seed, device=device)
-    denoised_per_sigma = []
-    denoised_per_sigma.append(denoise(net, x, sigma_grid_t[0]).cpu())
-    for k in range(num_fine_sigmas - 1):
-        sa, sb = sigma_grid_t[k], sigma_grid_t[k + 1]
-        denoised = denoise(net, x, sa)
-        d = (x - denoised) / sa
-        x_next = x + (sb - sa) * d
-        if sb.item() > 0:
-            denoised2 = denoise(net, x_next, sb)
-            d2 = (x_next - denoised2) / sb
-            x_next = x + (sb - sa) * 0.5 * (d + d2)
-        x = x_next
-        denoised_per_sigma.append(denoise(net, x, sb).cpu())
-
-    denoised_tensor = torch.stack(denoised_per_sigma, dim=0)
-    return DenoisedTable(
-        sigma_grid=sigma_grid,
-        denoised_per_sigma=denoised_tensor,
+    Returns a 40-step ascending schedule with t_0 = t_min, t_40 = t_max.
+    """
+    c2 = float(c * c)
+    grid_10 = _optimize_full_grid(t_min, t_max, K=10, c2=c2, maxiter=maxiter_full)
+    grid_20 = _subdivide_and_finetune(grid_10, c2=c2, maxiter=maxiter_subdivide)
+    grid_40 = _subdivide_and_finetune(grid_20, c2=c2, maxiter=maxiter_subdivide)
+    klub_10 = klub_total(grid_10, c2)
+    klub_20 = klub_total(grid_20, c2)
+    klub_40 = klub_total(grid_40, c2)
+    return AysSchedule(
+        t_grid=grid_40,
+        c2=c2,
         meta={
-            "num_calib_samples": num_calib_samples,
-            "num_fine_sigmas": num_fine_sigmas,
-            "sigma_min": sigma_min_eff,
-            "sigma_max": sigma_max_eff,
-            "seed": seed,
+            "t_min": t_min,
+            "t_max": t_max,
+            "c": c,
+            "klub_10": klub_10,
+            "klub_20": klub_20,
+            "klub_40": klub_40,
+            "stages": [grid_10.tolist(), grid_20.tolist(), grid_40.tolist()],
         },
     )
 
 
 # ---------------------------------------------------------------------------
-# KLUB loss for a candidate grid Pi_N
+# Public entry point used by samplers: descending sigma grid (Karras format)
 # ---------------------------------------------------------------------------
 
-def _D_at_sigma_via_interp(table: DenoisedTable, sigma_target: float) -> torch.Tensor:
-    """Linear log-sigma interpolation of D_theta into table. Returns shape (B,C,H,W)."""
-    grid = table.sigma_grid
-    log_grid = np.log(grid)        # descending in i
-    log_t = np.log(max(sigma_target, grid.min()))
-    # log_grid is monotone-decreasing; find bracketing pair
-    i = int(np.clip(np.searchsorted(-log_grid, -log_t) - 1, 0, len(log_grid) - 2))
-    log_lo, log_hi = log_grid[i], log_grid[i + 1]    # log_lo > log_hi (since descending)
-    if log_lo == log_hi:
-        return table.denoised_per_sigma[i]
-    f = (log_lo - log_t) / (log_lo - log_hi)
-    f = float(np.clip(f, 0.0, 1.0))
-    return (1 - f) * table.denoised_per_sigma[i] + f * table.denoised_per_sigma[i + 1]
+def ays_descending_sigmas(schedule: AysSchedule, K: int) -> np.ndarray:
+    """Return a Karras-format sigma grid with `K` substantive descending
+    sigmas (covering [sigma_min, sigma_max]) and a trailing 0, for a total
+    of K+1 elements.  This matches `karras_sigmas(num_steps=K)`'s shape so
+    our UniPC consumes exactly K NFE per sample.
 
-
-def klub_loss(sigmas: np.ndarray, table: DenoisedTable) -> float:
-    """KLUB(Pi_N) = sum_i integral over [sigma_i, sigma_{i-1}] of
-        (1/sigma^3) * mean_B ||D(x_sigma, sigma) - D(x_{sigma_{i-1}}, sigma_{i-1})||^2
-    where the inner expectation uses the bootstrap fine-grid evaluations.
-
-    Trapezoidal integration on the subset of fine-grid points that fall
-    inside each interval (plus interpolated endpoints).
+    The substantive sigmas are sampled from the cached 40-step AYS
+    schedule by piecewise log-linear interpolation in index space (the
+    paper's resampling rule for sub-40-step schedules, Sec. 3.3 last
+    paragraph).
     """
-    grid = table.sigma_grid
-    N_intervals = sigmas.shape[0] - 1
-    sigma_floor = float(grid.min())
-    total = 0.0
-    for i in range(N_intervals):
-        sigma_lo = float(sigmas[i + 1])           # right endpoint (smaller)
-        sigma_hi = float(sigmas[i])               # left endpoint (larger)
-        if sigma_hi <= sigma_floor:
-            continue
-        sigma_lo = max(sigma_lo, sigma_floor)
-        if sigma_lo >= sigma_hi:
-            continue
-        D_ref = _D_at_sigma_via_interp(table, sigma_hi)         # holds at left endpoint
-        # Fine-grid sigmas inside this interval
-        in_interval = (grid >= sigma_lo) & (grid <= sigma_hi)
-        sigma_inside = grid[in_interval]
-        D_inside = table.denoised_per_sigma[in_interval]
-        # Always include endpoints
-        sigma_lo_arr = np.array([sigma_lo])
-        sigma_hi_arr = np.array([sigma_hi])
-        sigma_full = np.concatenate([sigma_hi_arr, sigma_inside[::-1] if sigma_inside.size else sigma_inside, sigma_lo_arr])
-        D_lo = _D_at_sigma_via_interp(table, sigma_lo).unsqueeze(0)
-        D_hi = D_ref.unsqueeze(0)
-        if D_inside.shape[0] == 0:
-            D_full = torch.cat([D_hi, D_lo], dim=0)
-        else:
-            D_full = torch.cat([D_hi, D_inside.flip(0), D_lo], dim=0)
-        # Integrate (1/sigma^3) * mean_pixel_batch ||D_full[j] - D_ref||^2 d sigma
-        # over sigma_full (descending from sigma_hi to sigma_lo).
-        # Take sigma_full ascending for stable trapezoidal:
-        order = np.argsort(sigma_full)
-        sigma_sorted = sigma_full[order]
-        D_sorted = D_full[order]
-        # squared error per fine sigma, averaged over batch and pixels
-        err_sq = (D_sorted - D_ref.unsqueeze(0)).pow(2).mean(dim=tuple(range(1, D_sorted.dim())))
-        weight = 1.0 / (sigma_sorted ** 3 + 1e-12)
-        integrand = err_sq.numpy() * weight
-        # trapezoidal
-        seg = 0.5 * (integrand[:-1] + integrand[1:]) * np.diff(sigma_sorted)
-        total += float(seg.sum())
-    return total
-
-
-# ---------------------------------------------------------------------------
-# Optimize the K-1 free interior sigmas
-# ---------------------------------------------------------------------------
-
-def optimal_ays_grid(table: DenoisedTable, K: int, *, init: str = "karras",
-                     maxiter: int = 100) -> np.ndarray:
-    """Return Pi_K = (sigma_max, K-1 interior, sigma_min, 0) minimising KLUB."""
-    from scipy import optimize as _opt
-    sigma_min = float(table.sigma_grid.min())
-    sigma_max = float(table.sigma_grid.max())
-    log_range = np.log(sigma_max) - np.log(sigma_min)
-
-    def params_to_sigmas(deltas: np.ndarray) -> np.ndarray:
-        d = deltas - np.max(deltas)
-        ex = np.exp(d)
-        gaps = ex / ex.sum()
-        log_sigmas_inner = np.log(sigma_max) - np.cumsum(gaps) * log_range
-        sigmas = np.empty(K + 2, dtype=np.float64)
-        sigmas[0] = sigma_max
-        sigmas[1:K + 1] = np.exp(log_sigmas_inner)
-        sigmas[K + 1] = 0.0
-        return sigmas
-
-    def loss(deltas):
-        return klub_loss(params_to_sigmas(deltas), table)
-
-    if init == "karras":
-        with torch.no_grad():
-            kar = karras_sigmas(K, sigma_min, sigma_max, device="cpu").cpu().numpy()
-        kar_inner = kar[:K + 1] if kar[-1] == 0 else kar
-        if kar_inner.shape[0] != K + 1:
-            kar_inner = np.exp(np.linspace(np.log(sigma_max), np.log(sigma_min), K + 1))
-        log_gaps = -np.diff(np.log(np.clip(kar_inner, 1e-9, None))) / log_range
-        gaps_norm = np.clip(log_gaps, 1e-9, None)
-        gaps_norm = gaps_norm / gaps_norm.sum()
-        deltas_init = np.log(gaps_norm + 1e-9)
-        deltas_init -= deltas_init.mean()
-    else:
-        deltas_init = np.zeros(K, dtype=np.float64)
-
-    # Use a derivative-free optimizer since the loss is piecewise from
-    # trapezoidal integration on a fine grid (gradients are noisy but
-    # the loss surface is smooth in deltas at a coarser resolution).
-    res = _opt.minimize(loss, deltas_init, method="Nelder-Mead",
-                        options=dict(maxiter=maxiter * (K + 2), xatol=1e-3, fatol=1e-6,
-                                     adaptive=True, disp=False))
-    return params_to_sigmas(res.x).astype(np.float32)
+    K0 = schedule.t_grid.shape[0] - 1
+    # K substantive points covering both endpoints
+    x_src = np.arange(K0 + 1, dtype=np.float64) / K0
+    y_src = np.log(schedule.t_grid)
+    x_tgt = np.linspace(0.0, 1.0, K, dtype=np.float64)
+    asc = np.exp(np.interp(x_tgt, x_src, y_src))
+    desc = asc[::-1]
+    return np.concatenate([desc.astype(np.float32), np.array([0.0], dtype=np.float32)])
