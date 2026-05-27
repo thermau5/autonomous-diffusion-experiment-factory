@@ -422,6 +422,86 @@ UniPC) beats fixed and tuned-parametric Karras schedules at low NFE
 on CIFAR-10. It does \emph{not} claim a win against learned or
 adaptive schedules; those are open follow-up rounds.
 
+\section{Level-3 baseline plan (Issue \#1 \S5)}
+\label{sec:level3-plan}
+
+The locked test fixes \((\theta_{\mathrm{EDM}}, \pi_{\mathrm{EDM}})\)
+and varies only the solver core \(s\) and the schedule \(m\). The Level-3
+question --- ``does \emph{path-straightening} \(\pi\) beat schedule
+control \(m\) when both are properly tuned?'' --- requires changing
+\(\pi\), which means a different backbone (\(\theta\) trained on a
+different path family). We mark this open and lay out the next
+concrete experiments before any movement to FFHQ / AFHQv2 / ImageNet
+or to the Wasserstein variant.
+
+\paragraph{Candidate Level-3 baselines.} The path/coupling axis has
+four published families with available CIFAR-10 references:
+
+\begin{center}
+\scriptsize
+\begin{tabular}{l l l l l}
+\toprule
+method & path/coupling \(\pi\) & checkpoint? & training cost\(^\dagger\) & comment \\
+\midrule
+Rectified Flow / Reflow & straight-line + iterative reflow & yes (CIFAR-10 RF, 1- and 2-Reflow) & 0 (pretrained) & easiest drop-in \\
+OT-CFM (Tong et al.) & minibatch-OT flow matching & yes (TorchCFM CIFAR-10 examples) & 0 (pretrained) & second easiest \\
+Multisample Flow Matching & multisample-OT coupling & partial (need to train) & \(\sim 12\)--\(24\)\,h on the 4090 & in scope \\
+Optimal Flow Matching (Kornilov et al.) & optimal-Brenier coupling & no & \(\sim 24\)\,h on the 4090 & newest, smaller community \\
+\bottomrule
+\end{tabular}
+\end{center}
+\(^\dagger\) Estimated for CIFAR-10 32\(\times\)32 on a single RTX 4090.
+
+\paragraph{Table A vs Table B framing.} Per Issue \#1 \S5, do not merge
+fixed-EDM samplers with trained-transport baselines into one table.
+Report two separate tables:
+
+\begin{itemize}
+\item \textbf{Table A (fixed pretrained EDM backbone).} The locked-test
+content of this report (Sections \ref{sec:theory}--\ref{sec:tuned-rho}).
+\(\theta = \theta_{\mathrm{EDM}}\), \(\pi = \pi_{\mathrm{EDM}}\)
+fixed; \(s,\ m\) vary. Metrics: Clean-FID, actual NFE, wall-clock,
+SEM, retrain-needed flag (all ``no'').
+\item \textbf{Table B (trained transport-path baselines).}
+\(\pi\) varies, \(\theta\) is the corresponding trained backbone for
+that \(\pi\), \(s,\ m\) are method-specific. Metrics: Clean-FID,
+actual NFE, sampling wall-clock, training GPU-hours, total compute
+(training + sampling), pretrained-backbone-reused flag (``no'' for RF
+and Reflow if they require their own backbone),
+path/coupling-changed flag (always ``yes'').
+\end{itemize}
+
+The conclusion section must then separate two claims:
+\textbf{(i) inference-time control dominance on fixed pretrained
+diffusion} (the result this report establishes); and
+\textbf{(ii) path-straightening dominance among retrained flow models}
+(open).
+
+\paragraph{Proposed execution order.}
+\begin{enumerate}
+\item RF + Reflow on CIFAR-10 (pretrained backbones, \(\sim\)4\,h
+sampling + evaluation per method).
+\item OT-CFM on CIFAR-10 (pretrained, \(\sim\)4\,h).
+\item Pareto-AUC and Table B compiled; comparison to Table A.
+\item Optionally retrain MSFM or OFM if Table B suggests path-straightening
+is competitive at our NFE targets.
+\end{enumerate}
+
+\paragraph{What the result will tell us.}
+\begin{itemize}
+\item If \((\hat\pi, \hat s, m^\star_{\hat s})\) Pareto-dominates the
+EDM-Table-A frontier under total compute (training + sampling),
+the stronger ``path-straightening beats certified scheduling'' claim
+holds.
+\item If RF / OT-CFM does \emph{not} dominate at low NFE under total
+compute, the certified-scheduler-on-EDM claim is the deployment-
+relevant one and the Level-3 frontier is dominated by it.
+\item Mixed results (some NFE budgets favour each) is the most likely
+outcome and would justify a multi-regime claim.
+\end{itemize}
+
+Level-3 is queued as the next round after this report is final.
+
 \section{Tuned-\(\rho^\star\) baseline (Issue \#2 \S3.1)}
 \label{sec:tuned-rho}
 
