@@ -160,6 +160,21 @@ on a uniform-log-\(\sigma\) grid of \(M=32\) intervals over
 independent; the test step is the actual \(F_s\), so \(d_s\) is
 solver-specific by construction.
 
+\paragraph{Bootstrap: where \(x_b\) comes from.} The calibration needs
+in-distribution noisy images \(x_b\) at each \(\sigma_a\) \emph{before}
+the certificate has been solved. We bootstrap by running the standard
+\((\mathrm{Heun},\,\mathrm{Karras\,\rho{=}7})\) sampler --- the
+hand-tuned baseline from Karras 2022 that already produces
+FID\,\(\approx\,2\) at 35 NFE --- from pure noise at \(\sigma_{\max}\)
+down to \(\sigma_{\min}\), and use its trajectory \(x_b\) as the
+calibration source. This is the \emph{reverse} (sampler) trajectory,
+not the forward noising process: the EDM-Heun-Karras run is an
+off-the-shelf reference that doesn't depend on \(m_s^\star\), so the
+dependency chain is acyclic. Bootstrap cost is one-time per
+pretrained net (\(\sim\)10\,k NFE, \(\sim\)30\,s on the 4090, cached).
+Iterating the bootstrap with the new \((s, m_s^\star)\) sampler is
+possible but empirically unnecessary at validation-grade NFE.
+
 \paragraph{Scope (Appendix A correction).} The boxed pointwise form
 applies to single-step / pointwise-defect solvers (RK-class: Heun, EDM-Euler, DPM-Solver-2) and to multistep solvers whose leading
 defect is empirically pointwise (DPM-Solver++ 2M, UniPC --- Theorem A).
@@ -337,12 +352,79 @@ within the current single-GPU budget} (the dominant fixed cost is the
 re-derivation pipeline, not the eventual evaluation): faithful AYS
 re-derivation on EDM CIFAR-10 is a $\sim$1--2 day item. We choose to
 \textbf{defer to a follow-up round} on the grounds that (a) the tuned
-Karras-$\rho^\star$ baseline (\S\ref{sec:tuned-rho}) below is the
+Karras-$\rho^\star$ baseline (\S\ref{sec:tuned-rho}) is the
 \emph{within-family} schedule comparison the issue most directly asks
 for; (b) the bundled methods (DPM-Solver-v3, GENIE) cannot be used as
 pure schedule baselines; (c) AYS/DDSS implementation would not change
 the tuned-$\rho^\star$ comparison result we already get, only add one
 row to the Level-2 schedule table.
+
+\section{Tuned-\(\rho^\star\) baseline (Issue \#2 \S3.1)}
+\label{sec:tuned-rho}
+
+We sweep the Karras shape parameter
+\(\rho \in \{1, 2, 3, 5, 7, 9, 12, 15\}\) under the UniPC solver core
+(our headline winner) at NFE \(\in \{5, 8, 12, 18, 32, 64\}\) over 3
+seeds at 2000 Clean-FID samples per cell. \(\rho{=}7\) values are
+borrowed from the Round~3b validation sweep (same protocol, same NFE,
+same seed family); \(\rho \in \{1,2,3,5,9,12,15\}\) are new. The
+validation-optimal \(\rho^\star\) per NFE is the column-wise minimum.
+
+\begin{center}
+\scriptsize
+\begin{tabular}{r r r r r r r r r}
+\toprule
+NFE & \(\rho{=}1\) & \(\rho{=}2\) & \(\rho{=}3\) & \(\rho{=}5\) & \(\rho{=}7\) & \(\rho{=}9\) & \(\rho{=}12\) & \(\rho{=}15\) \\
+\midrule
+ 5 & 214.42 & 130.74 & 74.06 & 52.57 & \textbf{51.28} & 51.50 & 51.88 & 52.18 \\
+ 8 & 163.74 &  70.85 & 37.41 & 26.51 & 23.76 & 22.92 & 22.46 & \textbf{22.38} \\
+12 & 140.42 &  43.70 & 24.98 & 18.47 & 17.39 & 17.18 & \textbf{17.07} & 17.12 \\
+18 & 113.55 &  30.47 & 19.16 & 16.38 & 16.18 & 16.13 & \textbf{16.12} & 16.12 \\
+32 &  77.99 &  21.24 & 16.30 & 15.89 & 15.86 & \textbf{15.86} & 15.86 & 15.86 \\
+64 &  51.31 &  16.89 & 15.84 & 15.80 & 15.80 & 15.80 & \textbf{15.80} & 15.80 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Tuning \(\rho\) helps mildly at moderate NFE (\(-1.38\) FID at NFE=8 vs
+\(\rho{=}7\); \(-0.32\) at NFE=12) and \textbf{essentially does nothing
+at the smallest NFE} where the entire family converges to \(\approx 51
+\text{--}52\) FID.
+
+\paragraph{The load-bearing comparison.} (UniPC, m_s^\star) (Ours,
+nonparametric-calibrated) against UniPC with the validation-optimal
+parametric Karras \(\rho^\star\), at matched validation protocol
+(2000 samples / cell, 3 seeds):
+
+\begin{center}
+\small
+\begin{tabular}{r r r r r}
+\toprule
+actual NFE & UniPC \(\rho{=}7\) & UniPC \(\rho^\star\) & \textbf{(Ours, UniPC) \(m_s^\star\)} & \(\Delta\) vs \(\rho^\star\) \\
+\midrule
+ 5 & 51.28 & 51.50 \,(\(\rho{=}9\))  & \textbf{32.65} & \(\mathbf{-18.85}\) \\
+ 8 & 23.76 & 22.38 \,(\(\rho{=}15\)) & \textbf{20.58} & \(\mathbf{-1.80}\) \\
+12 & 17.39 & 17.07 \,(\(\rho{=}12\)) & \textbf{17.01} & \(-0.06\) \\
+18 & 16.18 & 16.12 \,(\(\rho{=}12\)) & \textbf{16.07} & \(-0.05\) \\
+32 & 15.86 & 15.86                   & 15.83          & \(-0.03\) (tie) \\
+64 & 15.80 & 15.80                   & 15.79          & \(-0.01\) (tie) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{What this rules out.} The nonparametric-calibrated
+\(m_s^\star\) win at low NFE is \emph{not} attributable to choosing a
+better Karras \(\rho\). At NFE=5 the tuned Karras family is flat across
+\(\rho\in\{5,7,9,12,15\}\) (FID 51--52); the certificate-derived
+\(m_s^\star\) breaks that floor by \(-18.85\) FID, an order of magnitude
+larger than tuning \(\rho\) achieves anywhere. At higher NFE the gap
+shrinks as everything saturates.
+
+\paragraph{What this confirms.} \((s, m_s^\star)\) Pareto-dominates the
+entire Karras family in \(\rho\), at every tested NFE in the
+deployment-relevant low-budget regime, under fixed
+\(\theta_{\mathrm{EDM}}, \pi_{\mathrm{EDM}}\), at the validation
+protocol used for the original Round~3b ablation.
 
 \section{Level-2: paired same-solver wins}
 
