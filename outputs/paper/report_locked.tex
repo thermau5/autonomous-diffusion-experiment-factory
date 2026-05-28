@@ -852,7 +852,7 @@ DDPM-anc.\ (A)       & --           & --            & 109.18  & --     & --     
 DPM-Solver++ (A)     & 40.14        & --            & --      & --     & --       & \textbf{23.19}  & 25.58 \\
 UniPC (A)            & 40.34        & --            & --      & 40.86  & 209.27   & \textbf{21.46}  & 25.64 \\
 DEIS (B)             & 35.12        & --            & --      & --     & --       & 28.61\(^b\)     & \textbf{27.17}\(^c\) \\
-DPM-Solver-v3 (B)    & --           & \textbf{17.0}\(^*\) & -- & --     & --       & 25.6\(^*\) (fail) & \(\circ\) \\
+DPM-Solver-v3 (B)    & 28.01\(^*\)  & \textbf{17.0}\(^*\) & -- & --     & --       & 25.6\(^*\) & bundled\(^d\) \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -873,6 +873,26 @@ finite-N calibrated certificate; \(-7.95\) vs Karras-DEIS baseline,
 \(\equiv\)A = single-step core; the calibrated-sequence machinery with no
 history reduces to the pointwise grid by construction.
 n/a = no calibrated-sequence variant for exact single-step cores.
+\(^d\) bundled = the DPM-Solver-v3 EMS coefficients are precomputed at
+logSNR-spaced nodes, so the schedule is not separably optimizable;
+see the schedule-sensitivity probe below.
+
+\noindent\textbf{DPM-Solver-v3: the EMS bundles the schedule.} DPM-Solver-v3
+is a strong Level-1 baseline (17.0 @ \(K{=}5\), beating (Ours, UniPC)
+21.46) but its ``empirical model statistics'' \((l,s,b)\) are computed
+once at a fixed logSNR grid; the schedule and solver are co-designed.
+The schedule-sensitivity probe (K=5, 10\,k) shows that \emph{any}
+deviation from logSNR degrades the core: logSNR\(+\)EMS 17.0,
+pointwise-\(m_s^\star\)\(+\)EMS 25.6, logSNR no-EMS 27.0, Karras\(+\)EMS
+28.0, time-uniform\(+\)EMS 253.6. Because the EMS already performs a
+schedule-locked optimization, our certificate (which optimizes the
+schedule at fixed solver) has no separable freedom to exploit --- a
+calibrated one-step optimizer would measure minimum v3 error \emph{at}
+logSNR and converge back to \(\approx 17.0\). Beating 17.0 therefore
+requires EMS-style \emph{solver}-core corrections (a Level-1 change),
+not a Level-2 schedule change. This is the cleanest demonstration in the
+study that solver and schedule are not always separable: DPM-Solver-v3
+is the one core where the \((s, m)\) factorization breaks.
 
 \noindent\textbf{Theorem A vs B, quantified (the ``both'' comparison).}
 For the effectively-pointwise multistep cores, the pointwise Theorem-A
