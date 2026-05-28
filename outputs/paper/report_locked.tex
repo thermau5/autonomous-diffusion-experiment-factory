@@ -851,7 +851,7 @@ DDIM (A)             & --           & --            & 63.41   & --     & --     
 DDPM-anc.\ (A)       & --           & --            & 109.18  & --     & --       & --              & n/a \\
 DPM-Solver++ (A)     & 40.14        & --            & --      & --     & --       & \textbf{23.19}  & \(\circ\) \\
 UniPC (A)            & 40.34        & --            & --      & 40.86  & 209.27   & \textbf{21.46}  & \(\circ\) \\
-DEIS (B)             & 35.12        & --            & --      & --     & --       & 28.61\(^b\)     & \textbf{26.99}\(^*\) \\
+DEIS (B)             & 35.12        & --            & --      & --     & --       & 28.61\(^b\)     & \textbf{27.17}\(^c\) \\
 DPM-Solver-v3 (B)    & --           & \textbf{17.0}\(^*\) & -- & --     & --       & 25.6\(^*\) (fail) & \(\circ\) \\
 \bottomrule
 \end{tabular}
@@ -863,8 +863,12 @@ DPM-Solver-v3 (B)    & --           & \textbf{17.0}\(^*\) & -- & --     & --    
 \(^b\) DEIS pointwise column is the \emph{borrowed} \(d_{\mathrm{Heun}}\)
 grid (Theorem A applied to a Theorem-B core), not a native pointwise
 rule.
-\(^*\) single-seed 10\,k (5-seed confirmation in progress);
+\(^*\) single-seed 10\,k (DPM-Solver-v3 baseline / pointwise probe);
 all others are locked 5-seed.
+\(^c\) calibrated-sequence DEIS, 5-seed 10\,k: \(27.17{\pm}0.13\) (Theorem-B
+finite-N calibrated certificate; \(-7.95\) vs Karras-DEIS baseline,
+\(-1.44\) vs the borrowed shared-\(d_{\mathrm{Heun}}\) stopgap, both at
+\(K{=}5\)).
 \(\circ\) = queued (the calibrated-sequence ``both'' runs for the A-cores
 and the DPM-Solver-v3 challenge).
 n/a = no calibrated-sequence variant for exact single-step cores.
@@ -923,10 +927,15 @@ grid \(m\) changes from \(m_s^{default}\) (Karras-style) to \(m_s^\star\)
 (certificate-optimal). For 3 of 4 cores (Heun, DPM-Solver++, UniPC) the
 certificate grid wins at every tested NFE from 5/9 up to 12. The DEIS
 column shows the same low-NFE win because \texttt{proposed\_deis} uses
-the shared \(d_{\mathrm{Heun}}\) grid (Theorem A); the corrected appendix's
-sequence-level Theorem B is implemented but does not yet outperform the
-shared heuristic empirically (pending a better terminal-amplification
-estimator).
+the shared \(d_{\mathrm{Heun}}\) grid (Theorem A borrowed). \textbf{The
+native finite-N calibrated Theorem B (PDF v4.1, App.~C;
+\texttt{proposed\_deis\_seq}) now outperforms the borrowed stopgap}: at
+\(K{=}5\) it scores \(27.17{\pm}0.13\) vs the shared grid's \(28.61\)
+(\(-1.44\)) and Karras-DEIS's \(35.12\) (\(-7.95\)), 5-seed 10\,k. The
+earlier \emph{leading-order} sequence optimizer (Round 3c) failed because
+it minimized an analytic defect that mis-predicts the true one-step error
+by \(10^2\text{--}10^3\times\) at deployment NFE; measuring the one-step
+error on-the-fly (App.~C, Prop.~3.1) removes the surrogate blind spot.
 SEMs are \(\sim 0.025\) so every \(|\Delta| \ge 0.1\) is \(>4\sigma\)
 separable.
 

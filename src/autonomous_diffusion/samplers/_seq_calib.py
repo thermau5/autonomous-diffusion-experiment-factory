@@ -98,6 +98,91 @@ def _deis_onestep_from_ref(ref: SeqReference, ji: int, jn: int, jp: int | None):
     return ref.Xref[ji] + (sn - si) * (cc * ref.EPSref[ji] + cp * ref.EPSref[jp])
 
 
+# ---------------------------------------------------------------------------
+# DPM-Solver++ 2M / UniPC shared predictor one-step map (data-prediction, lambda)
+# ---------------------------------------------------------------------------
+
+def _dpmpp_onestep_from_ref(ref: SeqReference, ji: int, jn: int, jp: int | None):
+    """One DPM-Solver++ 2M predictor step from reference node ji to jn, prev
+    node jp (1st-order if jp is None). Uses denoised (data prediction)
+    reconstructed from the reference: D = x - sigma*eps. UniPC shares this
+    predictor; its corrector is a fixed refinement that does not move the
+    optimal knot placement, so the same grid serves both cores."""
+    sig_t = torch.tensor(ref.sig, dtype=torch.float64, device=ref.Xref.device)
+    si, sn = sig_t[ji], sig_t[jn]
+    D_i = ref.Xref[ji] - si * ref.EPSref[ji]
+    h_i = (si.log() - sn.log())                      # lambda_{i+1}-lambda_i = log(si/sn)
+    if jp is None:
+        return (sn / si) * ref.Xref[ji] - torch.expm1(-h_i) * D_i
+    sp = sig_t[jp]
+    D_p = ref.Xref[jp] - sp * ref.EPSref[jp]
+    h_p = (sp.log() - si.log())                      # lambda_i-lambda_{i-1} = log(sp/si)
+    r = h_p / h_i
+    D_pred = (1 + 1 / (2 * r)) * D_i - (1 / (2 * r)) * D_p
+    return (sn / si) * ref.Xref[ji] - torch.expm1(-h_i) * D_pred
+
+
+# Registry of one-step maps by core name.
+_ONESTEP = {
+    "deis": lambda ref, ji, jn, jp: _deis_onestep_from_ref(ref, ji, jn, jp),
+    "dpmpp": _dpmpp_onestep_from_ref,
+    "unipc": _dpmpp_onestep_from_ref,   # shares the 2M predictor
+}
+
+
+def seq_objective(grid: np.ndarray, ref: SeqReference, core: str) -> float:
+    """Calibrated diagonal certificate (A_i=1), measured on-the-fly, for the
+    given solver core's one-step map. grid: K+1 elements [smax,...,smin,0]."""
+    onestep = _ONESTEP[core]
+    s = grid[:-1]
+    total = 0.0
+    for i in range(len(s) - 1):
+        ji = ref.near(s[i]); jn = ref.near(s[i + 1])
+        jp = ref.near(s[i - 1]) if i > 0 else None
+        xloc = onestep(ref, ji, jn, jp)
+        total += (xloc - ref.Xref[jn]).reshape(ref.Xref.shape[1], -1).pow(2).sum(1).mean().item()
+    return total
+
+
+def optimal_seq_grid_for(ref: SeqReference, K: int, core: str, *, maxiter: int = 150) -> np.ndarray:
+    """K-substantive monotone grid minimizing the calibrated certificate for
+    `core`. Returns K+1 elements [sigma_max,...,sigma_min,0] (NFE = K)."""
+    from scipy import optimize as _opt
+    sigma_min = float(ref.sig.min()); sigma_max = float(ref.sig.max())
+    lr = np.log(sigma_max) - np.log(sigma_min)
+
+    def d2s(deltas):
+        d = deltas - deltas.max(); ex = np.exp(d); gaps = ex / ex.sum()
+        loginner = np.log(sigma_max) - np.cumsum(gaps) * lr
+        out = np.empty(K + 1)
+        out[0] = sigma_max; out[1:K] = np.exp(loginner[:K - 1]); out[K - 1] = sigma_min; out[K] = 0.0
+        return out
+
+    kar = karras_sigmas(K, sigma_min, sigma_max, device="cpu").cpu().numpy()
+    ki = kar[:K] if kar[-1] == 0 else kar
+    lg = -np.diff(np.log(np.clip(ki, 1e-9, None))) / lr
+    g0 = np.clip(lg, 1e-9, None); g0 = g0 / g0.sum()
+    d0 = np.log(g0 + 1e-9); d0 -= d0.mean()
+    if d0.shape[0] != K - 1:
+        d0 = np.zeros(K - 1)
+
+    res = _opt.minimize(lambda d: seq_objective(d2s(d), ref, core), d0, method="Nelder-Mead",
+                        options=dict(maxiter=maxiter * K, xatol=1e-4, fatol=1e-8, adaptive=True))
+    return d2s(res.x).astype(np.float32)
+
+
+def get_or_build_seq_grid(net, K: int, core: str, *, root="outputs/calibration",
+                          device="cuda", image_shape=None, ref_kwargs=None) -> np.ndarray:
+    """Cached calibrated grid for an arbitrary core (deis/dpmpp/unipc)."""
+    path = grid_cache_path(net, K, root=root, tag=f"{core}_seq")
+    if path.exists():
+        return np.array(json.loads(path.read_text())["grid"], dtype=np.float32)
+    ref = build_reference(net, device=device, image_shape=image_shape, **(ref_kwargs or {}))
+    grid = optimal_seq_grid_for(ref, K, core)
+    path.write_text(json.dumps({"grid": grid.tolist(), "K": K, "core": core, "ref_meta": ref.meta}))
+    return grid
+
+
 def deis_seq_objective(grid: np.ndarray, ref: SeqReference) -> float:
     """Calibrated diagonal certificate with A_i=1 (PDF v4.1 eq 6/31),
     measured on-the-fly. grid: K+1 elements [sigma_max,...,sigma_min,0]."""

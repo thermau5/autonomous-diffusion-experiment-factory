@@ -21,3 +21,5 @@ from . import ays_unipc          # noqa: F401  -- ays_unipc        (AYS learned 
 from . import dpm_solver_v3 as _dpmv3  # noqa: F401  -- dpm_solver_v3  (Level-1 baseline; EMS-corrected solver)
 from . import proposed_dpm_solver_v3    # noqa: F401  -- proposed_dpm_solver_v3 (m_s* on DPM-Solver-v3 core)
 from . import proposed_deis_seq          # noqa: F401  -- proposed_deis_seq (calibrated finite-N certificate, PDF v4.1)
+from . import proposed_dpmpp_seq          # noqa: F401  -- proposed_dpmpp_seq (calibrated-B on DPM-Solver++ core)
+from . import proposed_unipc_seq          # noqa: F401  -- proposed_unipc_seq (calibrated-B on UniPC core)
