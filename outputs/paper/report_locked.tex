@@ -846,11 +846,11 @@ the finite-N calibrated certificate, App.~C).
 core (thm) & Karras \(\rho{=}7\) & unif-log & DDPM-\(\beta\) & tuned \(\rho^\star\) & AYS & Ours \(m_s^\star\) (pt) & Ours seq (B) \\
 \midrule
 Euler (A)            & 69.32        & --            & --      & --     & --       & --              & n/a \\
-Heun (A)             & 45.24\(^9\)  & 62.48\(^9\)   & --      & --     & --       & \textbf{13.54}\(^9\) & \(\circ\) \\
+Heun (A)             & 45.24\(^9\)  & 62.48\(^9\)   & --      & --     & --       & \textbf{13.54}\(^9\) & \(\equiv\)A \\
 DDIM (A)             & --           & --            & 63.41   & --     & --       & --              & n/a \\
 DDPM-anc.\ (A)       & --           & --            & 109.18  & --     & --       & --              & n/a \\
-DPM-Solver++ (A)     & 40.14        & --            & --      & --     & --       & \textbf{23.19}  & \(\circ\) \\
-UniPC (A)            & 40.34        & --            & --      & 40.86  & 209.27   & \textbf{21.46}  & \(\circ\) \\
+DPM-Solver++ (A)     & 40.14        & --            & --      & --     & --       & \textbf{23.19}  & 25.58 \\
+UniPC (A)            & 40.34        & --            & --      & 40.86  & 209.27   & \textbf{21.46}  & 25.64 \\
 DEIS (B)             & 35.12        & --            & --      & --     & --       & 28.61\(^b\)     & \textbf{27.17}\(^c\) \\
 DPM-Solver-v3 (B)    & --           & \textbf{17.0}\(^*\) & -- & --     & --       & 25.6\(^*\) (fail) & \(\circ\) \\
 \bottomrule
@@ -869,9 +869,28 @@ all others are locked 5-seed.
 finite-N calibrated certificate; \(-7.95\) vs Karras-DEIS baseline,
 \(-1.44\) vs the borrowed shared-\(d_{\mathrm{Heun}}\) stopgap, both at
 \(K{=}5\)).
-\(\circ\) = queued (the calibrated-sequence ``both'' runs for the A-cores
-and the DPM-Solver-v3 challenge).
+\(\circ\) = queued (DPM-Solver-v3 calibrated challenge).
+\(\equiv\)A = single-step core; the calibrated-sequence machinery with no
+history reduces to the pointwise grid by construction.
 n/a = no calibrated-sequence variant for exact single-step cores.
+
+\noindent\textbf{Theorem A vs B, quantified (the ``both'' comparison).}
+For the effectively-pointwise multistep cores, the pointwise Theorem-A
+grid \(m_s^\star\) is not merely \(\approx\) the calibrated Theorem-B
+sequence grid --- it is \emph{strictly better} at low NFE: DPM-Solver++
+23.19 (A) vs 25.58 (B), UniPC 21.46 (A) vs 25.64 (B), both \(K{=}5\)
+10\,k. Both still beat the Karras default by \(\approx 14.5\). The
+history-coupling of these cores is weak enough that sequence
+optimization buys nothing, and the pointwise rule additionally carries
+the FID-perceptual weight \(w(\sigma){=}\sigma^{-2}\) that the
+pixel-space calibrated certificate (with \(A_i{\equiv}1\)) omits. By
+contrast, for the genuinely history-coupled DEIS core --- where the
+pointwise entry is only a \emph{borrowed} \(d_{\mathrm{Heun}}\) grid, not
+a native per-core calibration --- the calibrated Theorem-B grid wins
+(\(27.17\) vs the borrowed \(28.61\), \(-1.44\)). So each theorem owns a
+regime: \textbf{Theorem A is superior where coupling is weak
+(DPM++, UniPC); Theorem B is required where coupling is strong and
+pointwise is only a stopgap (DEIS).}
 
 \noindent\textbf{Reading the grid.} (i) The \(m_s^\star\) column is the
 result: every core for which we built a proposed variant beats its own
