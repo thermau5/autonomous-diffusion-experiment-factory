@@ -18,3 +18,6 @@ from . import proposed_unipc    # noqa: F401  -- proposed_unipc   (UniPC predict
 from . import proposed_deis     # noqa: F401  -- proposed_deis    (DEIS tAB-2 core)
 from . import proposed_restart  # noqa: F401  -- proposed_restart (Restart wrapper + Heun)
 from . import ays_unipc          # noqa: F401  -- ays_unipc        (AYS learned schedule on UniPC core)
+from . import dpm_solver_v3 as _dpmv3  # noqa: F401  -- dpm_solver_v3  (Level-1 baseline; EMS-corrected solver)
+from . import proposed_dpm_solver_v3    # noqa: F401  -- proposed_dpm_solver_v3 (m_s* on DPM-Solver-v3 core)
+from . import proposed_deis_seq          # noqa: F401  -- proposed_deis_seq (calibrated finite-N certificate, PDF v4.1)

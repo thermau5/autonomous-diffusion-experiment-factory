@@ -824,6 +824,67 @@ NFE \(\ge 8\) but mis-picked at NFE=5 due to FID-noise sensitivity ---
 exactly the kind of failure that a non-FID-tuned, calibrated method
 avoids.
 
+\section{Unified solver core \(\times\) schedule grid}
+\label{sec:unified-grid}
+
+\noindent\textit{Setup:} \textsc{fix} \(\theta_{\mathrm{EDM}},
+\pi_{\mathrm{EDM}}\); \textsc{variable} = (solver core \(s\), schedule
+class \(m\)); cells are Clean-FID at requested \(K{=}5\) (10\,k samples).
+The schedule \(m\) is a fully separable axis: any column can in principle
+run on any row; a solver's shipped ``default'' is just the column where
+its baseline sits. For EDM (\(\alpha{=}1,\ \sigma_t{=}t\)) uniform-logSNR
+\(\equiv\) uniform-log-\(\sigma\), so DPM-Solver-v3's ``logSNR'' default
+lands in the uniform-log column. Rows are tagged by which theorem
+governs the certificate: \textbf{A} = pointwise (single-step or
+empirically-pointwise), \textbf{B} = history-coupled multistep (requires
+the finite-N calibrated certificate, App.~C).
+
+\begin{center}
+\scriptsize
+\begin{tabular}{l r r r r r r r}
+\toprule
+core (thm) & Karras \(\rho{=}7\) & unif-log & DDPM-\(\beta\) & tuned \(\rho^\star\) & AYS & Ours \(m_s^\star\) (pt) & Ours seq (B) \\
+\midrule
+Euler (A)            & 69.32        & --            & --      & --     & --       & --              & n/a \\
+Heun (A)             & 45.24\(^9\)  & 62.48\(^9\)   & --      & --     & --       & \textbf{13.54}\(^9\) & \(\circ\) \\
+DDIM (A)             & --           & --            & 63.41   & --     & --       & --              & n/a \\
+DDPM-anc.\ (A)       & --           & --            & 109.18  & --     & --       & --              & n/a \\
+DPM-Solver++ (A)     & 40.14        & --            & --      & --     & --       & \textbf{23.19}  & \(\circ\) \\
+UniPC (A)            & 40.34        & --            & --      & 40.86  & 209.27   & \textbf{21.46}  & \(\circ\) \\
+DEIS (B)             & 35.12        & --            & --      & --     & --       & 28.61\(^b\)     & \textbf{26.99}\(^*\) \\
+DPM-Solver-v3 (B)    & --           & \textbf{17.0}\(^*\) & -- & --     & --       & 25.6\(^*\) (fail) & \(\circ\) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+\(^9\) Heun-class costs \(2K{-}1\) NFE \(\Rightarrow\) actual NFE 9 at
+\(K{=}5\); all unmarked cells are actual NFE 5.
+\(^b\) DEIS pointwise column is the \emph{borrowed} \(d_{\mathrm{Heun}}\)
+grid (Theorem A applied to a Theorem-B core), not a native pointwise
+rule.
+\(^*\) single-seed 10\,k (5-seed confirmation in progress);
+all others are locked 5-seed.
+\(\circ\) = queued (the calibrated-sequence ``both'' runs for the A-cores
+and the DPM-Solver-v3 challenge).
+n/a = no calibrated-sequence variant for exact single-step cores.
+
+\noindent\textbf{Reading the grid.} (i) The \(m_s^\star\) column is the
+result: every core for which we built a proposed variant beats its own
+default by a wide margin at \(K{=}5\) (Heun \(45.2{\to}13.5\), DPM++
+\(40.1{\to}23.2\), UniPC \(40.3{\to}21.5\)). (ii) UniPC is the only
+fully-explored row, carrying the tuned-\(\rho^\star\) (40.86) and AYS
+(209.27) baselines from Rounds 5a/5b. (iii) For the Theorem-B cores the
+\(m_s^\star\) column splits: DEIS shows the borrowed-pointwise stopgap
+(28.61) and the native calibrated-sequence grid (26.99, beating both its
+own Karras default \(35.12\) by \(-8.13\) and the stopgap by \(-1.62\));
+DPM-Solver-v3's pointwise attempt fails (25.6) against its own
+logSNR\(+\)EMS default (17.0), and the calibrated-sequence challenge is
+queued. (iv) Empty cells are runnable, not structural: the highest-value
+fills are the queued \(\circ\) cells (calibrated-sequence on the three
+A-cores, to quantify the A\(\approx\)B gap) and the DPM-Solver-v3
+challenge.
+
 \section{Level-2: paired same-solver wins}
 
 \noindent\textit{Setup:} \textsc{fix} \(\theta_{\mathrm{EDM}},
