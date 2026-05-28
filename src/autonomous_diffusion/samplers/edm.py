@@ -44,10 +44,12 @@ def _edm_sample(
     image_shape,
     heun: bool,
 ) -> SamplerOutput:
+    import os
     device = torch.device(device)
     shape = resolve_shape(net, image_shape)
     sigma_min, sigma_max = resolve_sigma_range(net)
-    sigmas = karras_sigmas(num_steps, sigma_min, sigma_max, device=device).to(torch.float32)
+    rho = float(os.environ.get("AD_KARRAS_RHO", "7.0"))
+    sigmas = karras_sigmas(num_steps, sigma_min, sigma_max, rho=rho, device=device).to(torch.float32)
 
     out: list[torch.Tensor] = []
     nfe_per_sample = 0
@@ -68,7 +70,7 @@ def _edm_sample(
         samples=torch.cat(out, dim=0)[:num_samples],
         nfe=nfe_per_sample,
         metadata={"schedule": "karras", "sigma_min": sigma_min, "sigma_max": sigma_max,
-                  "rho": 7.0, "num_steps": num_steps, "heun": heun},
+                  "rho": rho, "num_steps": num_steps, "heun": heun},
     )
 
 

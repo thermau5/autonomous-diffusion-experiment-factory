@@ -846,10 +846,10 @@ the finite-N calibrated certificate, App.~C).
 core (thm) & Karras \(\rho{=}7\) & unif-log & DDPM-\(\beta\) & tuned \(\rho^\star\) & AYS & Ours \(m_s^\star\) (pt) & Ours seq (B) \\
 \midrule
 Euler (A)            & 69.32        & --            & --      & --     & --       & --              & n/a \\
-Heun (A)             & 45.24\(^9\)  & 62.48\(^9\)   & --      & --     & --       & \textbf{13.54}\(^9\) & \(\equiv\)A \\
+Heun (A)             & 45.24\(^9\)  & 62.48\(^9\)   & --      & 42.58\(^{9,r}\) & --       & \textbf{13.54}\(^9\) & \(\equiv\)A \\
 DDIM (A)             & --           & --            & 63.41   & --     & --       & --              & n/a \\
 DDPM-anc.\ (A)       & --           & --            & 109.18  & --     & --       & --              & n/a \\
-DPM-Solver++ (A)     & 40.14        & --            & --      & --     & --       & \textbf{23.19}  & 25.58 \\
+DPM-Solver++ (A)     & 40.14        & --            & --      & 40.14\(^{r}\) & --       & \textbf{23.19}  & 25.58 \\
 UniPC (A)            & 40.34        & --            & --      & 40.86  & 209.27   & \textbf{21.46}  & 25.64 \\
 DEIS (B)             & 35.12        & --            & --      & --     & --       & 28.61\(^b\)     & \textbf{27.17}\(^c\) \\
 DPM-Solver-v3 (B)    & 28.01\(^*\)  & \textbf{17.0}\(^*\) & -- & --     & --       & 25.6\(^*\) & bundled\(^d\) \\
@@ -876,6 +876,13 @@ n/a = no calibrated-sequence variant for exact single-step cores.
 \(^d\) bundled = the DPM-Solver-v3 EMS coefficients are precomputed at
 logSNR-spaced nodes, so the schedule is not separably optimizable;
 see the schedule-sensitivity probe below.
+\(^r\) tuned \(\rho^\star\) chosen on 2k validation (3 seeds), re-evaluated
+at 10\,k: Heun \(\rho^\star{=}9\) (42.58), DPM-Solver++ \(\rho^\star{=}7\)
+(= Karras default, already optimal), UniPC \(\rho^\star{=}9\) (40.86).
+\textbf{Ours \(m_s^\star\) beats tuned-\(\rho^\star\) on all three cores
+at \(K{=}5\): Heun \(-29.0\), DPM-Solver++ \(-16.95\), UniPC \(-19.40\)}
+--- the certificate win is not attributable to choosing a better Karras
+\(\rho\).
 
 \noindent\textbf{DPM-Solver-v3: the EMS bundles the schedule.} DPM-Solver-v3
 is a strong Level-1 baseline (17.0 @ \(K{=}5\), beating (Ours, UniPC)
