@@ -163,32 +163,74 @@ what carries this discrimination: it penalizes schedules that
 under-resolve the low-$\sigma$ region where perturbations survive into the
 final features.
 
-\section{The FID-optimal schedule}
+\section{The derived schedule, and its limit at deployment NFE}
 \label{sec:schedule}
 
 The closed-form optimizer
 $m^{\star}_{\mathrm{FID}}(\sigma)\propto\bigl(d_s(\sigma)\,g(\sigma)\bigr)^{1/(p+1)}$
 follows from Cauchy--Schwarz on $\int d_s^{\varphi}/m^p$ subject to
-$\int m\,d\sigma=K$. It is a fully measured object: $d_s$ from one-step
-solver residuals against a fine reference, $g$ from the feature-sensitivity
-probe of \S\ref{sec:estimator}. No free perceptual hyperparameter enters
---- the perceptual weighting is supplied by the measured $g(\sigma)$.
+$\int m\,d\sigma=K$, with $d_s$ and $g$ both measured (no free perceptual
+hyperparameter). We tested it end-to-end on the UniPC core against a
+schedule using a fixed power-law perceptual weight $w(\sigma)=\sigma^{-2}$
+tuned directly on validation FID (Clean-FID, 3 seeds, $10$k):
 
-\section{Caveats and next steps}
-\label{sec:caveats}
+\begin{center}
+\small
+\begin{tabular}{l r r r}
+\toprule
+$K$ & $m^{\star}$ from $g$ (direct $d_s^{\varphi}$) & $m^{\star}$ from $g$ (random-probe) & $\sigma^{-2}$ tuned \\
+\midrule
+5 & 26.3 & 34.0 & \textbf{21.5} \\
+8 & 11.9 & 19.2 & \textbf{9.2} \\
+\bottomrule
+\end{tabular}
+\end{center}
 
+\noindent
+Two facts. (i) Using the \emph{actual} error direction (direct
+$d_s^{\varphi}$: one true solver step propagated to the features) beats a
+random-direction probe ($26.3$ vs $34.0$ at $K{=}5$) --- the systematic
+error direction carries more feature weight than the average direction,
+as expected. (ii) Nonetheless, neither measured schedule beats the
+directly-FID-tuned $\sigma^{-2}$.
+
+The reason is a regime gap, not an estimation error. $g(\sigma)$ is a
+\emph{linear} (small-$\epsilon$) sensitivity, but at deployment NFE the
+steps are large: $g$ reports high-$\sigma$ perturbations as nearly free
+($g(40)\!\approx\!10^{-4}$) because an infinitesimal high-$\sigma$ kick is
+absorbed by the remaining flow, whereas an actual $80\!\to\!4$ step is
+catastrophic in a way linear sensitivity cannot see. The derived schedule
+therefore takes too large a first step and loses FID. A weight tuned
+\emph{at the operating $K$} implicitly accounts for this large-step
+nonlinearity; a first-principles weight from local/linear analysis does
+not.
+
+\section{What is established, and what is not}
+\label{sec:scope}
+
+\paragraph{Established.} FID is a feature-space $W_2$, and the
+feature-amplified difficulty $d_s^{\varphi}=d_s\,g$ is faithful to it
+\emph{at the ranking level}: $\mathcal R_{\mathrm{FID}}$ orders schedules
+by FID where local pixel difficulty cannot, and the feature sensitivity
+$g(\sigma)$ explains \emph{why} low-$\sigma$ resolution is perceptually
+decisive. This is the correct risk geometry for FID.
+
+\paragraph{Not established.} The closed-form $m^{\star}_{\mathrm{FID}}$
+from measured $g$ does \emph{not} outperform a perceptual weight tuned
+directly on FID at the operating NFE. At low NFE the linear feature
+sensitivity underestimates large-step error, so the derived schedule is a
+correct \emph{explanation} of the tuned weight's behaviour but not an
+improvement on it.
+
+\paragraph{Open routes to close the gap.}
 \begin{itemize}
-\item The validation is leading-order: it uses the covariance term
-$\operatorname{Tr}\operatorname{Cov}(\Delta\varphi)$; the mean-shift term
-$\lVert\mathbb E[\Delta\varphi]\rVert^2$ should be added for schedules with
-systematic (non-zero-mean) error.
-\item $g(\sigma)$ here is a single-batch, $28$-node estimate with a
-differentiable-bicubic resize standing in for the exact feature-extractor
-resize. The agreement is rank-level; a multi-seed, finer-grid, exact-resize
-estimate is the confirmation run.
-\item The end-to-end test is to instantiate
-$m^{\star}_{\mathrm{FID}}\propto(d_s g)^{1/(p+1)}$ and measure its
-Clean-FID against strong baselines under the locked protocol.
+\item Add the mean-shift term $\lVert\mathbb E[\Delta\varphi]\rVert^2$
+(this report uses the covariance term only).
+\item Replace the linear sensitivity $g$ by a \emph{finite-step} feature
+response measured at the deployment step size, removing the
+small-$\epsilon$ assumption that fails for large steps.
+\item Estimate $g$ at multi-seed with the exact feature-extractor resize
+(here: single batch, $28$ nodes, bicubic proxy).
 \end{itemize}
 
 \end{document}
