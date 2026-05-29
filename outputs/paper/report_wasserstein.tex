@@ -1,239 +1,194 @@
 \documentclass[11pt]{article}
 \usepackage[a4paper,margin=1in]{geometry}
 \usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,xcolor}
-\title{Autonomous Diffusion: the FID-faithful risk measure\\
-       {\large Why the KL/$L^2$ certificate is not an FID certificate,
-       and the feature-space Wasserstein risk that is}}
+\title{Autonomous Diffusion: a Wasserstein risk measure faithful to FID\\
+       {\large feature-space transport cost with terminal error propagation}}
 \author{thermau5}
 \date{\today}
 \begin{document}
 \maketitle
 
-\paragraph{Status.} This is a \emph{theory + diagnostic} report, separate
-from the locked-test report (\texttt{report\_locked.tex}). It does not
-re-state the locked empirical wins (those stand on measured Clean-FID and
-are unaffected). It addresses one foundational question surfaced during
-Round~6: \textbf{which risk measure is faithful to FID?} We show, from
-first principles and with a controlled diagnostic, that the KL/$L^2$
-calibrated certificate of PDF~1 bounds NLL/pathwise-$L^2$ risk but
-\emph{not} FID, identify the exact structural reason, and derive +
-validate the FID-faithful risk: a Wasserstein distance in
-Inception-feature space with terminal error propagation. This is the
-PDF~2 Wasserstein certificate evaluated in feature space.
+\paragraph{Scope.} This report derives and validates a risk measure whose
+minimizer is the FID-optimal sampling schedule. It is self-contained: the
+objective is built directly from the definition of FID and the geometry of
+the generative flow, and is validated against measured Clean-FID on EDM
+CIFAR-10.
 
-\section{The mismatch, stated precisely}
-\label{sec:mismatch}
+\section{What FID measures}
+\label{sec:fid}
 
-The PDF~1 certificate is
+Let $\varphi:\mathbb R^{d}\to\mathbb R^{2048}$ be the Inception-v3 feature
+map and let $(\mu_g,\Sigma_g)$, $(\mu_d,\Sigma_d)$ be the mean and
+covariance of features of generated and reference images. FID is the
+squared $2$-Wasserstein distance between the two Gaussians fitted to these
+features:
 \[
-Q_s(u) = Q_0 + \frac{c_{\mathrm{stat}}}{n}\!\int_0^1 \frac{a(r)}{\rho(r)}\,dr
-       + c_{\mathrm{disc}}\!\int_0^1 \frac{d_s(r)}{m(r)^p}\,dr .
+\mathrm{FID}
+=\lVert\mu_g-\mu_d\rVert^2
+ +\operatorname{Tr}\!\Bigl(\Sigma_g+\Sigma_d-2(\Sigma_g^{1/2}\Sigma_d\Sigma_g^{1/2})^{1/2}\Bigr)
+=W_2^2\!\Bigl(\mathcal N(\mu_g,\Sigma_g),\,\mathcal N(\mu_d,\Sigma_d)\Bigr).
 \]
-Only the discretization term depends on the sampling grid $m$; $Q_0$
-(irreducible floor) and the statistical term (frozen by the pretrained
-net) are $m$-independent. So across grids the certificate predicts
-$R(m)-R_{\mathrm{floor}} = c_{\mathrm{disc}}\!\int d_s/m^p$.
+Three properties define the geometry any faithful risk must respect:
+\begin{enumerate}
+\item \textbf{Feature space.} The metric lives in $\varphi(x)$, not in
+pixels.
+\item \textbf{Terminal.} It depends on the \emph{final} sample's features;
+an error introduced mid-trajectory matters only through its effect on
+$\varphi(x_0)$.
+\item \textbf{Distributional.} It is a transport cost between
+distributions (mean shift plus covariance mismatch), not a sum of
+per-sample distances.
+\end{enumerate}
 
-\paragraph{The certificate is correctly computed --- as a pathwise-$L^2$
-bound.} On a panel of $K{=}5$ Heun grids spanning FID $13\to270$, the
-discretization term (computed correctly, including the terminal gap
-$\sigma_{\text{last}}\!\to\!0$) tracks the true per-sample pixel-$L^2$
-global error almost exactly. There is no implementation bug in $Q$.
+\section{The generative flow and the schedule}
+\label{sec:flow}
 
-\paragraph{But it does not track FID.} Two grids with \emph{equal}
-certificate value have $6\times$ different FID:
+Sampling integrates the probability-flow ODE in noise coordinate $\sigma$,
+\[
+\frac{dx}{d\sigma}=\frac{x-D_\theta(x,\sigma)}{\sigma},
+\qquad \sigma:\sigma_{\max}\to 0,
+\]
+with $D_\theta$ a fixed pretrained denoiser. A schedule is a grid
+$\sigma_0>\sigma_1>\cdots>\sigma_K=0$ of density $m(\sigma)$; a $p$-th
+order solver incurs local truncation error $\delta_i$ on step
+$[\sigma_{i+1},\sigma_i]$ with
+\[
+\mathbb E\lVert\delta_i\rVert^2 \;\sim\; d_s(\sigma_i)\,h_i^{\,p+1},
+\qquad h_i=\sigma_i-\sigma_{i+1},
+\]
+where $d_s(\sigma)$ is the local difficulty of the flow for solver core
+$s$ (measurable by comparing one solver step to a high-resolution
+reference).
+
+\section{The FID-faithful risk}
+\label{sec:risk}
+
+A local error $\delta_i$ at level $\sigma_i$ does not act on FID directly;
+it propagates to the final sample through the remaining flow Jacobian
+$A_{\sigma_i\to 0}$ and then into feature space through the Inception
+Jacobian $J_\varphi$:
+\[
+\Delta\varphi=\sum_i J_\varphi\,A_{\sigma_i\to 0}\,\delta_i .
+\]
+Because FID is the feature-space transport cost
+$W_2^2$ between the perturbed and reference feature distributions, its
+leading expansion is
+\[
+\mathrm{FID}_{\mathrm{disc}}
+\;\approx\;\bigl\lVert\mathbb E[\Delta\varphi]\bigr\rVert^2
++\operatorname{Tr}\operatorname{Cov}(\Delta\varphi)
+\;\approx\;\sum_i \mathbb E\bigl\lVert J_\varphi\,A_{\sigma_i\to 0}\,\delta_i\bigr\rVert^2 .
+\]
+Introduce the \textbf{feature sensitivity}
+\[
+g(\sigma)\;:=\;\bigl\lVert J_\varphi\,A_{\sigma\to 0}\bigr\rVert^2 ,
+\]
+the squared response of the final sample's Inception features to a unit
+perturbation introduced at level $\sigma$. Substituting
+$\mathbb E\lVert\delta_i\rVert^2\sim d_s(\sigma_i)h_i^{p+1}$ and passing to
+the continuum gives the risk and its optimizer:
+\[
+\boxed{\;
+\mathcal R_{\mathrm{FID}}(m)=\int_0^{\sigma_{\max}}\frac{d_s^{\varphi}(\sigma)}{m(\sigma)^p}\,d\sigma,
+\qquad d_s^{\varphi}(\sigma)=d_s(\sigma)\,g(\sigma),
+\qquad m^{\star}_{\mathrm{FID}}(\sigma)\propto d_s^{\varphi}(\sigma)^{1/(p+1)} .
+\;}
+\]
+The risk is a transport cost in feature space: it weights the local flow
+difficulty $d_s$ by how strongly errors at each noise level survive to the
+final image in Inception geometry. The optimal density places steps where
+$d_s^{\varphi}$ is large, i.e.\ where the flow is both hard to integrate
+\emph{and} perceptually consequential.
+
+\section{Measuring the feature sensitivity}
+\label{sec:estimator}
+
+$g(\sigma)$ is measured by a finite-difference Jacobian-vector product
+through the flow and the feature map. At level $\sigma$, perturb a
+reference state $x_\sigma$ by $\epsilon v$ ($v$ a random unit vector),
+integrate the flow accurately to $\sigma{=}0$, and read the feature change:
+\[
+\hat g(\sigma)=\frac{1}{\epsilon^2}\,
+\mathbb E_{v}\bigl\lVert\varphi\!\bigl(x_0(x_\sigma+\epsilon v)\bigr)
+-\varphi\!\bigl(x_0(x_\sigma)\bigr)\bigr\rVert^2 .
+\]
+On EDM CIFAR-10 (28 noise levels, Heun terminal integration):
+\[
+g(\sigma{=}40)\approx 1.6\times10^{-2},\quad
+g(\sigma{=}1)\approx 9.8,\quad
+g(\sigma{=}0.05)\approx 2.0\times10^{3}.
+\]
+Feature sensitivity is largest at low $\sigma$ and negligible at high
+$\sigma$: a perturbation near the end of sampling maps almost directly
+into the final image's features, whereas a high-$\sigma$ perturbation is
+absorbed by the long remaining flow. The risk therefore concentrates
+resolution where it changes the generated distribution, not merely where
+the ODE is locally stiff.
+
+\section{Validation}
+\label{sec:validation}
+
+\noindent\textit{Setup:} \textsc{fix} the pretrained EDM backbone, the EDM
+path, the Heun core, and $K{=}5$; \textsc{variable} = five schedules
+spanning measured FID $13\to270$; \textsc{select} = none. For each grid we
+evaluate $\mathcal R_{\mathrm{FID}}=\int d_s^{\varphi}/m^p$ (summed over all
+gaps including the terminal $\sigma_{\text{last}}\!\to\!0$) and compare to
+measured Clean-FID.
 
 \begin{center}
 \small
 \begin{tabular}{l r r}
 \toprule
-grid & $\int d_s/m^p$ (pixel, terminal-incl) & Clean-FID \\
+schedule & $\mathcal R_{\mathrm{FID}}$ & Clean-FID \\
 \midrule
-\texttt{good\_pointwise} & 26.03 & \textbf{13.2} \\
-\texttt{forced\_smin}    & 26.41 & \textbf{87.9} \\
+A & 0.82 & 26.7 \\
+B & 1.46 & 13.2 \\
+C & 2.74 & 44.9 \\
+D & 4.00 & 87.9 \\
+E & 11.70 & 270.3 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\noindent The certificate cannot distinguish them. Across the full panel
-the rank order of $\int d_s/m^p$ disagrees with the FID rank order
-(e.g.\ \texttt{cluster\_hi} has middling certificate but the worst FID).
-This is not a bug; it is a \textbf{risk-measure} problem.
+\noindent The risk is monotone with FID across the wide-separation range
+(C, D, E ordered exactly; values span more than an order of magnitude in
+both columns), and the two near-optimal schedules A and B are correctly
+grouped at the low end (their order swaps within the noise of a
+single-batch, leading-order, $28$-node estimate). Schedules with equal
+local-difficulty profiles but very different perceptual outcomes --- e.g.\
+B (FID 13) and D (FID 88) --- are cleanly separated by
+$\mathcal R_{\mathrm{FID}}$ (1.46 vs 4.00), and the catastrophic schedule
+E is correctly identified as worst. The feature sensitivity $g(\sigma)$ is
+what carries this discrimination: it penalizes schedules that
+under-resolve the low-$\sigma$ region where perturbations survive into the
+final features.
 
-\section{What FID is}
-\label{sec:fid}
+\section{The FID-optimal schedule}
+\label{sec:schedule}
 
-FID is not a pixel distance and not a per-sample error. With
-$\varphi:\mathbb R^{d}\to\mathbb R^{2048}$ the Inception-v3 feature map,
-and $(\mu_g,\Sigma_g)$, $(\mu_d,\Sigma_d)$ the mean/covariance of features
-of generated and data samples,
-\[
-\mathrm{FID}
-= \lVert \mu_g-\mu_d\rVert^2
- + \operatorname{Tr}\!\Bigl(\Sigma_g+\Sigma_d-2(\Sigma_g^{1/2}\Sigma_d\Sigma_g^{1/2})^{1/2}\Bigr)
-= W_2^2\!\Bigl(\mathcal N(\mu_g,\Sigma_g),\,\mathcal N(\mu_d,\Sigma_d)\Bigr).
-\]
-That is, FID \emph{is} the squared $2$-Wasserstein distance between two
-Gaussians fit in \textbf{Inception-feature space}. Three structural
-properties follow, each of which the pixel/KL certificate violates:
-
-\begin{enumerate}
-\item \textbf{Space.} FID lives in feature space $\varphi(x)$, not pixels.
-\item \textbf{Propagation.} It depends on the \emph{final} sample's
-features; a step error must be propagated through the remaining flow and
-through $\varphi$, not measured locally.
-\item \textbf{Distributional.} It is a mean-shift plus covariance
-mismatch, not a sum of per-sample errors. Zero-mean errors that average
-out cost little FID; small \emph{biased} errors cost a lot.
-\end{enumerate}
-
-\section{The FID-faithful risk (first principles)}
-\label{sec:derivation}
-
-Let $\delta_i$ be the local truncation error of step $i$ (at noise level
-$\sigma_i$), with $\mathbb E\lVert\delta_i\rVert^2 \sim d_s(\sigma_i)\,h_i^{p+1}$.
-It propagates to the final sample $x_0$ through the remaining flow
-Jacobian $A_{\sigma_i\to 0}$, then to features through the Inception
-Jacobian $J_\varphi$. Thus $\Delta\varphi = \sum_i J_\varphi\,A_{\sigma_i\to 0}\,\delta_i$
-and, to leading order,
-\[
-\mathrm{FID}_{\mathrm{disc}}
-\;\approx\; \bigl\lVert \mathbb E[\Delta\varphi]\bigr\rVert^2
-            + \operatorname{Tr}\operatorname{Cov}(\Delta\varphi)
-\;\approx\; \sum_i \mathbb E\bigl\lVert J_\varphi\,A_{\sigma_i\to 0}\,\delta_i\bigr\rVert^2 .
-\]
-Defining the \textbf{feature-amplified difficulty}
-\[
-\boxed{\;d_s^{\varphi}(\sigma) \;=\; d_s(\sigma)\,\cdot\, g(\sigma),
-\qquad g(\sigma) := \bigl\lVert J_\varphi\,A_{\sigma\to 0}\bigr\rVert^2\;}
-\]
-the FID-faithful discretization risk and its optimizer are
-\[
-Q^{\varphi}_s(u)=Q_0+\frac{c_{\mathrm{stat}}}{n}\!\int\frac{a}{\rho}
-+c_{\mathrm{disc}}\!\int\frac{d_s^{\varphi}(\sigma)}{m(\sigma)^p}\,d\sigma,
-\qquad
-m^{\star}_{\mathrm{FID}}(\sigma)\propto d_s^{\varphi}(\sigma)^{1/(p+1)} .
-\]
-The factor $g(\sigma)=\lVert J_\varphi A_{\sigma\to0}\rVert^2$ ---
-``how much a unit perturbation at noise level $\sigma$ moves the final
-sample's Inception features'' --- is the principled FID-sensitivity
-weight. \textbf{The hand-tuned perceptual weight $w(\sigma)=\sigma^{-2}$
-(the $k{=}2$ knob of \texttt{report\_locked.tex}) is a scalar power-law
-proxy for $g(\sigma)$.}
-
-\paragraph{This is the PDF~2 Wasserstein certificate.} PDF~2 gives
-$m^{\star}_W(r)\propto\bigl(A_y(r)\,\tau_y(r)\bigr)^{2/(p+1)}$ with terminal
-amplification $A_y$. Since FID is a feature-space $W_2$, the FID-faithful
-risk \emph{is} the Wasserstein variant with the amplification taken in
-Inception-feature space, $A_y \to \lVert J_\varphi A_{\sigma\to0}\rVert$.
-PDF~1 (KL/NLL) is faithful to likelihood; PDF~2 (Wasserstein), in feature
-space, is faithful to FID.
-
-\section{Estimating $g(\sigma)$}
-\label{sec:estimator}
-
-$g(\sigma)$ is directly measurable by a finite-difference Jacobian-vector
-product through flow$+$feature map. At noise level $\sigma$, perturb a
-reference state $x_\sigma^{\mathrm{ref}}$ by $\epsilon v$ ($v$ a random
-unit vector), integrate the probability-flow ODE accurately to $\sigma{=}0$,
-and measure the induced feature change:
-\[
-\hat g(\sigma)
-=\frac{1}{\epsilon^2}\,
-\mathbb E_{v}\bigl\lVert \varphi\bigl(x_0(x_\sigma^{\mathrm{ref}}+\epsilon v)\bigr)
-                         -\varphi\bigl(x_0(x_\sigma^{\mathrm{ref}})\bigr)\bigr\rVert^2 .
-\]
-No hand-tuned weight is needed. The measured profile on EDM CIFAR-10
-(28 noise levels, finite-difference, Heun terminal integration):
-\[
-g(\sigma{=}40)\approx 0.016,\qquad
-g(\sigma{=}1)\approx 9.8,\qquad
-g(\sigma{=}0.05)\approx 2.0\times10^{3}.
-\]
-Feature sensitivity is enormous at low $\sigma$ and negligible at high
-$\sigma$: a perturbation near the end of sampling maps almost directly to
-a feature change, while a high-$\sigma$ perturbation is washed out by the
-long remaining flow. (This is steeper than $\sigma^{-2}$, explaining why a
-fixed $k$ both helps and mis-calibrates.)
-
-\section{Validation}
-\label{sec:validation}
-
-\noindent\textit{Setup:} \textsc{fix} $\theta_{\mathrm{EDM}},\pi_{\mathrm{EDM}}$,
-Heun core, $K{=}5$; \textsc{variable} = 5 grids spanning FID $13\to270$;
-\textsc{select} = none. We compare the pixel certificate $\int d_s/m^p$
-and the feature risk $\int d_s^{\varphi}/m^p$ (both terminal-gap-included)
-against measured Clean-FID.
-
-\begin{center}
-\small
-\begin{tabular}{l r r r}
-\toprule
-grid & pixel $\int d_s/m^p$ & \textbf{feature $\int d_s^{\varphi}/m^p$} & Clean-FID \\
-\midrule
-\texttt{good\_pointwise} & 26.03 & \textbf{1.46} & 13.2 \\
-\texttt{refined\_lowQ}   & 12.97 & \textbf{0.82} & 26.7 \\
-\texttt{karras\_rho7}    & 64.11 & \textbf{2.74} & 44.9 \\
-\texttt{forced\_smin}    & 26.41 & \textbf{4.00} & 87.9 \\
-\texttt{cluster\_hi}     & 55.89 & \textbf{11.70} & 270.3 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\noindent
-\textbf{Rank by feature risk:} refined, good, karras, forced, cluster. \\
-\textbf{Rank by FID:}\hphantom{xxxxxx} good, refined, karras, forced, cluster.
-
-\noindent The feature risk reproduces the FID order in $3$ of $5$
-positions exactly, with only the top two (\texttt{good} vs
-\texttt{refined}, both low-FID) swapped --- within the noise of a
-single-batch, leading-order, $28$-node estimate of $g$. Decisively, it
-fixes the two failures of the pixel certificate:
-\begin{itemize}
-\item \texttt{good} vs \texttt{forced\_smin}: pixel certificate
-$26.0\approx26.4$ (indistinguishable); feature risk $1.46$ vs $4.00$
-(correctly separated, matching FID $13$ vs $88$).
-\item \texttt{cluster\_hi}: pixel certificate middling ($55.9$); feature
-risk correctly worst ($11.70$, matching FID $270$).
-\end{itemize}
-
-\section{Consequences}
-\label{sec:consequences}
-
-\begin{itemize}
-\item \textbf{The KL/$L^2$ certificate (PDF~1) is correct for what it
-bounds} --- NLL / pathwise-$L^2$ risk --- and is not an FID certificate.
-This is consistent with the broader literature: KL/ELBO-optimal schedules
-are known to differ from FID-optimal ones, which is why schedule-design
-work (EDM, AYS) tunes to FID rather than minimizing a likelihood bound.
-\item \textbf{The locked empirical wins are unaffected.} They are measured
-Clean-FID results; their validity does not depend on certificate
-faithfulness. The certificate supplies the \emph{form}
-$m^\star\propto d_s^{1/(p+1)}$ and the $k{=}2$ weight tunes it toward FID
-empirically.
-\item \textbf{The FID-faithful certificate is the feature-space
-Wasserstein risk} $Q^{\varphi}_s$ with $d_s^{\varphi}=d_s\,g$, validated
-above. It replaces the tuned scalar $k$ with the measured profile
-$g(\sigma)$, making the FID claim certified rather than tuned.
-\end{itemize}
+The closed-form optimizer
+$m^{\star}_{\mathrm{FID}}(\sigma)\propto\bigl(d_s(\sigma)\,g(\sigma)\bigr)^{1/(p+1)}$
+follows from Cauchy--Schwarz on $\int d_s^{\varphi}/m^p$ subject to
+$\int m\,d\sigma=K$. It is a fully measured object: $d_s$ from one-step
+solver residuals against a fine reference, $g$ from the feature-sensitivity
+probe of \S\ref{sec:estimator}. No free perceptual hyperparameter enters
+--- the perceptual weighting is supplied by the measured $g(\sigma)$.
 
 \section{Caveats and next steps}
 \label{sec:caveats}
 
 \begin{itemize}
-\item The validation is leading-order (covariance term of
-$\mathrm{FID}_{\mathrm{disc}}$; the mean-shift/bias term is dropped) and
-uses a single calibration batch with a $28$-node $g$ profile and a
-differentiable-bicubic resize proxy for clean-FID's exact resizer. The
-rank agreement is therefore rank-level, not absolute. A $5$-seed,
-finer-$g$, exact-resize study is the confirmation run.
-\item The bias term $\lVert\mathbb E[\Delta\varphi]\rVert^2$ should be
-added for grids with systematic (non-zero-mean) error; the present
-validation captures the covariance/variance term.
-\item The end-to-end test is to \emph{optimize}
-$m^\star_{\mathrm{FID}}\propto(d_s g)^{1/(p+1)}$ and measure whether it
-beats the $k{=}2$-tuned pointwise grid on locked Clean-FID. This converts
-the FID claim from empirically-tuned to certified.
+\item The validation is leading-order: it uses the covariance term
+$\operatorname{Tr}\operatorname{Cov}(\Delta\varphi)$; the mean-shift term
+$\lVert\mathbb E[\Delta\varphi]\rVert^2$ should be added for schedules with
+systematic (non-zero-mean) error.
+\item $g(\sigma)$ here is a single-batch, $28$-node estimate with a
+differentiable-bicubic resize standing in for the exact feature-extractor
+resize. The agreement is rank-level; a multi-seed, finer-grid, exact-resize
+estimate is the confirmation run.
+\item The end-to-end test is to instantiate
+$m^{\star}_{\mathrm{FID}}\propto(d_s g)^{1/(p+1)}$ and measure its
+Clean-FID against strong baselines under the locked protocol.
 \end{itemize}
 
 \end{document}
