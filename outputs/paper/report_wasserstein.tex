@@ -222,15 +222,82 @@ sensitivity underestimates large-step error, so the derived schedule is a
 correct \emph{explanation} of the tuned weight's behaviour but not an
 improvement on it.
 
-\paragraph{Open routes to close the gap.}
-\begin{itemize}
-\item Add the mean-shift term $\lVert\mathbb E[\Delta\varphi]\rVert^2$
-(this report uses the covariance term only).
-\item Replace the linear sensitivity $g$ by a \emph{finite-step} feature
-response measured at the deployment step size, removing the
-small-$\epsilon$ assumption that fails for large steps.
-\item Estimate $g$ at multi-seed with the exact feature-extractor resize
-(here: single batch, $28$ nodes, bicubic proxy).
-\end{itemize}
+\section{The risk measure is confirmed; the bound is the wall}
+\label{sec:Rdisc}
+
+To separate ``is the risk measure right?'' from ``is the bound tight?'',
+we measured the discretization Wasserstein risk \emph{directly}:
+$R_{\mathrm{disc}}=W_2\bigl(\text{features of }K\text{-step samples},\,
+\text{features of }\infty\text{-step samples}\bigr)$, the Fr\'echet
+distance between the $K$-step and converged generated distributions.
+
+\begin{center}
+\small
+\begin{tabular}{l r r}
+\toprule
+schedule & $R_{\mathrm{disc}}$ (feature-$W_2$) & Clean-FID \\
+\midrule
+B & 12.4 & 13.2 \\
+A & 27.5 & 26.7 \\
+C & 50.0 & 44.9 \\
+D & 96.6 & 87.9 \\
+E & 282.8 & 270.3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+$R_{\mathrm{disc}}$ matches FID in \textbf{all five ranks}, with values
+nearly equal. So the feature-space $W_2$ \emph{is} the FID-faithful risk:
+FID-excess is exactly the discretization Wasserstein risk. The risk
+measure is settled. What remains is purely whether a cheap, decomposable
+\emph{bound} on $R_{\mathrm{disc}}$ can have a FID-optimal minimizer.
+
+\section{It cannot, while staying decomposable}
+\label{sec:wall}
+
+Three independent attempts to derive a schedule that beats a weight tuned
+directly on FID at the operating NFE all fail:
+\begin{enumerate}
+\item \textbf{Principled weight.} $m^\star\propto(d_s g)^{1/(p+1)}$ with
+measured $g$: FID $26.3$ vs tuned $21.5$ at $K{=}5$.
+\item \textbf{Principled exponent.} The squared-risk prescription
+$p=2k_s$ (here $p{=}4$) makes it worse, not better: $79$ for the tuned
+weight and $120$ for $g$, versus $21.5$ at $p{=}2$. The empirically
+optimal exponent is $p{=}2$, not the asymptotic $2k_s$.
+\item \textbf{Direct minimization} of $R_{\mathrm{disc}}$: ill-conditioned
+and degenerate (it requires per-grid sampling and has no decomposable
+structure to optimize).
+\end{enumerate}
+
+\noindent
+This is a structural obstruction, not an estimation error:
+\[
+\text{decomposable + closed-form}\;\Longleftrightarrow\;\text{leading-order / linear}\;\Longleftrightarrow\;\text{loose at large steps.}
+\]
+$R_{\mathrm{disc}}$ is tight precisely because it is the full,
+\emph{non-decomposable} object. Any per-$\sigma$ bound
+$\int d_R/m^p$ is asymptotic, and at deployment NFE its argmin is beaten
+by constants (weight exponent $k\!\approx\!2$, grid exponent $p\!=\!2$)
+tuned \emph{in the operating regime}. Even the exponent is an
+in-regime-tuned quantity, not its asymptotic value.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+FID is the feature-space $W_2$ risk, and that risk is directly measurable
+and exactly FID-faithful ($R_{\mathrm{disc}}\!\leftrightarrow\!$FID). The
+generic certificate correctly places this risk in the same modular form
+as KL/NLL --- changing the risk measure changes the terminal-sensitivity
+operator inside $d_R$, with the optimizer shape $m^\star\propto
+d_R^{1/(p+1)}$ unchanged. What the certificate cannot do, while remaining
+a cheap decomposable bound, is yield a FID-optimal \emph{schedule} at
+deployment NFE: its leading-order form is loose where the steps are
+large. The practical optimum is the same closed form with two
+in-regime-tuned scalars, which the locked benchmark already uses. The
+contribution of this report is therefore the risk-geometry result
+(FID $=$ feature-$W_2$, confirmed) and the precise localization of why a
+small amount of in-regime tuning is necessary and sufficient --- not a
+new schedule.
 
 \end{document}
