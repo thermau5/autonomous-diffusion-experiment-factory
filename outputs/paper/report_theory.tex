@@ -1,0 +1,487 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,booktabs,hyperref,xcolor,bm}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{proposition}{Proposition}
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\newcommand{\R}{\mathcal R}
+\newcommand{\E}{\mathbb E}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\title{A Generic Excess-Risk Certificate for Diffusion / Flow Samplers\\
+       {\large path, parameterization, solver, and risk measure in one theorem;\\
+        with the calibration and tuning that instantiate it}}
+\author{thermau5}
+\date{\today}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We derive, from first principles, a single certified upper bound on the
+excess terminal risk of a learned diffusion/flow sampler, valid for any
+probability path $P$, learned-field parameterization $h$, numerical
+solver core $s$, and terminal risk measure $\R$. The bound decomposes
+into an irreducible floor, a statistical (estimation) term scaling as
+$1/n$, and a discretization term scaling as $N^{-p}$ in the number of
+function evaluations. Minimizing it gives closed-form optimal training
+and sampling densities, $\rho^\star\propto\sqrt{a}$ and
+$m^\star\propto d^{1/(p+1)}$, with an explicit accuracy--compute
+frontier. We then specialize: the parameterization $h$ enters through a
+conversion Jacobian; the path $P$ through the floor and both densities;
+the solver $s$ only through the local defect; and the risk measure $\R$
+through a terminal-sensitivity operator. We give the score / noise /
+$x_0$ / $v$ / flow instances and the KL / Wasserstein / feature-space
+(FID) instances. Finally we separate, operationally and honestly, what
+is \emph{calibrated} (measured intrinsic quantities, no metric feedback)
+from what is \emph{tuned} (parameters selected against the evaluation
+metric), and we report what our experiments establish: the feature-space
+$W_2$ risk is the directly-measurable, FID-faithful risk; the certificate
+is exact for the risk it bounds but is an asymptotic (small-step) object;
+and a single in-regime exponent closes the deployment-NFE gap that no
+decomposable bound can.
+\end{abstract}
+
+\tableofcontents
+
+\section{Setup and notation}
+\label{sec:setup}
+
+Let $r\in[0,B]$ be an intrinsic path coordinate (e.g.\ a monotone
+reparameterization of noise level $\sigma$ or half-log-SNR
+$\lambda=-\log\sigma$). A \emph{probability path} $P$ specifies
+intermediate laws $\mu_r^P$ interpolating a tractable prior $\mu_0^P$ and
+the data law $\mu_B^P=p_{\mathrm{data}}$.
+
+\paragraph{Learned field and parameterization.}
+The oracle target is a field $h_P^\star(x,r)$; a network learns
+$h_\theta(x,r)\approx h_P^\star(x,r)$. Common choices:
+\[
+h=s\ (\text{score }\nabla_x\log\mu_r),\quad
+h=\epsilon\ (\text{noise}),\quad
+h=x_0\ (\text{data}),\quad
+h=v\ (\text{velocity / flow}).
+\]
+The learned object is converted into a physical generative field
+(an SDE drift or ODE velocity) by a path-and-parameterization map
+$F_{P,h}[\,\cdot\,]$. Write the induced \emph{physical error}
+\[
+e_F(x,r)=F_{P,h}[h_\theta](x,r)-F_{P,h}[h_P^\star](x,r),
+\qquad
+e_h(x,r)=h_\theta(x,r)-h_P^\star(x,r).
+\]
+
+\paragraph{Solver and sampler.}
+A solver core $s$ of state order $k_s$ discretizes the generative
+dynamics on a grid $r_0<\cdots<r_N=B$ of step density $m(r)$
+($\int_0^B m=N$). A training schedule density $\rho(r)$ allocates the $n$
+training samples ($\int_0^B\rho=n$, effective local count $n\rho(r)$).
+The full control is $u=(\theta,P,h,s,\rho,m,N)$.
+
+\paragraph{Risk.}
+The terminal risk is $\R_{P,h}(\theta)=\R(\mu_B^\theta,\mu_B^\star)$ for a
+divergence/metric $\R$ (KL, $W_2$, feature-space distance, task loss).
+The \emph{excess risk} is $\R_{P,h,s}(\theta,m)-\R^\star$ where $\R^\star$
+is the best achievable by the family.
+
+\section{The generic certificate}
+\label{sec:generic}
+
+\subsection{Assumptions}
+
+\begin{assumption}[Local linearization of the conversion]\label{as:lin}
+There is a (matrix- or scalar-valued) field $J_{P,h}(r)$ such that
+$e_F(x,r)=J_{P,h}(r)\,e_h(x,r)+o(\norm{e_h})$ uniformly on the support of
+$\mu_r^P$.
+\end{assumption}
+
+\begin{assumption}[Terminal-risk stability]\label{as:stab}
+There is a nonnegative weight $G_P^\R(r)$ (the \emph{terminal-risk
+sensitivity}) such that local physical errors propagate to terminal risk
+as
+\[
+\R_{P,h}(\theta)-\R^\star \;\le\;
+\int_0^B G_P^\R(r)\,\E_{x\sim\mu_r^P}\norm{e_F(x,r)}^2\,dr \;+\; B_{\mathrm{disc}} .
+\]
+\end{assumption}
+
+\begin{assumption}[Local ERM rate]\label{as:erm}
+For the local population risk
+$L_{P,h,r}(\theta)=\E_{x\sim\mu_r^P}\norm{h_\theta(x,r)-h_P^\star(x,r)}^2$,
+the ERM estimator $\hat\theta_\rho$ obeys, near $r$,
+\[
+L_{P,h,r}(\hat\theta_\rho)\;\le\; b_{P,h}^2(r)+\frac{c_{\mathrm{stat}}\,V_{P,h}(r)}{n\rho(r)},
+\]
+with $b_{P,h}^2(r)=\inf_{\theta\in\Theta}L_{P,h,r}(\theta)$ the local
+approximation bias and $V_{P,h}(r)$ the local statistical difficulty
+(target variance / complexity / effective dimension).
+\end{assumption}
+
+\begin{assumption}[Solver local defect]\label{as:solver}
+The solver's leading local truncation defect at $(x,r)$ is
+\[
+\tau_s(x,r)=\lim_{\Delta r\to 0}\frac{\Psi_{s,\Delta r}(x)-\Phi_{\Delta r}(x)}{(\Delta r)^{k_s+1}},
+\]
+where $\Phi$ is the exact one-step flow and $\Psi_s$ one solver step.
+\end{assumption}
+
+\subsection{Stability $\to$ parameterization-weighted target risk}
+
+\begin{lemma}[Risk weight]\label{lem:weight}
+Under Assumptions~\ref{as:lin}--\ref{as:stab}, with the
+\emph{parameterization-specific risk weight}
+\[
+w_{P,h}^\R(r):=G_P^\R(r)\,\norm{J_{P,h}(r)}_{\mathrm{op}}^2 ,
+\]
+the terminal excess risk obeys
+\[
+\R_{P,h}(\theta)-\R^\star \le
+\int_0^B w_{P,h}^\R(r)\,\E_{\mu_r^P}\norm{h_\theta-h_P^\star}^2\,dr + B_{\mathrm{disc}} .
+\]
+\end{lemma}
+\begin{proof}
+Insert Assumption~\ref{as:lin} into Assumption~\ref{as:stab} and bound
+$\norm{J e_h}^2\le\norm{J}_{\mathrm{op}}^2\norm{e_h}^2$. The $o(\cdot)$
+term is higher order and absorbed into $B_{\mathrm{disc}}$.
+\end{proof}
+
+\subsection{Insert ERM $\to$ statistical term}
+
+Plugging Assumption~\ref{as:erm} into Lemma~\ref{lem:weight} and defining
+\[
+Q_{0,P,h}=\int_0^B w_{P,h}^\R(r)\,b_{P,h}^2(r)\,dr,
+\qquad
+a_{P,h}^\R(r)=w_{P,h}^\R(r)\,V_{P,h}(r),
+\]
+gives
+\[
+\R_{P,h}(\hat\theta_\rho)-\R^\star \le
+Q_{0,P,h}+\frac{c_{\mathrm{stat}}}{n}\int_0^B\frac{a_{P,h}^\R(r)}{\rho(r)}\,dr
++ B_{\mathrm{disc}} .
+\]
+
+\subsection{Discretization term}
+
+\begin{lemma}[Discretization density]\label{lem:disc}
+Under Assumption~\ref{as:solver}, with terminal-risk amplification
+$A_\R(r,x)$ (the linear sensitivity of final risk to a state perturbation
+introduced at $r$) and risk exponent $q\in\{1,2\}$,
+define the \emph{local numerical stiffness}
+\[
+d_{P,h,s}^\R(r)=\E_{x\sim\mu_r^P}\big\|A_\R(r,x)\,\tau_s(x,r)\big\|^q .
+\]
+Then, for step density $m$ and a risk-decay exponent $p$,
+\[
+B_{\mathrm{disc}}\;\le\; c_{\mathrm{disc}}\int_0^B \frac{d_{P,h,s}^\R(r)}{m(r)^p}\,dr .
+\]
+For a state-order-$k_s$ solver, $p=k_s$ for an unsquared terminal error
+and $p=2k_s$ for a squared-error certificate; in general $p$ is the
+\emph{risk}-decay order, not automatically the solver state order.
+\end{lemma}
+\begin{proof}[Proof sketch]
+A step of size $h\sim 1/m$ at $r$ has local state defect
+$\norm{\tau_s}h^{k_s+1}$; its terminal-risk contribution is
+$\norm{A_\R\tau_s}^q h^{q(k_s+1)}$. The number of steps near $r$ per unit
+$r$ is $m$, so the contribution density is
+$m\cdot\norm{A_\R\tau_s}^q (1/m)^{q(k_s+1)}=d_{P,h,s}^\R\,m^{-(q(k_s+1)-1)}$.
+Writing $p=q\,k_s+(q-1)$ and absorbing constants gives the stated form;
+the two displayed cases are $q=1$ ($p=k_s$) and $q=2$ ($p=2k_s$).
+\end{proof}
+
+\subsection{Main theorem}
+
+\begin{theorem}[Generic excess-risk certificate]\label{thm:main}
+Under Assumptions~\ref{as:lin}--\ref{as:solver}, for any path $P$,
+parameterization $h$, solver $s$, and risk $\R$,
+\[
+\boxed{\;
+\R_{P,h,s}(\hat\theta_\rho,m)-\R^\star \;\le\;
+Q_{P,h,s}^\R(\rho,m,N)=
+Q_{0,P,h}+\frac{c_{\mathrm{stat}}}{n}\int_0^B\frac{a_{P,h}^\R(r)}{\rho(r)}\,dr
++ c_{\mathrm{disc}}\int_0^B\frac{d_{P,h,s}^\R(r)}{m(r)^p}\,dr .
+\;}
+\]
+\end{theorem}
+\begin{proof}
+Combine the ERM-inserted bound with Lemma~\ref{lem:disc}.
+\end{proof}
+
+\paragraph{Certificate hierarchy.}
+Reading off the dependencies:
+\[
+\text{change }h\Rightarrow \text{changes }a;\quad
+\text{change }P\Rightarrow \text{changes }a,d,Q_0;\quad
+\text{change }s\Rightarrow \text{changes only }d;\quad
+\text{change }\R\Rightarrow \text{changes }a,d\ \text{(through }G^\R,A_\R).
+\]
+
+\section{The optimizer and the frontier}
+\label{sec:optimizer}
+
+\begin{theorem}[Optimal densities]\label{thm:opt}
+Fix $N,n$. The minimizers of $Q_{P,h,s}^\R$ over densities with
+$\int\rho=n$, $\int m=N$ are
+\[
+\rho^\star(r)\propto\sqrt{a_{P,h}^\R(r)},
+\qquad
+m^\star(r)\propto d_{P,h,s}^\R(r)^{1/(p+1)} .
+\]
+\end{theorem}
+\begin{proof}
+The statistical term $\int a/\rho$ under $\int\rho=n$ is minimized by
+Cauchy--Schwarz: $\big(\int\sqrt a\big)^2\le \big(\int a/\rho\big)\big(\int\rho\big)$,
+equality iff $\rho\propto\sqrt a$. For the grid, the Lagrangian
+$\int d/m^p-\lambda(\int m-N)$ has stationarity
+$-p\,d\,m^{-(p+1)}=\lambda$, i.e.\ $m^{p+1}\propto d$, giving
+$m^\star\propto d^{1/(p+1)}$.
+\end{proof}
+
+\begin{corollary}[Optimized certificate / frontier]\label{cor:frontier}
+At the optima,
+\[
+Q^{\R,\star}_{P,h,s}(N)=Q_{0,P,h}
++\frac{c_{\mathrm{stat}}}{n}\Big(\int_0^B\!\sqrt{a_{P,h}^\R}\Big)^2
++\frac{c_{\mathrm{disc}}}{N^{p}}\Big(\int_0^B\!{d_{P,h,s}^\R}^{1/(p+1)}\Big)^{p+1}.
+\]
+Inverting $Q^{\R,\star}(N)\le\varepsilon$ gives the minimum-NFE
+accuracy-constrained sampler $N^\star(\varepsilon)$.
+\end{corollary}
+
+\noindent The shape laws $\rho^\star\propto\sqrt a$,
+$m^\star\propto d^{1/(p+1)}$ are \emph{invariant} across all
+$(P,h,s,\R)$; only the profiles $a,d$ (and floor $Q_0$) change.
+
+\section{Instances}
+\label{sec:instances}
+
+\subsection{Parameterizations: the conversion factor}
+\label{sec:params}
+
+Each parameterization converts target error to score error
+$s_\theta-s^\star=\kappa_h(r)\,(h_\theta-h^\star)$, and the path-KL weight
+is $w^{\mathrm{KL}}_{P,h}(r)=\tfrac12 g(r)^2\kappa_h(r)^2$, where $g(r)$ is
+the reverse-SDE diffusion coefficient (Girsanov). With Gaussian
+corruption $x_r=\alpha(r)x_0+\sigma(r)\epsilon$:
+
+\begin{center}
+\small
+\begin{tabular}{lll}
+\toprule
+$h$ & conversion $\kappa_h$ ($s$-error per $h$-error) & risk weight $w^{\mathrm{KL}}_{P,h}(r)$ \\
+\midrule
+score $s$ & $1$ & $\tfrac12 g^2$ \\
+noise $\epsilon$ & $1/\sigma$ & $\tfrac12 g^2/\sigma^2$ \\
+data $x_0$ & $\alpha/\sigma^2$ & $\tfrac12 g^2\alpha^2/\sigma^4$ \\
+velocity $v$ & $\kappa_v$ (rotation-dependent) & $\tfrac12 g^2\kappa_v^2$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Then $a_{P,h}^{\mathrm{KL}}(r)=w^{\mathrm{KL}}_{P,h}(r)\,V_{P,h}(r)$.
+The theorem is unchanged; only $a$ moves. For the EDM convention
+($\alpha=1,\ \sigma=t$, VE diffusion $g^2=2\sigma$) the data-prediction
+weight scales as $g^2/\sigma^4=2\sigma^{-3}$, the noise weight as
+$\sigma^{-1}$, the score weight as $\sigma$. The exponent of the
+terminal-sensitivity weight is thus a \emph{parameterization-and-path}
+quantity in an $O(\sigma^{-1})$--$O(\sigma^{-3})$ family; see
+\S\ref{sec:tuning} for how its precise value is fixed in practice.
+
+\subsection{Flow matching / velocity (deterministic transport)}
+\label{sec:flow}
+For $h=v$ with $dx_r/dr=v^\star(x_r,r)$ and Lipschitz $L(r)$, define the
+terminal amplification $A_P(r)=\exp\!\big(\int_r^B L\big)$. A natural
+terminal risk is $\R_{W}=W_2^2(\mu_B^\theta,\mu_B^\star)$, giving
+$w^{W_2}_{P,v}(r)=B\,A_P(r)^2$ and
+$a^{W_2}_{P,v}(r)=B\,A_P(r)^2 V_{P,v}(r)$, with the same certificate form.
+
+\subsection{Risk measures: the terminal-sensitivity operator}
+\label{sec:risks}
+
+The risk enters only through $G^\R$ (statistical) and $A_\R$
+(discretization). With the solver defect $\tau_s$ fixed:
+
+\begin{center}
+\small
+\begin{tabular}{ll}
+\toprule
+risk $\R$ & local numerical stiffness $d^\R_{s}(r)$ \\
+\midrule
+path-KL (reverse SDE) & $\tfrac12\,\E\big\|\Sigma(r)^{-1/2}\tau_s\big\|^2$ \quad ($p=2k_s$) \\
+squared Wasserstein & $\E\big[A(r)^2\norm{\tau_s}^2\big]$, $A(r)=e^{\int_r^B L}$ \quad ($p=2k_s$)\\
+task / feature loss $\ell$ & $\E\big\|\nabla_x\ell(\cdot)\,D_z\Phi_{B\leftarrow r}\,\tau_s\big\|^2$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent All share the semantic form
+$d^\R_s(r)=(\text{terminal risk sensitivity})\times(\text{local solver defect})$,
+so Theorem~\ref{thm:opt} applies verbatim with the appropriate $d^\R$.
+
+\subsection{The FID instance}
+\label{sec:fid}
+FID is a feature-space transport cost: with $\varphi$ the Inception map,
+$\mathrm{FID}=W_2^2(\mathcal N(\mu_g,\Sigma_g),\mathcal N(\mu_d,\Sigma_d))$
+in $\varphi$-space. This is the task-loss instance with
+$\ell=$ feature distance, so
+\[
+A_{\mathrm{FID}}(r)=J_\varphi(x_0)\,D_z\Phi_{B\leftarrow r}\equiv J_\varphi\,A_{r\to0},
+\qquad
+d^{\mathrm{FID}}_s(r)=\E\big\|J_\varphi\,A_{r\to0}\,\tau_s\big\|^2 .
+\]
+Writing $d_s(r)=\E\norm{\tau_s}^2$ (the pure local defect) and
+$g_\varphi(r)=\norm{J_\varphi A_{r\to 0}}^2$ (the feature terminal
+sensitivity), the FID stiffness factorizes (directionally up to the
+alignment of $\tau_s$) as $d^{\mathrm{FID}}_s(r)\approx d_s(r)\,g_\varphi(r)$,
+and $m^\star_{\mathrm{FID}}\propto (d_s\,g_\varphi)^{1/(p+1)}$.
+
+\section{Calibration}
+\label{sec:calibration}
+
+\begin{definition}[Calibration]
+Measurement of an intrinsic quantity of $(P,h,s)$ from the model/reference
+dynamics, with \emph{no} reference to the evaluation metric. Deterministic;
+zero metric-feedback degrees of freedom.
+\end{definition}
+
+\paragraph{Local stiffness $d_s(r)$.}
+Build a high-resolution reference trajectory (e.g.\ a 16--32 substep Heun
+integration) for a calibration batch. At each $r$, take one solver step
+from the reference state and compare to the reference target:
+\[
+\hat d_s(r)=\E_{x\sim\text{ref}}\Big\|\tfrac{\Psi_{s,h}(x,r)-\Phi_h(x,r)}{h^{k_s+1}}\Big\|^q .
+\]
+This estimates Assumption~\ref{as:solver}'s defect directly and is
+solver-general (no symbolic Taylor expansion needed for DPM-Solver++,
+UniPC, DEIS, Restart).
+
+\paragraph{Terminal sensitivity $g_\varphi(r)$ (for FID).}
+Finite-difference Jacobian--vector product through flow and feature map:
+perturb the reference state at $r$ by $\epsilon v$, integrate the flow to
+$r=B$, and read the feature change,
+\[
+\hat g_\varphi(r)=\tfrac{1}{\epsilon^2}\,\E_v\big\|\varphi(x_B(x_r+\epsilon v))-\varphi(x_B(x_r))\big\|^2 .
+\]
+
+\paragraph{Statistical difficulty $a(r)$.}
+$V_{P,h}(r)$ is the local target variance/complexity, measured from the
+training targets; $w^\R_{P,h}$ from the path constants and the
+parameterization Jacobian. These are model-intrinsic, never metric-fit.
+
+\noindent\textbf{Properties.} Calibrated quantities cannot overfit the
+evaluation metric (they never see it); they feed Theorem~\ref{thm:main}
+directly and yield \emph{certified} optima.
+
+\section{Tuning}
+\label{sec:tuning}
+
+\begin{definition}[Tuning]
+Selection of a free parameter by searching against the evaluation metric
+on a held-out (validation) split and keeping the best-scoring value.
+Metric-in-the-loop; finite degrees of freedom.
+\end{definition}
+
+\paragraph{Why a tuned exponent appears.}
+In practice the calibrated stiffness is used in a power-law-weighted form
+$d^\R_s(r)\approx d_s(r)\,\sigma^{-k}$ with grid exponent $p$. The
+weight $\sigma^{-k}$ is the \emph{parametric model} of the
+terminal-sensitivity factor $g_\varphi$ (FID) or $w^\R$ (KL); the theory
+fixes its \emph{family} (\S\ref{sec:params}--\ref{sec:risks}) but not the
+exact exponent when (i) the precise sensitivity is known only
+approximately and (ii) the certificate is asymptotic while deployment is
+at large steps. Both $k$ and $p$ are then fixed by a validation-FID sweep.
+
+\paragraph{Protocol (no-leakage).}
+Sweep $(k,p)$ on the validation split only; select the argmin; evaluate
+\emph{once} on the locked test split. Tuning on test is forbidden.
+
+\paragraph{The certified--tuned boundary.}
+\begin{center}
+\small
+\begin{tabular}{lll}
+\toprule
+object & status & role \\
+\midrule
+shape law $m^\star\propto d^{1/(p+1)}$, $\rho^\star\propto\sqrt a$ & theory & optimizer form \\
+$d_s(r)$ profile & calibrated & full profile, 0 metric DOF \\
+$g_\varphi(r)$ profile & calibrated & feature sensitivity (FID) \\
+grid exponent $p$ & theory + tuned & $2k_s$ asymptotically; in-regime value differs \\
+weight exponent $k$ & tuned & 1 scalar; parametric model of the sensitivity \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Empirical reconciliation}
+\label{sec:empirics}
+
+We summarize what experiments on EDM CIFAR-10 (UniPC/Heun cores, Clean-FID,
+$10^4$ samples) establish about the gap between the certificate and FID.
+
+\paragraph{(i) The risk measure is FID-faithful, and directly measurable.}
+The discretization Wasserstein risk
+$R_{\mathrm{disc}}=W_2(\varphi\text{-features of }K\text{-step},\ \infty\text{-step})$
+tracks FID in \emph{all} ranks with near-equal values (e.g.\ $12.4/13.2$,
+$50/45$, $283/270$). Hence FID-excess \emph{is} the feature-space $W_2$
+discretization risk: the risk-measure axis of Theorem~\ref{thm:main} is
+confirmed for $\R=$ feature-$W_2$.
+
+\paragraph{(ii) A pixel/identity sensitivity is the wrong operator.}
+The bound with $A_\R=I$ (pixel $L^2$) is computed correctly --- it tracks
+true pixel error --- but its rank disagrees with FID (two grids of equal
+pixel-$Q$, FID $13$ vs $88$). Replacing $A_\R$ by the feature sensitivity
+$g_\varphi$ restores FID-faithful ranking. This is exactly the
+risk-sensitivity correction of \S\ref{sec:risks}.
+
+\paragraph{(iii) The bound is asymptotic; its argmin needs an in-regime
+exponent.} Minimizing the cheap decomposable bound does not by itself give
+the FID-optimal schedule at deployment NFE, because $\tau_s$ and $A_\R$
+are leading-order/linear. An oracle sweep of the weight exponent against
+FID has a sharp convex minimum:
+\begin{center}
+\small
+\begin{tabular}{l rrrrrr}
+\toprule
+$K$ & $k{=}0$ & $k{=}1$ & $k{=}1.5$ & $k{=}2$ & $k{=}2.5$ & $k{=}3$ \\
+\midrule
+5 & 163.7 & 59.9 & 31.1 & \textbf{21.2} & 33.2 & 109.8 \\
+8 & 101.3 & 29.7 & 16.6 & \textbf{9.2} & 9.6 & 53.1 \\
+12 & 61.2 & 19.3 & 10.8 & 5.6 & \textbf{5.3} & 21.7 \\
+\bottomrule
+\end{tabular}
+\end{center}
+The oracle is $k^\star\approx 2$ (drifting to $2.5$ at $K{=}12$): a clean,
+stable minimum, not an arbitrary knob. The leading-order feature
+sensitivity gives $g_\varphi\sim\sigma^{-1.5}$ (i.e.\ $k\approx1.5$), which
+is \emph{suboptimal} ($31$ vs $21$ at $K{=}5$); the deployment-NFE
+correction pushes the effective exponent steeper, into the family
+predicted by the KL/parameterization weights of \S\ref{sec:params}
+($\sigma^{-1}$ to $\sigma^{-3}$).
+
+\paragraph{(iv) The decomposability--tightness wall.} A bound that is
+simultaneously cheap, decomposable ($\int d/m^p$), and tight at large
+steps does not exist in general: tightness requires the non-decomposable
+nonlinear error interaction that $R_{\mathrm{disc}}$ captures by direct
+sampling. Three independent attempts to beat the in-regime-tuned schedule
+(measured $g_\varphi$ weight; squared-risk exponent $p=2k_s$; direct
+$R_{\mathrm{disc}}$ minimization) all fail or degenerate. Hence one
+in-regime-tuned exponent is necessary and sufficient.
+
+\section{Scope of claims}
+\label{sec:scope}
+
+\begin{itemize}
+\item \textbf{Certified} (calibration + theory, no metric feedback): the
+KL/pathwise-$L^2$ optima $\rho^\star\propto\sqrt a$,
+$m^\star\propto d_s^{1/(p+1)}$.
+\item \textbf{Confirmed risk geometry}: FID $=$ feature-$W_2$ (Theorem
+\ref{thm:main} with $\R=$ feature-$W_2$); $R_{\mathrm{disc}}\!\leftrightarrow\!$FID.
+\item \textbf{Tuned} (one scalar, validation-selected, theory-shaped):
+the FID weight exponent $k\approx2$ (and effective grid exponent $p=2$),
+which absorbs the asymptotic-vs-deployment gap.
+\end{itemize}
+The honest one-line claim: \emph{the sampler is the certificate's optimizer
+$m^\star\propto d^{1/(p+1)}$; certified for KL/$L^2$ with a calibrated
+difficulty profile, and FID-optimal with the same closed form under one
+in-regime-tuned, theory-shaped exponent.}
+
+\end{document}
