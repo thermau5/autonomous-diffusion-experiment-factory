@@ -24,3 +24,11 @@ Durability: commit after every completed step; this log is the resume anchor.
   - this is 1-Rectified-Flow (base flow); low-NFE Euler FID expected poor (path not very straight); 2-RF/distilled would be better.
   - sampler saved: scripts/rf_level3_sampler.py ; ckpt at third_party/rectified_flow/.../checkpoint_8.pth (990MB, gitignored)
 - NEXT: wait dpm_v3 sweep done -> aggregate; then RF FID curve at locked NFE grid.
+
+## Update 2 (dpm_v3 done)
+- dpm_solver_v3 (logSNR+EMS) 5-seed locked-protocol DONE. Strongest single sampler:
+  NFE 5/8/12/18/32/64 = 17.07/6.30/4.71/4.46/4.35/4.35 (+-~0.1..0.02).
+  Beats (Ours,UniPC) 21.46/9.18/5.58/4.66/4.45/4.41 at EVERY NFE (-4.4 @K5).
+  HONEST: a better SOLVER CORE (EMS) beats our best SCHEDULE; Level-1 advance, not schedule.
+  agg: jobs/auto30/dpmv3_agg.json
+- NEXT: RF/Reflow FID sweep launching (1-RF, Euler, 6 NFE x 3 seeds).
