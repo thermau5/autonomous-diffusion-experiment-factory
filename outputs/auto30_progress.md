@@ -39,3 +39,9 @@ Durability: commit after every completed step; this log is the resume anchor.
 - Downloaded 2-RF + 3-RF ckpts (990MB each, disk 159G free). All load w/ same ddpmpp config.
 - 1-RF sweep running; rf_sweep_param.py ready for 2-RF/3-RF.
 - OT-CFM (P2) deprioritized: needs training (~12-24 GPU-h); reflow series gives a cleaner path-axis story.
+
+## Update 4 (1-RF complete, chain advanced to 2-RF)
+- 1-RF Euler FID (3-seed, 10k Clean-FID): NFE 5/8/12/18/32/64 = 38.59/20.21/13.76/10.57/8.04/6.53.
+  Monotone, smooth. (NFE=64 Euler=6.53 > published 2.58 which uses RK45 ~127 NFE — expected; ours is fixed-step Euler.)
+- Chain handoff verified: 1-RF exited 22:39:08 (~45min sweep), chain auto-launched 2-RF (GPU 100%).
+- report_level3_path Table B 1-RF row filled. Awaiting 2-RF, 3-RF, R2.
