@@ -45,3 +45,13 @@ Durability: commit after every completed step; this log is the resume anchor.
   Monotone, smooth. (NFE=64 Euler=6.53 > published 2.58 which uses RK45 ~127 NFE — expected; ours is fixed-step Euler.)
 - Chain handoff verified: 1-RF exited 22:39:08 (~45min sweep), chain auto-launched 2-RF (GPU 100%).
 - report_level3_path Table B 1-RF row filled. Awaiting 2-RF, 3-RF, R2.
+
+## Update 5 (2-RF complete; floor probe queued)
+- 2-RF Euler FID: NFE 5/8/12/18/32/64 = 7.55/6.99/6.70/6.53/6.38/6.31.
+  Beats 1-RF at EVERY tested NFE (incl 64: 6.31 vs 6.53). NO crossover in the <=64 Euler grid.
+  Low-NFE win is huge (NFE5: 7.55 vs 38.59, 5x). Curve far flatter (straighter path = NFE-insensitive).
+  vs fixed-EDM frontier: 2-RF wins only at NFE5 (7.55 vs dpm_v3 17.07); dpm_v3 wins NFE>=8 (better floor ~4.35).
+- Pre-registered part(ii) [1-RF<2-RF at NFE=64] NOT met at this grid: Euler@64 is far from 1-RF's converged
+  2.58 floor, so the floor reversal must live at NFE>64. Added chain2_floor.sh: Euler {128,256} for 1/2/3-RF
+  (same integrator, no RK45 confound) to locate the crossover. Runs after main chain (3-RF + R2) completes.
+- 3-RF sweep running (handoff 23:28:30).
