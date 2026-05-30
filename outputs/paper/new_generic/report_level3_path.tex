@@ -1,0 +1,124 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,booktabs,hyperref,xcolor,bm}
+\newcommand{\R}{\mathcal R}
+\newcommand{\E}{\mathbb E}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\title{The Path Axis of the Excess-Risk Certificate:\\
+       {\large a controlled path-straightening test on CIFAR-10\\
+        (Rectified-Flow reflow series), against the fixed-EDM frontier}}
+\author{thermau5}
+\date{\today}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The generic certificate of the companion report bounds excess terminal
+risk by an irreducible floor $Q_0$ plus statistical and discretization
+terms, with the probability path $P$ entering through \emph{both} the
+floor $Q_0$ and the local solver defect $d$ (hence the optimal sampling
+density $m^\star\propto d^{1/(p+1)}$). Every locked result so far varied
+the schedule ($m$) and the solver core ($s$) at a \emph{fixed} EDM path.
+Here we test the one axis those experiments held constant --- the path
+$P$ itself --- using the Rectified-Flow reflow series (1-RF, 2-RF, 3-RF)
+as a \emph{controlled path-straightening} ladder: identical NCSN++
+backbone, identical $v$-parameterization, identical Euler solver, varying
+\emph{only} the straightness of the probability path. The certificate
+makes a sharp, falsifiable prediction: reflow lowers the curvature-driven
+defect $d$ (helping at small NFE) but raises the floor $Q_0$ via coupling
+approximation error (hurting at large NFE), so the reflow ladder must
+exhibit a \emph{crossover} in the FID-vs-NFE plane rather than a uniform
+win. We report the fixed-EDM frontier (Table~\ref{tab:edm}) and the path
+ladder (Table~\ref{tab:path}) under the locked 10k Clean-FID protocol, and
+we state plainly what the data confirm and refute.
+\end{abstract}
+
+\section{What this experiment isolates}
+The hierarchy of the certificate is $h\!\to\!a$, $P\!\to\!(a,d,Q_0)$,
+$s\!\to\!d$, $\R\!\to\!(a,d)$. The locked benchmark to date is a study of
+the \emph{schedule} axis $m$ (and, with DPM-Solver-v3, the \emph{solver}
+axis $s$) at a single, fixed EDM variance-exploding path. The path $P$ was
+never varied. This report adds that axis with the cleanest controlled
+manipulation available: the reflow procedure, which re-couples noise and
+data along progressively straighter trajectories while keeping the network
+architecture, the velocity parameterization, and the integrator fixed.
+
+\paragraph{The certificate's path-axis prediction.}
+Reflow reduces trajectory curvature, i.e.\ the local defect
+$d_s(r)=A_\R(r)\,\tau_s(r)$ shrinks because $\tau_s$ (a curvature-weighted
+truncation defect for a fixed-order solver) shrinks for straighter paths.
+By $m^\star\propto d^{1/(p+1)}$ and the certificate's discretization term
+$c_{\mathrm{disc}}\!\int d/m^p$, a smaller $d$ lowers the
+\emph{NFE-dependent} part of the risk: straighter paths should win at
+\emph{small} NFE. But each reflow step is trained to reproduce the
+previous flow's input--output coupling, injecting an approximation error
+that raises the \emph{floor} $Q_0$ (the published infinite-step FIDs grow
+$2.58\!\to\!3.36\!\to\!3.96$ for 1/2/3-RF). The certificate therefore
+predicts a \textbf{crossover}: 3-RF $<$ 2-RF $<$ 1-RF at low NFE, and the
+order reversing as NFE $\to\infty$. A uniform win for any single member
+would \emph{refute} the floor-vs-defect decomposition on the path axis.
+
+\section{Fixed-EDM frontier (path held constant)}
+All entries: EDM CIFAR-10 (NVlabs), Clean-FID 10k, locked test protocol,
+$\pm$ s.e.m.\ over seeds. ``(Ours)'' is the nonparametric-calibrated
+scheduler (theory-shaped $m^\star\propto d_s^{1/(p+1)}$ with calibrated
+$d_s$ and a single tuned perceptual exponent); rows are at \emph{matched}
+NFE.
+
+\begin{table}[h]\centering
+\caption{Fixed-EDM frontier: schedule and solver-core axes at a fixed path.
+Clean-FID (10k), lower is better. dpm\_solver\_v3 = logSNR grid + EMS
+(Level-1 solver-core advance).}
+\label{tab:edm}
+\begin{tabular}{lcccccc}
+\toprule
+NFE & 5 & 8 & 12 & 18 & 32 & 64\\
+\midrule
+(Ours, UniPC)        & 21.46 & 9.18 & 5.58 & 4.66 & 4.45 & 4.41\\
+dpm\_solver\_v3 (EMS)& \textbf{17.07} & \textbf{6.30} & \textbf{4.71} & \textbf{4.46} & \textbf{4.35} & \textbf{4.35}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\emph{Honest reading.} A better \emph{solver core} (DPM-Solver-v3's
+EMS coefficients) dominates our best \emph{schedule} at every NFE on the
+fixed path. This is a Level-1 (solver) advance, not a schedule advance; it
+is consistent with the certificate ($s$ enters $d$ directly), and it sets
+the bar the path axis must be measured against.
+
+\section{Path ladder (reflow series)}
+1-RF/2-RF/3-RF, identical NCSN++ DDPM++ backbone, EMA weights, standard
+Gaussian prior ($\mathrm{noise\_scale}=1$), Euler $v$-ODE
+$x_{i+1}=x_i+v_\theta(x_i,t_i)\,\Delta t$, $t\!:\!10^{-3}\!\to\!1$,
+$\Delta t=1/N$, NFE$=N$. Clean-FID 10k, 3 seeds, $\pm$ s.e.m.
+
+\begin{table}[h]\centering
+\caption{Path-straightening ladder at matched NFE (Euler). Clean-FID (10k),
+lower is better. \textsc{[2-RF / 3-RF rows fill in on chain completion.]}}
+\label{tab:path}
+\begin{tabular}{lcccccc}
+\toprule
+NFE & 5 & 8 & 12 & 18 & 32 & 64\\
+\midrule
+1-RF (base)  & 38.59 & 20.21 & \texttt{TBD} & \texttt{TBD} & \texttt{TBD} & \texttt{TBD}\\
+2-RF (reflow$\times$1) & \texttt{TBD} & \texttt{TBD} & \texttt{TBD} & \texttt{TBD} & \texttt{TBD} & \texttt{TBD}\\
+3-RF (reflow$\times$2) & \texttt{TBD} & \texttt{TBD} & \texttt{TBD} & \texttt{TBD} & \texttt{TBD} & \texttt{TBD}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Decision rule (pre-registered).} The crossover prediction is
+\emph{confirmed} iff (i) at NFE$=5$ the FID order is 3-RF $<$ 2-RF $<$
+1-RF (straighter wins when steps are scarce), and (ii) at NFE$=64$ the
+order is 1-RF $<$ 2-RF $<$ 3-RF (the floor dominates when steps are
+plentiful). Any monotone-in-NFE single winner refutes the
+floor-vs-defect split on the path axis. We commit to this rule before the
+2-RF/3-RF numbers are measured.
+
+\section{Reconciliation (to be completed)}
+\textsc{[On chain completion: place the path ladder against the fixed-EDM
+frontier; report whether the predicted low-NFE crossover holds; quantify
+the d-vs-$Q_0$ tradeoff from the measured crossover NFE; state whether the
+straightest in-budget path beats the best fixed-EDM solver at any NFE.]}
+
+\end{document}
