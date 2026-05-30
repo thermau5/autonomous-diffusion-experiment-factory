@@ -55,3 +55,11 @@ Durability: commit after every completed step; this log is the resume anchor.
   2.58 floor, so the floor reversal must live at NFE>64. Added chain2_floor.sh: Euler {128,256} for 1/2/3-RF
   (same integrator, no RK45 confound) to locate the crossover. Runs after main chain (3-RF + R2) completes.
 - 3-RF sweep running (handoff 23:28:30).
+
+## Update 6 (3-RF complete; full path ladder)
+- 3-RF Euler FID: NFE 5/8/12/18/32/64 = 7.45/7.20/7.06/6.97/6.89/6.85.
+- FULL LADDER orderings: NFE5: 3<2<<1 (part i CONFIRMED); NFE8-32: 2<3<1; NFE64: 2<1<3 (1-RF overtook 3-RF).
+  No single monotone winner -> floor-vs-defect split CONFIRMED (pre-registered rule).
+  Crossovers: 3-vs-2-RF ~6 NFE (observed); 1-vs-3-RF in (32,64) (observed); 1-vs-2-RF >64 (floor probe).
+  Optimal reflow count is NFE-dependent: 3-RF@NFE5, 2-RF@8-64, 1-RF beyond.
+- report_level3_path: 3-RF row + full reconciliation section written. R2 running, floor probe queued.
