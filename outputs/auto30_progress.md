@@ -32,3 +32,10 @@ Durability: commit after every completed step; this log is the resume anchor.
   HONEST: a better SOLVER CORE (EMS) beats our best SCHEDULE; Level-1 advance, not schedule.
   agg: jobs/auto30/dpmv3_agg.json
 - NEXT: RF/Reflow FID sweep launching (1-RF, Euler, 6 NFE x 3 seeds).
+
+## Update 3 (path-straightening series found)
+- RF repo has CIFAR-10 ckpts for 1-RF, 2-RF, 3-RF (reflow series = controlled path-straightening).
+  This IS the Level-3 path-axis experiment (same arch, varying path straightness). Better than OT-CFM (needs training).
+- Downloaded 2-RF + 3-RF ckpts (990MB each, disk 159G free). All load w/ same ddpmpp config.
+- 1-RF sweep running; rf_sweep_param.py ready for 2-RF/3-RF.
+- OT-CFM (P2) deprioritized: needs training (~12-24 GPU-h); reflow series gives a cleaner path-axis story.
