@@ -63,3 +63,12 @@ Durability: commit after every completed step; this log is the resume anchor.
   Crossovers: 3-vs-2-RF ~6 NFE (observed); 1-vs-3-RF in (32,64) (observed); 1-vs-2-RF >64 (floor probe).
   Optimal reflow count is NFE-dependent: 3-RF@NFE5, 2-RF@8-64, 1-RF beyond.
 - report_level3_path: 3-RF row + full reconciliation section written. R2 running, floor probe queued.
+
+## Update 7 (R2 done; chain complete; floor probe running)
+- R2 (R_disc = feature-W2(K-step, 128-step ref), 3-seed) vs FID, locked panel:
+  good 13.76+/-0.09 (FID 13.16); refined 28.91+/-0.18 (26.71); karras 50.43+/-0.32 (44.90);
+  forced 96.73+/-0.13 (87.85); cluster 282.87+/-0.16 (270.30).
+  RANK 5/5 exact, values close+monotone -> feature-W2 IS the FID-faithful risk (multi-seed hardened). Task #8 done.
+  NOTE: R2 took ~11h (00:17->11:37) -- recomputes 128-step Heun ref per panel grid (15x, no caching). Correct, just slow.
+- Main CHAIN COMPLETE 11:37:40. chain2_floor auto-started: Euler {128,256} for 1/2/3-RF (1-RF running).
+- Elapsed ~13.7h of 30h. Remaining: floor probe (~few h) -> compile final PDF.
