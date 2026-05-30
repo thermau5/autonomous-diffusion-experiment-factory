@@ -11,6 +11,8 @@ outputs/*
 !outputs/paper/
 outputs/paper/*
 !outputs/paper/*.tex
+!outputs/paper/*/
+!outputs/paper/*/*.tex
 !outputs/locked_test/
 outputs/locked_test/*
 !outputs/locked_test/*/

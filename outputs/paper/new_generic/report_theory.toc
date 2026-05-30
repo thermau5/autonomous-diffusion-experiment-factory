@@ -1,0 +1,31 @@
+\contentsline {section}{\numberline {1}Setup and notation}{2}{section.1}%
+\contentsline {paragraph}{Learned field and parameterization.}{2}{section*.2}%
+\contentsline {paragraph}{Solver and sampler.}{2}{section*.3}%
+\contentsline {paragraph}{Risk.}{2}{section*.4}%
+\contentsline {section}{\numberline {2}The generic certificate}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Assumptions}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Stability $\to $ parameterization-weighted target risk}{3}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Insert ERM $\to $ statistical term}{3}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Discretization term}{3}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Main theorem}{3}{subsection.2.5}%
+\contentsline {paragraph}{Certificate hierarchy.}{4}{section*.5}%
+\contentsline {section}{\numberline {3}The optimizer and the frontier}{4}{section.3}%
+\contentsline {section}{\numberline {4}Instances}{4}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Parameterizations: the conversion factor}{4}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Flow matching / velocity (deterministic transport)}{4}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Risk measures: the terminal-sensitivity operator}{5}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}The FID instance}{5}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Calibration}{5}{section.5}%
+\contentsline {paragraph}{Local stiffness $d_s(r)$.}{5}{section*.6}%
+\contentsline {paragraph}{Terminal sensitivity $g_\varphi (r)$ (for FID).}{5}{section*.7}%
+\contentsline {paragraph}{Statistical difficulty $a(r)$.}{5}{section*.8}%
+\contentsline {section}{\numberline {6}Tuning}{6}{section.6}%
+\contentsline {paragraph}{Why a tuned exponent appears.}{6}{section*.9}%
+\contentsline {paragraph}{Protocol (no-leakage).}{6}{section*.10}%
+\contentsline {paragraph}{The certified--tuned boundary.}{6}{section*.11}%
+\contentsline {section}{\numberline {7}Empirical reconciliation}{6}{section.7}%
+\contentsline {paragraph}{(i) The risk measure is FID-faithful, and directly measurable.}{6}{section*.12}%
+\contentsline {paragraph}{(ii) A pixel/identity sensitivity is the wrong operator.}{6}{section*.13}%
+\contentsline {paragraph}{(iii) The bound is asymptotic; its argmin needs an in-regime exponent.}{6}{section*.14}%
+\contentsline {paragraph}{(iv) The decomposability--tightness wall.}{7}{section*.15}%
+\contentsline {section}{\numberline {8}Scope of claims}{7}{section.8}%

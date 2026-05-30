@@ -870,8 +870,16 @@ finite-N calibrated certificate; \(-7.95\) vs Karras-DEIS baseline,
 \(-1.44\) vs the borrowed shared-\(d_{\mathrm{Heun}}\) stopgap, both at
 \(K{=}5\)).
 \(\circ\) = queued (DPM-Solver-v3 calibrated challenge).
-\(\equiv\)A = single-step core; the calibrated-sequence machinery with no
-history reduces to the pointwise grid by construction.
+\(\equiv\)A = single-step core; Theorem A (the pointwise density
+\(m_s^\star\propto d_s^{1/(p+1)}\)) is the correct certificate, not the
+sequence functional. This is empirically verified: applying the
+sequence-sum objective \(\sum_i\hat e_i^2\) to Heun gives FID 88.1 at
+\(K{=}5\) (and worsens with any low-\(\sigma\) reweighting: 94.0 at
+\(\sigma^{-1}\), 173.2 at \(\sigma^{-2}\)) versus Theorem A's 13.54. The
+sequence sum lacks the \(1/(p{+}1)\) Cauchy--Schwarz exponent that
+controls FID; for \(q{=}1\) one must use the pointwise density. This is
+a negative control confirming the A/B split: the sequence functional is
+the \(q{\ge}2\) object, Theorem A the \(q{=}1\) object.
 n/a = no calibrated-sequence variant for exact single-step cores.
 \(^d\) bundled = the DPM-Solver-v3 EMS coefficients are precomputed at
 logSNR-spaced nodes, so the schedule is not separably optimizable;
