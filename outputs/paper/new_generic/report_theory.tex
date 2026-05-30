@@ -466,6 +466,47 @@ sampling. Three independent attempts to beat the in-regime-tuned schedule
 $R_{\mathrm{disc}}$ minimization) all fail or degenerate. Hence one
 in-regime-tuned exponent is necessary and sufficient.
 
+\section{Reframing the locked benchmark as certificate instances}
+\label{sec:reframe}
+
+The locked CIFAR-10 benchmark (frozen contract; $17$ samplers $\times$ $6$
+NFE $\times$ $5$ seeds $\times$ $10^4$ samples) is, in the language of
+Theorem~\ref{thm:main}, a study at fixed backbone $\theta_{\mathrm{EDM}}$,
+fixed path $P=\pi_{\mathrm{EDM}}$, and fixed parameterization
+$h=x_0$ (the EDM denoiser), varying the solver $s$ and the schedule $m$.
+Every ``proposed'' sampler in that benchmark is the certificate optimizer
+$m^\star_s(\sigma)\propto d_s(\sigma)^{1/(p+1)}$ of \S\ref{sec:optimizer},
+instantiated per solver core through the hierarchy ``$s\Rightarrow$
+changes only $d$''. Concretely:
+
+\begin{center}
+\small
+\begin{tabular}{l l l}
+\toprule
+benchmark object & certificate reading & axis \\
+\midrule
+$s\in$\{Euler,Heun,DDIM,DPM++,UniPC,DEIS,\dots\} & $s\Rightarrow d_s$ & solver \\
+Karras $\rho{=}7$, uniform-log grids & fixed-form $m$ (not $m^\star$) & schedule (baseline) \\
+tuned Karras $\rho^\star$ & 1-parameter $m$ family & schedule (baseline) \\
+\texttt{proposed\_$s$} ($m^\star_s\propto d_s^{1/(p+1)}$) & certificate optimizer & schedule (ours) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The headline low-NFE wins --- e.g.\ $(\mathrm{UniPC},m^\star)$ beating
+Karras-$\rho{=}7$ and tuned-$\rho^\star$ at $K{=}5$, and
+$(\mathrm{Heun},m^\star)$, $(\mathrm{DPM\text{-}Solver}{+}{+},m^\star)$
+likewise --- are measured Clean-FID and stand independently of any
+certificate tightness; the certificate supplies the schedule \emph{form}
+$d_s^{1/(p+1)}$ and the calibrated profile $d_s$, with the single perceptual
+exponent $k$ tuned in-regime (\S\ref{sec:tuning}). The benchmark thus
+validates the $s$- and $m$-axes of the certificate; the $P$-axis (path /
+coupling) is the open extension --- it moves $a$, $d$, and the floor
+$Q_0$ simultaneously, and is the subject of the path-baseline program
+(Rectified Flow / OT-CFM and successors) that produces the comparison
+table to the fixed-EDM frontier above.
+
 \section{Scope of claims}
 \label{sec:scope}
 
