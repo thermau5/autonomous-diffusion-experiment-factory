@@ -150,3 +150,15 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   but absolute FID gain bounded by defect-fraction-of-FID (small for 2-RF).
 - Above-floor fraction removed by scheduling: 2-RF ~21-36% stable across NFE; 1-RF only ~2% @K5 (too undersampled to place)
   rising to ~44% @K32. Honest: naive "straighter->flatter->smaller gap" wrong on premise, right on conclusion, diff mechanism.
+
+## Update 14 (3-RF schedule -> path x schedule grid COMPLETE)
+- 3-RF defect ratio 72.1 (~1-RF 69, 2-RF 71.8): defect SHAPE constant across full reflow ladder.
+- 3-RF proposed_p1 vs uniform: K5 7.26/7.40; K8 7.05/7.16; K12 6.94/7.02; K18 6.88/6.93; K32 6.83/6.85.
+- FULL GAP GRID (proposed_p1 - uniform):
+        K=5    K=8    K=12   K=18   K=32
+  1-RF  -0.77  -0.67  -1.16  -1.36  -1.01
+  2-RF  -0.27  -0.19  -0.13  -0.08  -0.04
+  3-RF  -0.14  -0.11  -0.08  -0.05  -0.02
+- Schedule beats uniform in EVERY (path,NFE) cell; gap shrinks monotonically with reflow (more floor-limited).
+  Shape-driven leverage constant; absolute gain bounded by defect's share of FID. Path-straighten + schedule = complementary.
+- Level-3 program on RF COMPREHENSIVELY COMPLETE (axes P, m, R, s all tested). ~26h elapsed.
