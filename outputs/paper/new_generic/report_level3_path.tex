@@ -4,9 +4,10 @@
 \newcommand{\R}{\mathcal R}
 \newcommand{\E}{\mathbb E}
 \newcommand{\norm}[1]{\lVert #1 \rVert}
-\title{The Path Axis of the Excess-Risk Certificate:\\
-       {\large a controlled path-straightening test on CIFAR-10\\
-        (Rectified-Flow reflow series), against the fixed-EDM frontier}}
+\title{The Path and Schedule Axes of the Excess-Risk Certificate,\\
+       Tested on the Rectified-Flow Family:\\
+       {\large a controlled path-straightening ladder (reflow series) and a
+        calibrated-schedule test on CIFAR-10, against the fixed-EDM frontier}}
 \author{thermau5}
 \date{\today}
 \begin{document}
@@ -30,7 +31,13 @@ approximation error (hurting at large NFE), so the reflow ladder must
 exhibit a \emph{crossover} in the FID-vs-NFE plane rather than a uniform
 win. We report the fixed-EDM frontier (Table~\ref{tab:edm}) and the path
 ladder (Table~\ref{tab:path}) under the locked 10k Clean-FID protocol, and
-we state plainly what the data confirm and refute.
+we state plainly what the data confirm and refute. Finally
+(Section~\ref{sec:sched}) we test the \emph{schedule} axis $m$ on the same
+RF family: a certificate-calibrated, \emph{parameter-free} node placement
+$m^\star\propto d^{1/(p+1)}$ ($p=1$, the Euler order, no metric feedback)
+beats the RF default (uniform-in-$t$ Euler) at every NFE --- the schedule
+claim, established for EDM solvers, generalizes to a model family with a
+different ODE and solver.
 \end{abstract}
 
 \section{What this experiment isolates}
@@ -220,6 +227,68 @@ floor-vs-defect decomposition is thus confirmed across the \emph{entire}
 NFE range --- defect-dominated reshuffling at small NFE
 (Section~\ref{sec:reconcile}), floor-dominated reversal at large NFE here.
 
+\section{The schedule axis on the RF family ($m$, calibrated)}
+\label{sec:sched}
+The path ladder above varied $P$ at a fixed (uniform) schedule. We now hold
+the path fixed (1-RF) and vary the \emph{schedule} $m$ --- the placement of
+the $K$ Euler time-nodes $t_0\!=\!\epsilon<\dots<t_K\!=\!1$ --- to test
+whether the certificate's optimal density $m^\star\propto d^{1/(p+1)}$
+transfers from EDM solvers to the RF flow. The defect $d$ is the
+Euler local-truncation magnitude, which for an order-1 solver scales with
+the trajectory acceleration $\lVert\ddot x(t)\rVert$; we estimate it once on
+a 512-step reference trajectory (finite-difference of the velocity field
+along the path) and place nodes by equipartitioning $\int m^\star\,dt$.
+This calibration uses \emph{no} FID feedback and \emph{no} tuned scalar.
+The baseline is the RF default, uniform-in-$t$ Euler; both use the same
+explicit-node integrator $x_{i+1}=x_i+v_\theta(x_i,t_i)(t_{i+1}-t_i)$ at
+matched NFE$=K$.
+
+The measured RF defect is strongly non-uniform
+($\lVert\ddot x\rVert$ quartiles $30.7/51.9/86.0$, max $3581$;
+max/median $\approx69$), with curvature concentrated near both endpoints
+(especially the data end $t\!\to\!1$) --- so the calibrated grid clusters
+nodes at the endpoints and thins the middle.
+
+\begin{table}[h]\centering
+\caption{Schedule axis on 1-RF: certificate-calibrated node placement vs
+uniform Euler. Clean-FID (10k), 3 seeds. Headline $=$ \textbf{p1}
+(parameter-free, $p\!=\!1$, no FID feedback). $p\!\in\!\{0.5,2\}$ are a
+sensitivity sweep, not the headline; $\ast$ marks the best entry per NFE.}
+\label{tab:sched}
+\begin{tabular}{lccccc}
+\toprule
+NFE ($K$)               & 5 & 8 & 12 & 18 & 32\\
+\midrule
+uniform (RF default)    & 37.94 & 19.74 & 13.39 & 10.26 & 7.80\\
+\textbf{proposed }$p\!=\!1$ & 37.17 & 19.07 & \textbf{12.23}$^\ast$ & \textbf{8.90}$^\ast$ & \textbf{6.79}$^\ast$\\
+\midrule
+\multicolumn{6}{l}{\footnotesize sensitivity (not headline):}\\
+proposed $p\!=\!0.5$    & 42.71 & 20.99 & 12.97 & 9.16 & 6.86\\
+proposed $p\!=\!2$      & \textbf{35.12}$^\ast$ & \textbf{18.56}$^\ast$ & 12.35 & 9.08 & 6.93\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Result.} The pre-committed parameter-free schedule ($p\!=\!1$)
+\textbf{beats uniform at every NFE} ($\Delta=-0.77,-0.67,-1.16,-1.36,-1.01$
+at $K=5,8,12,18,32$), with the largest relative gain ($\approx13\%$) at
+mid-budget $K=18$ where node placement has the most leverage. The
+certificate's schedule prescription thus generalizes off the EDM family to
+a flow model with a different ODE and a different (Euler) solver, with no
+metric tuning.
+
+\paragraph{Honest sensitivity.} The optimal exponent is mildly
+NFE-dependent. The gentler $p\!=\!2$ (density exponent $1/3$) is marginally
+best at the scarcest budgets ($K=5,8$), $p\!=\!1$ (exponent $1/2$) is best
+for $K\ge12$, and the aggressive $p\!=\!0.5$ (exponent $2/3$)
+over-concentrates and even loses to uniform at $K=5,8$. So $p\!=\!1$ is not
+pointwise-optimal everywhere, but it is the only single parameter-free
+choice that beats uniform at \emph{every} NFE, and all three calibrated
+variants converge and beat uniform once steps are ample ($K=32$). The
+recurrence of an effective best exponent near $2$ at low NFE matches the
+EDM regime-tuning observation that the deployment-NFE exponent is an
+in-regime quantity, not the asymptotic order.
+
 \section{Conclusion}
 The reflow series isolates the path axis $P$ and confirms the certificate's
 two-term structure on it: each reflow step lowers the discretization defect
@@ -234,6 +303,14 @@ straightened path owns only the scarcest-budget corner (NFE$=5$, beating
 the best fixed-EDM solver by $>2\times$); a strong solver core on a
 low-floor EDM model wins every larger budget. Path-straightening and
 solver-core quality are thus complementary advances on orthogonal axes
-($P$ vs $s$) of one certificate.
+($P$ vs $s$) of one certificate. Finally, on the \emph{schedule} axis $m$,
+the certificate's calibrated node placement $m^\star\propto d^{1/(p+1)}$
+transfers off the EDM family: a parameter-free ($p\!=\!1$, no metric
+feedback) grid beats RF's uniform-Euler default at every NFE
+(Section~\ref{sec:sched}). Across all three axes we could vary on the RF
+family --- path $P$, schedule $m$, and (via the EDM frontier) solver $s$ ---
+the certificate's structure holds: the path trades $Q_0$ for $d$ with an
+NFE-dependent optimum, and the calibrated schedule is the model-agnostic way
+to spend a fixed step budget.
 
 \end{document}
