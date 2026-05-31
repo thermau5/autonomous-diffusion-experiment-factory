@@ -208,3 +208,17 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   clearly-labeled internal comparison; interaction grid -> held-out. Honest note: K=5 1-RF gap (-0.20) anomalously
   small (too undersampled); monotone reflow-shrinkage holds K>=8. velocity-FD(seed0) cross-check agrees (peak -1.36 vs -1.39).
 - Report recompiles (6pp). Summary updated. All GPU jobs done; GPU idle.
+
+## Update 20 (SOLVER/SCHEDULE AXIS -- fairness correction, user-driven)
+- User flagged: original EDM "solver-axis" table confounded 3 knobs (core+schedule+EMS). Correct single-knob test =
+  per core, proposed schedule vs that core's OWN default, everything else fixed.
+- Clean schedule-isolation on EMS core (proposed_dpm_solver_v3 SHARED d_Heun calib vs dpm_v3 default):
+  nfe5 25.77 vs 17.07 (+8.70 LOSS); nfe8 12.47 vs 6.30 (+6.17 LOSS). Our schedule LOSES on EMS core.
+- INVESTIGATION: EMS coeffs (l,s,b) are stored dense-in-lambda (1201 pts) + interpolated to any grid -> grid-agnostic,
+  already fair (not the cause). REAL cause: proposed_dpm_v3 default uses SHARED d_Heun calibration (Heun's defect profile),
+  NOT dpm_v3's own. User's point: "they tune solver for their schedule; tune ours too" = calibrate d to THIS solver.
+- calibrate() (proposed_control.py) is SOUND pointwise: per-interval single-step(solver) vs Heun-substep ref -> d_s(sigma).
+  per_core (AD_PROPOSED_CALIB=per_core, calib_id=core) calibrates each core's OWN defect. NOT the buggy seq path.
+- LAUNCHED fair_table.sh: every proposed_<core> with per_core calibration vs own default (EMS row first, then Heun/DPM++/DEIS/UniPC),
+  3 seeds, NFE{5,8,12,18,32,64}. Shared-calib dpm_v3 kept as ablation. Cell format (user): paired FID m*/default, bold winner.
+- ETA ~12-16h GPU (162 runs). Will report pivotal EMS-fair result first.
