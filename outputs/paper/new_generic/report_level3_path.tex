@@ -201,14 +201,23 @@ three flows (no integrator change, so no confound).
 \toprule
 NFE & 128 & 256\\
 \midrule
-1-RF & \texttt{TBD} & \texttt{TBD}\\
-2-RF & \texttt{TBD} & \texttt{TBD}\\
-3-RF & \texttt{TBD} & \texttt{TBD}\\
+1-RF & \textbf{5.85} & \textbf{5.56}\\
+2-RF & 6.27 & 6.26\\
+3-RF & 6.82 & 6.81\\
 \bottomrule
 \end{tabular}
 \end{table}
-\noindent\emph{Expected (pre-committed):} 1-RF continues to descend toward
-its $\sim$2.58 floor and overtakes 2-RF by NFE$=256$, completing the
-reversal $1\text{-RF}<2\text{-RF}<3\text{-RF}$ predicted by part (ii).
+\noindent\textbf{Confirmed.} By NFE$=128$ the order is fully reversed to
+$1\text{-RF}\,(5.85)<2\text{-RF}\,(6.27)<3\text{-RF}\,(6.81)$ and is stable
+at NFE$=256$ ($5.56<6.26<6.81$) --- the exact ordering of the published
+converged floors ($2.58<3.36<3.96$). 2-RF and 3-RF are flat between 128 and
+256 (within $0.02$), i.e.\ at their Euler floors; 1-RF is still descending
+($6.53\to5.85\to5.56$ over $64\to128\to256$) as the extra steps resolve its
+curved path. The 1-RF\,/\,2-RF crossover therefore sits in $(64,128)$,
+completing pre-registered part (ii): the lowest-floor (least-reflowed) path
+wins once the step budget is large enough to integrate its curvature. The
+floor-vs-defect decomposition is thus confirmed across the \emph{entire}
+NFE range --- defect-dominated reshuffling at small NFE
+(Section~\ref{sec:reconcile}), floor-dominated reversal at large NFE here.
 
 \end{document}

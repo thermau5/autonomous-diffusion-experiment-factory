@@ -72,3 +72,12 @@ Durability: commit after every completed step; this log is the resume anchor.
   NOTE: R2 took ~11h (00:17->11:37) -- recomputes 128-step Heun ref per panel grid (15x, no caching). Correct, just slow.
 - Main CHAIN COMPLETE 11:37:40. chain2_floor auto-started: Euler {128,256} for 1/2/3-RF (1-RF running).
 - Elapsed ~13.7h of 30h. Remaining: floor probe (~few h) -> compile final PDF.
+
+## Update 8 (floor probe complete; path program DONE; proposed_rf running)
+- Floor (Euler 128/256, 3-seed): 1-RF 5.85/5.56; 2-RF 6.27/6.26; 3-RF 6.82/6.81.
+  Full reversal 1<2<3 confirmed by NFE=128, stable at 256 (= published converged order 2.58<3.36<3.96).
+  1-vs-2-RF crossover in (64,128). PRE-REGISTERED part(ii) CONFIRMED. Floor-vs-defect split holds across ALL NFE.
+- report_level3_path.tex finalized (Table B ladder + Table 4 floor + reconciliation + floor section); PDF compiles.
+- NEW (user-requested): proposed_rf (calibrated nonuniform Euler t-grid, m*∝curvature^{1/(p+1)}, p=1 pre-registered,
+  held-out calib seed 777) vs uniform, matched NFE, 1/2/3-RF. Prediction: gain shrinks with straightness.
+  1-RF running now (chain3_proposed.sh). Evaluate ONCE.
