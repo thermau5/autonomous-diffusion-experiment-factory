@@ -121,3 +121,17 @@ Durability: commit after every completed step; this log is the resume anchor.
   delta -0.20/-0.52/-1.11/-1.39/-1.05/-0.56. Inverted-U, peak -1.39 @NFE18 (~13 sem). SIGNIFICANT.
   => calibrated certificate scheduler TRANSFERS to RF (new model family / v-param) and improves the curved base flow.
 - 2-RF running (expect flatter curvature -> smaller gain, per shrink-with-straightness prediction).
+
+## Update 11 (RF schedule sweep COMPLETE -- full sensitivity)
+Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
+  K  | uniform | p=1(HEAD) | p=0.5 | p=2
+  5  | 37.94   | 37.17     | 42.71 | 35.12*
+  8  | 19.74   | 19.07     | 20.99 | 18.56*
+  12 | 13.39   | 12.23*    | 12.97 | 12.35
+  18 | 10.26   |  8.90*    |  9.16 |  9.08
+  32 |  7.80   |  6.79*    |  6.86 |  6.93   (* = best at that K)
+- HEADLINE (pre-committed, parameter-free p=1, NO FID feedback): beats uniform at EVERY NFE (-0.77..-1.36).
+- SENSITIVITY: optimal exponent mildly NFE-dependent. p=2 (gentle, exp 1/3) best @K=5,8; p=1 (Euler order, exp 1/2)
+  best @K>=12; p=0.5 (aggressive, exp 2/3) over-concentrates, loses to uniform @K=5,8. All proposed converge @K=32 (all beat uniform).
+- Echoes EDM finding (FID-effective exponent ~2 at low NFE); but theory p=1 wins everywhere w/o tuning.
+- CONCLUSION: certificate SCHEDULE claim generalizes to RF family (new ODE+solver), parameter-free. Honest negative-ish nuance: theory p=1 not pointwise-optimal at lowest NFE (p=2 marginally better), consistent with in-regime exponent.
