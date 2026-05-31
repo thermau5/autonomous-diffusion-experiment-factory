@@ -90,3 +90,14 @@ Durability: commit after every completed step; this log is the resume anchor.
 - FULL CROSSOVER CASCADE: 3<->2-RF ~6 NFE; 1<->3-RF (32,64); 1<->2-RF (64,128). NFE-dependent optimal reflow.
 - report_level3_path.tex finalized (4pp, Tables: fixed-EDM frontier, path ladder, floor probe; reconciliation+conclusion). Builds clean.
 - Tasks #8/#10/#11 done. #12 (compile report) effectively done. Path-axis Level-3 program COMPLETE.
+
+## Update 9 (schedule axis on RF -- new experiment, task #13)
+- Tests whether the certificate's calibrated schedule (m*∝d^{1/(p+1)}) generalizes to a NEW model family
+  (RF/Euler flow, not EDM). Baseline = uniform-in-t Euler (RF default schedule). Mirrors locked methodology.
+- DIAGNOSTIC (1-RF, 512-step ref trajectory): Euler defect d(t)=||xddot(t)|| is strongly non-uniform:
+  quantiles [30.7,38.5,51.9,86.0,3581] -> max/median=69. Curvature spikes near both endpoints (esp data end t->1).
+  -> real scheduling headroom. Proposed grid concentrates nodes at endpoints, sparse in middle.
+- PRE-REGISTERED: headline = proposed p=1 (Euler order, NO FID feedback, no tuned scalar) vs uniform,
+  1-RF, NFE {5,8,12,18,32}, 3 seeds, evaluate ONCE. p={0.5,2} = labeled sensitivity only.
+  Both use same explicit-node left-Euler integrator x+=v(x,t_i)*(t_{i+1}-t_i), matched NFE=K.
+- Sweep running. Scripts: rf_calib_diag.py, rf_sched_sweep.py. Calib: rf1diag_calib.json.
