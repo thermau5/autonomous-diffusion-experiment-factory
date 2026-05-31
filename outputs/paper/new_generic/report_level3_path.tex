@@ -290,26 +290,39 @@ EDM regime-tuning observation that the deployment-NFE exponent is an
 in-regime quantity, not the asymptotic order.
 
 \paragraph{Path\,$\times$\,schedule interaction.} Repeating the
-calibrated-$p\!=\!1$-vs-uniform test on the straighter 2-RF path, the
-proposed schedule still wins at \emph{every} NFE
-($7.27/6.79/6.56/6.43/6.33$ vs uniform $7.54/6.98/6.69/6.51/6.37$ at
-$K=5/8/12/18/32$), so the calibrated schedule generalizes across the path
-ladder too. But the absolute gap is far smaller than on 1-RF
-($-0.27\!\dots\!-0.04$ vs $-0.77\!\dots\!-1.36$) and shrinks toward the
-floor. The mechanism is \emph{not} a flatter defect: the 2-RF defect
-\emph{shape} is essentially unchanged ($\lVert\ddot x\rVert$ max/median
-$\approx71.8$ vs 1-RF's $69$). Rather, reflow shrinks the defect
-\emph{magnitude}, so 2-RF already runs near its floor ($\approx6.26$) and
-leaves little FID room for scheduling to recover. This is consistent with
-$m^\star$ being scale-invariant in $d$ (the gain depends on the defect
-shape, which reflow preserves, while the absolute FID gain is bounded by
-the defect's share of the total risk, which reflow shrinks). In
-above-floor terms the schedule removes a stable $\approx21\text{--}36\%$ of
-2-RF's defect across all NFE, whereas heavily-curved 1-RF at $K=5$ is too
+calibrated-$p\!=\!1$-vs-uniform test across the whole reflow ladder gives
+the gap grid (proposed $-$ uniform FID, $<0$ means the schedule wins):
+
+\begin{center}
+\begin{tabular}{lccccc}
+\toprule
+$\Delta$FID & $K{=}5$ & $K{=}8$ & $K{=}12$ & $K{=}18$ & $K{=}32$\\
+\midrule
+1-RF & $-0.77$ & $-0.67$ & $-1.16$ & $-1.36$ & $-1.01$\\
+2-RF & $-0.27$ & $-0.19$ & $-0.13$ & $-0.08$ & $-0.04$\\
+3-RF & $-0.14$ & $-0.11$ & $-0.08$ & $-0.05$ & $-0.02$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The calibrated schedule wins in \emph{every} (path, NFE) cell ---
+it generalizes across the entire path ladder --- but the gap shrinks
+monotonically with reflow. The mechanism is \emph{not} a flatter defect:
+the defect \emph{shape} is essentially constant along the ladder
+($\lVert\ddot x\rVert$ max/median $\approx 69,71.8,72.1$ for 1/2/3-RF).
+Rather, reflow shrinks the defect \emph{magnitude}, so 2-RF and 3-RF run
+near their floors ($\approx6.26,6.81$) and leave little FID room for
+scheduling to recover. This is exactly what $m^\star$'s scale-invariance in
+$d$ predicts: the gain depends on the defect shape (which reflow
+preserves), while the \emph{absolute} FID gain is bounded by the defect's
+share of the total risk (which reflow shrinks). In above-floor terms the
+schedule removes a stable $\approx21\text{--}36\%$ of the residual defect
+on 2-RF/3-RF across all NFE, whereas heavily-curved 1-RF at $K=5$ is too
 undersampled for node placement to help ($\approx2\%$), rising to
 $\approx44\%$ by $K=32$. Path-straightening and schedule-calibration are
-thus not redundant: the former lowers the defect magnitude, the latter
-optimally spends a fixed budget against whatever defect shape remains.
+therefore complementary, not redundant: the former lowers the defect
+magnitude, the latter optimally spends a fixed budget against whatever
+defect shape remains.
 
 \section{Conclusion}
 The reflow series isolates the path axis $P$ and confirms the certificate's

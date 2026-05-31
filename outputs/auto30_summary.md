@@ -36,7 +36,15 @@ Calibrate Euler defect `d(t)=‖ẍ(t)‖` on a 512-step reference (no FID feedb
 
 → The certificate's **schedule prescription generalizes off the EDM family**, parameter-free, to a different ODE + solver. Sensitivity: optimal exponent mildly NFE-dependent (p=2 best at K=5,8; p=1 best at K≥12; p=0.5 over-concentrates) — echoes the EDM in-regime-exponent finding.
 
-**Path×schedule interaction (2-RF, /3-RF in progress):** the schedule still wins on 2-RF at every NFE but by a much smaller margin (−0.04…−0.27 vs 1-RF's −0.67…−1.36). Mechanism (correcting a naive guess): reflow does **not** flatten the defect *shape* (max/median ≈72 ≈ 1-RF's 69) — it shrinks the defect *magnitude*, so 2-RF runs near its floor and leaves little FID room for scheduling. Consistent with m* being scale-invariant in d. **Path-straightening and schedule-calibration are complementary, not redundant.**
+**Path×schedule interaction (full grid).** The calibrated schedule wins in *every* (path, NFE) cell, but the gap shrinks monotonically with reflow:
+
+| ΔFID (proposed − uniform) | K=5 | K=8 | K=12 | K=18 | K=32 |
+|---|----|----|----|----|----|
+| 1-RF | −0.77 | −0.67 | −1.16 | −1.36 | −1.01 |
+| 2-RF | −0.27 | −0.19 | −0.13 | −0.08 | −0.04 |
+| 3-RF | −0.14 | −0.11 | −0.08 | −0.05 | −0.02 |
+
+Mechanism (correcting a naive guess): reflow does **not** flatten the defect *shape* (max/median ≈ 69/71.8/72.1 for 1/2/3-RF, constant) — it shrinks the defect *magnitude*, so 2/3-RF run near their floors and leave little FID room for scheduling. Consistent with m* being scale-invariant in d (shape-driven leverage constant; absolute gain bounded by the defect's share of FID). **Path-straightening and schedule-calibration are complementary, not redundant.**
 
 ---
 
@@ -51,5 +59,4 @@ Calibrate Euler defect `d(t)=‖ẍ(t)‖` on a 512-step reference (no FID feedb
 - R2 inefficiency: recomputes the 128-step Heun reference per panel grid (~11 h); cache if rerun.
 
 ## Open / next
-- 3-RF schedule sweep finishing (completes path×schedule grid).
 - Untested: FID-faithful (feature-weighted) schedule on RF; OT-CFM path point (needs training, deferred).
