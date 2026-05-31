@@ -135,3 +135,8 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   best @K>=12; p=0.5 (aggressive, exp 2/3) over-concentrates, loses to uniform @K=5,8. All proposed converge @K=32 (all beat uniform).
 - Echoes EDM finding (FID-effective exponent ~2 at low NFE); but theory p=1 wins everywhere w/o tuning.
 - CONCLUSION: certificate SCHEDULE claim generalizes to RF family (new ODE+solver), parameter-free. Honest negative-ish nuance: theory p=1 not pointwise-optimal at lowest NFE (p=2 marginally better), consistent with in-regime exponent.
+
+## Update 12 (path x schedule interaction test, task #14)
+- PREDICTION: 2-RF (straighter) has flatter defect d(t) -> smaller max/median than 1-RF's 69 -> smaller
+  proposed-p1-vs-uniform gap than 1-RF. Falsifiable cross-axis interaction.
+- chain3_sched2.sh running: 2-RF calib diagnostic -> 2-RF schedule sweep (uniform + proposed_p1, 3 seed, K{5,8,12,18,32}).
