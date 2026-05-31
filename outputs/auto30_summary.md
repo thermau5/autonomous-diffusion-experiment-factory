@@ -27,24 +27,25 @@ Full Euler FID ladder (10k Clean-FID, 3 seeds):
 ## 4. Schedule axis (m) — calibrated node placement on RF, *parameter-free*
 Calibrate Euler defect `d(t)=‖ẍ(t)‖` on a 512-step reference (no FID feedback, no tuned scalar), place nodes `∝d^{1/(p+1)}`, p=1 (Euler order). Baseline = RF default uniform-Euler.
 
-**On 1-RF the calibrated schedule beats uniform at every NFE:**
+**On 1-RF the calibrated schedule beats uniform at every NFE** (held-out-seed calibration; independently reproduced by a velocity-FD estimator on a different seed — peak −1.39 vs −1.36 @K18):
 
-| K | 5 | 8 | 12 | 18 | 32 |
-|---|----|----|----|----|----|
-| uniform | 37.94 | 19.74 | 13.39 | 10.26 | 7.80 |
-| proposed p=1 | 37.17 | 19.07 | 12.23 | 8.90 | 6.79 |
+| K | 5 | 8 | 12 | 18 | 32 | 64 |
+|---|----|----|----|----|----|----|
+| uniform | 37.94 | 19.74 | 13.39 | 10.26 | 7.80 | 6.35 |
+| proposed p=1 | 37.74 | 19.22 | 12.28 | 8.87 | 6.75 | 5.79 |
+| Δ | −0.20 | −0.52 | −1.11 | −1.39 | −1.05 | −0.55 |
 
-→ The certificate's **schedule prescription generalizes off the EDM family**, parameter-free, to a different ODE + solver. Sensitivity: optimal exponent mildly NFE-dependent (p=2 best at K=5,8; p=1 best at K≥12; p=0.5 over-concentrates) — echoes the EDM in-regime-exponent finding.
+→ The certificate's **schedule prescription generalizes off the EDM family**, parameter-free, to a different ODE + solver (inverted-U gain peaking mid-budget at K=18). Sensitivity: optimal exponent mildly NFE-dependent (p=2 best at K=5,8; p=1 best at K≥12; p=0.5 over-concentrates) — echoes the EDM in-regime-exponent finding.
 
 **FID-faithful weighting does NOT help (decomposability wall, cross-family).** Replacing pixel-`d` with `d·g` (g = feature-sensitivity, finite-difference) gives a *worse* schedule than both pixel-d and uniform at every NFE (48.4/26.3/16.9/11.6/8.0). g is well-behaved but peaks at the noise end (flow most sensitive to its initial condition), so `d·g` starves the high-curvature data end that needs resolution at deployment NFE. Same regime gap as EDM: the local/linear "principled" weighting is regime-mismatched; **parameter-free pixel-`d` is sufficient and superior.**
 
-**Path×schedule interaction (full grid).** The calibrated schedule wins in *every* (path, NFE) cell, but the gap shrinks monotonically with reflow:
+**Path×schedule interaction (full grid).** The calibrated schedule wins in *every* (path, NFE) cell; for K≥8 the gap shrinks monotonically with reflow (the K=5 1-RF gap is anomalously small — too undersampled for placement to help):
 
-| ΔFID (proposed − uniform) | K=5 | K=8 | K=12 | K=18 | K=32 |
-|---|----|----|----|----|----|
-| 1-RF | −0.77 | −0.67 | −1.16 | −1.36 | −1.01 |
-| 2-RF | −0.27 | −0.19 | −0.13 | −0.08 | −0.04 |
-| 3-RF | −0.14 | −0.11 | −0.08 | −0.05 | −0.02 |
+| ΔFID (proposed − uniform), held-out calib | K=5 | K=8 | K=12 | K=18 | K=32 | K=64 |
+|---|----|----|----|----|----|----|
+| 1-RF | −0.20 | −0.52 | −1.11 | −1.39 | −1.05 | −0.55 |
+| 2-RF | −0.23 | −0.18 | −0.11 | −0.07 | −0.03 | −0.01 |
+| 3-RF | −0.11 | −0.10 | −0.07 | −0.05 | −0.02 | −0.01 |
 
 Mechanism (correcting a naive guess): reflow does **not** flatten the defect *shape* (max/median ≈ 69/71.8/72.1 for 1/2/3-RF, constant) — it shrinks the defect *magnitude*, so 2/3-RF run near their floors and leave little FID room for scheduling. Consistent with m* being scale-invariant in d (shape-driven leverage constant; absolute gain bounded by the defect's share of FID). **Path-straightening and schedule-calibration are complementary, not redundant.**
 

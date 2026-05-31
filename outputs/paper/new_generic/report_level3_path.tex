@@ -236,12 +236,20 @@ whether the certificate's optimal density $m^\star\propto d^{1/(p+1)}$
 transfers from EDM solvers to the RF flow. The defect $d$ is the
 Euler local-truncation magnitude, which for an order-1 solver scales with
 the trajectory acceleration $\lVert\ddot x(t)\rVert$; we estimate it once on
-a 512-step reference trajectory (finite-difference of the velocity field
-along the path) and place nodes by equipartitioning $\int m^\star\,dt$.
-This calibration uses \emph{no} FID feedback and \emph{no} tuned scalar.
-The baseline is the RF default, uniform-in-$t$ Euler; both use the same
-explicit-node integrator $x_{i+1}=x_i+v_\theta(x_i,t_i)(t_{i+1}-t_i)$ at
-matched NFE$=K$.
+a 512-step reference trajectory and place nodes by equipartitioning
+$\int m^\star\,dt$, with $p=1$ (the Euler order) fixed by theory. This
+calibration uses \emph{no} FID feedback and \emph{no} tuned scalar, and ---
+to avoid any leakage --- the reference trajectory uses a \emph{held-out
+seed} (777) disjoint from the evaluation seeds. As a robustness check the
+whole experiment was run with two independent defect estimators (a
+second-difference $\lVert x_{i+1}-2x_i+x_{i-1}\rVert$ on the held-out seed,
+and a velocity finite-difference $\lVert\dot v\rVert$ on a different seed);
+they agree to within the low-NFE noise (e.g.\ the 1-RF gap peaks at
+$-1.39$ vs $-1.36$ at $K=18$), so we report the held-out-seed estimator as
+primary. The baseline is the RF default, uniform-in-$t$ Euler; both arms
+use the same explicit-node integrator
+$x_{i+1}=x_i+v_\theta(x_i,t_i)(t_{i+1}-t_i)$ at matched NFE$=K$, and we
+evaluate once.
 
 The measured RF defect is strongly non-uniform
 ($\lVert\ddot x\rVert$ quartiles $30.7/51.9/86.0$, max $3581$;
@@ -250,64 +258,71 @@ max/median $\approx69$), with curvature concentrated near both endpoints
 nodes at the endpoints and thins the middle.
 
 \begin{table}[h]\centering
-\caption{Schedule axis on 1-RF: certificate-calibrated node placement vs
-uniform Euler. Clean-FID (10k), 3 seeds. Headline $=$ \textbf{p1}
-(parameter-free, $p\!=\!1$, no FID feedback). $p\!\in\!\{0.5,2\}$ are a
-sensitivity sweep, not the headline; $\ast$ marks the best entry per NFE.}
+\caption{Schedule axis on 1-RF (headline): parameter-free
+certificate-calibrated node placement ($p\!=\!1$, held-out-seed
+calibration, no FID feedback) vs the RF-default uniform Euler. Clean-FID
+(10k), 3 seeds. Lower is better; the calibrated schedule wins at every NFE.}
 \label{tab:sched}
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccccc}
 \toprule
-NFE ($K$)               & 5 & 8 & 12 & 18 & 32\\
+NFE ($K$)               & 5 & 8 & 12 & 18 & 32 & 64\\
 \midrule
-uniform (RF default)    & 37.94 & 19.74 & 13.39 & 10.26 & 7.80\\
-\textbf{proposed }$p\!=\!1$ & 37.17 & 19.07 & \textbf{12.23}$^\ast$ & \textbf{8.90}$^\ast$ & \textbf{6.79}$^\ast$\\
-\midrule
-\multicolumn{6}{l}{\footnotesize sensitivity (not headline):}\\
-proposed $p\!=\!0.5$    & 42.71 & 20.99 & 12.97 & 9.16 & 6.86\\
-proposed $p\!=\!2$      & \textbf{35.12}$^\ast$ & \textbf{18.56}$^\ast$ & 12.35 & 9.08 & 6.93\\
+uniform (RF default)    & 37.94 & 19.74 & 13.39 & 10.26 & 7.80 & 6.35\\
+\textbf{proposed }$p\!=\!1$ & \textbf{37.74} & \textbf{19.22} & \textbf{12.28} & \textbf{8.87} & \textbf{6.75} & \textbf{5.79}\\
+$\Delta$                & $-0.20$ & $-0.52$ & $-1.11$ & $-1.39$ & $-1.05$ & $-0.55$\\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \paragraph{Result.} The pre-committed parameter-free schedule ($p\!=\!1$)
-\textbf{beats uniform at every NFE} ($\Delta=-0.77,-0.67,-1.16,-1.36,-1.01$
-at $K=5,8,12,18,32$), with the largest relative gain ($\approx13\%$) at
-mid-budget $K=18$ where node placement has the most leverage. The
-certificate's schedule prescription thus generalizes off the EDM family to
-a flow model with a different ODE and a different (Euler) solver, with no
-metric tuning.
+\textbf{beats uniform at every NFE}, in an inverted-U whose largest gain
+($\Delta=-1.39$, $\approx13.5\%$) is at mid-budget $K=18$ where node
+placement has the most leverage; the gain narrows at $K=5$ (too few nodes
+to exploit the curvature) and at $K\ge32$ (uniform already near the floor).
+The certificate's schedule prescription thus generalizes off the EDM family
+to a flow model with a different ODE and a different (Euler) solver, with no
+metric tuning, and is reproduced by two independent defect estimators
+(above).
 
-\paragraph{Honest sensitivity.} The optimal exponent is mildly
-NFE-dependent. The gentler $p\!=\!2$ (density exponent $1/3$) is marginally
-best at the scarcest budgets ($K=5,8$), $p\!=\!1$ (exponent $1/2$) is best
-for $K\ge12$, and the aggressive $p\!=\!0.5$ (exponent $2/3$)
-over-concentrates and even loses to uniform at $K=5,8$. So $p\!=\!1$ is not
-pointwise-optimal everywhere, but it is the only single parameter-free
-choice that beats uniform at \emph{every} NFE, and all three calibrated
-variants converge and beat uniform once steps are ample ($K=32$). The
-recurrence of an effective best exponent near $2$ at low NFE matches the
+\paragraph{Honest sensitivity (seed-0 calibration).} A separate exponent
+sweep (using the velocity-FD calibration on seed~0, so internally
+consistent but not directly comparable in absolute value to the held-out
+table) gives proposed FID $42.71/20.99/12.97/9.16/6.86$ for $p\!=\!0.5$,
+$37.17/19.07/12.23/8.90/6.79$ for $p\!=\!1$, and
+$35.12/18.56/12.35/9.08/6.93$ for $p\!=\!2$ (at $K=5/8/12/18/32$). The
+optimal exponent is mildly NFE-dependent: the gentler $p\!=\!2$ (density
+exponent $1/3$) is marginally best at the scarcest budgets ($K=5,8$),
+$p\!=\!1$ (exponent $1/2$) is best for $K\ge12$, and the aggressive
+$p\!=\!0.5$ (exponent $2/3$) over-concentrates and even loses to uniform at
+$K=5,8$. So $p\!=\!1$ is not pointwise-optimal everywhere, but it is the
+theory-given parameter-free choice that beats uniform at \emph{every} NFE.
+The recurrence of an effective best exponent near $2$ at low NFE matches the
 EDM regime-tuning observation that the deployment-NFE exponent is an
 in-regime quantity, not the asymptotic order.
 
 \paragraph{Path\,$\times$\,schedule interaction.} Repeating the
-calibrated-$p\!=\!1$-vs-uniform test across the whole reflow ladder gives
-the gap grid (proposed $-$ uniform FID, $<0$ means the schedule wins):
+calibrated-$p\!=\!1$-vs-uniform test (held-out-seed calibration) across the
+whole reflow ladder gives the gap grid (proposed $-$ uniform FID, $<0$ means
+the schedule wins):
 
 \begin{center}
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccccc}
 \toprule
-$\Delta$FID & $K{=}5$ & $K{=}8$ & $K{=}12$ & $K{=}18$ & $K{=}32$\\
+$\Delta$FID & $K{=}5$ & $K{=}8$ & $K{=}12$ & $K{=}18$ & $K{=}32$ & $K{=}64$\\
 \midrule
-1-RF & $-0.77$ & $-0.67$ & $-1.16$ & $-1.36$ & $-1.01$\\
-2-RF & $-0.27$ & $-0.19$ & $-0.13$ & $-0.08$ & $-0.04$\\
-3-RF & $-0.14$ & $-0.11$ & $-0.08$ & $-0.05$ & $-0.02$\\
+1-RF & $-0.20$ & $-0.52$ & $-1.11$ & $-1.39$ & $-1.05$ & $-0.55$\\
+2-RF & $-0.23$ & $-0.18$ & $-0.11$ & $-0.07$ & $-0.03$ & $-0.01$\\
+3-RF & $-0.11$ & $-0.10$ & $-0.07$ & $-0.05$ & $-0.02$ & $-0.01$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
 \noindent The calibrated schedule wins in \emph{every} (path, NFE) cell ---
-it generalizes across the entire path ladder --- but the gap shrinks
-monotonically with reflow. The mechanism is \emph{not} a flatter defect:
+it generalizes across the entire path ladder. For $K\ge8$ the gap shrinks
+monotonically with reflow ($1\text{-RF}\gg2\text{-RF}>3\text{-RF}$); the
+lone exception is $K=5$, where heavily-curved 1-RF is too undersampled for
+node placement to help ($-0.20$, even smaller than 2-RF's $-0.23$). The
+mechanism is \emph{not} a flatter defect:
 the defect \emph{shape} is essentially constant along the ladder
 ($\lVert\ddot x\rVert$ max/median $\approx 69,71.8,72.1$ for 1/2/3-RF).
 Rather, reflow shrinks the defect \emph{magnitude}, so 2-RF and 3-RF run
@@ -316,10 +331,10 @@ scheduling to recover. This is exactly what $m^\star$'s scale-invariance in
 $d$ predicts: the gain depends on the defect shape (which reflow
 preserves), while the \emph{absolute} FID gain is bounded by the defect's
 share of the total risk (which reflow shrinks). In above-floor terms the
-schedule removes a stable $\approx21\text{--}36\%$ of the residual defect
-on 2-RF/3-RF across all NFE, whereas heavily-curved 1-RF at $K=5$ is too
-undersampled for node placement to help ($\approx2\%$), rising to
-$\approx44\%$ by $K=32$. Path-straightening and schedule-calibration are
+schedule removes a sizeable, fairly stable $\approx18\text{--}30\%$ of the
+residual defect on 2-RF/3-RF across all NFE, whereas heavily-curved 1-RF at
+$K=5$ is too undersampled for node placement to help ($<1\%$), rising to
+$\approx46\%$ by $K=32$. Path-straightening and schedule-calibration are
 therefore complementary, not redundant: the former lowers the defect
 magnitude, the latter optimally spends a fixed budget against whatever
 defect shape remains.

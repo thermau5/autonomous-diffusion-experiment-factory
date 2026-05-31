@@ -197,3 +197,14 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - ACTION: held-out-seed calibration is the cleaner PRIMARY; will reconcile report to it + note independent velocity-FD
   cross-check agrees. (Switching to held-out numbers is the rigorous direction even though it shows SMALLER low-NFE gain --
   NOT cherry-picking.) 3-RF proposed_rf running (curvature ~0, very straight -> proposed~uniform expected).
+
+## Update 19 (RECONCILED report+summary to held-out-seed primary; proposed_rf chain COMPLETE)
+- proposed_rf 3-RF done; PROPOSED CHAIN COMPLETE 03:09:36. Full held-out gap grid (proposed-uniform):
+        K5     K8     K12    K18    K32    K64
+  1-RF  -0.20  -0.52  -1.11  -1.39  -1.05  -0.55
+  2-RF  -0.23  -0.18  -0.11  -0.07  -0.03  -0.01
+  3-RF  -0.11  -0.10  -0.07  -0.05  -0.02  -0.01
+- Report tab:sched now uses HELD-OUT-seed proposed_rf as primary (1-RF, +K64); seed-0 p-sensitivity kept as
+  clearly-labeled internal comparison; interaction grid -> held-out. Honest note: K=5 1-RF gap (-0.20) anomalously
+  small (too undersampled); monotone reflow-shrinkage holds K>=8. velocity-FD(seed0) cross-check agrees (peak -1.36 vs -1.39).
+- Report recompiles (6pp). Summary updated. All GPU jobs done; GPU idle.
