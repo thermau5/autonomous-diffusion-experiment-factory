@@ -168,3 +168,11 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   propagated to t=1 via fine Euler) beats pixel-d=||xddot|| for the RF schedule. Mirrors EDM perceptual-weight Q.
 - rf_gsens.py estimates g(t) on 49 nodes + SANITY GATE (positivity/smoothness/profile) before any sweep.
   Clearly EXPLORATORY; honest report regardless of outcome. EDM precedent: feature-weighting did NOT beat tuned.
+
+## Update 16 (g-sanity PASSED; FID-weighted schedule sweep running)
+- g(t) feature-sensitivity (1-RF, 49 nodes, finite-diff eps=0.05, 2 reps): ALL POSITIVE, smooth, max/median=35.
+  Profile: HIGH at noise end (t=0: ~500-730), dips through middle (min ~6.4 @t~0.7), rises @t=1 (~52).
+  Interpretable: ODE sensitivity to near-initial condition dominates (x(0) ~ determines sample); mid-traj perturbations
+  contracted toward data manifold. SANITY GATE PASSED -> proceed.
+- KEY: pixel-d ||xddot|| peaks near t->1, but g peaks near t->0, so d*g reweights node placement toward noise end.
+- rf_sched_fid.py running: proposed_dg (∝(d*g)^{1/2}) vs existing pixel-d-p1 / uniform on 1-RF, 3 seed.
