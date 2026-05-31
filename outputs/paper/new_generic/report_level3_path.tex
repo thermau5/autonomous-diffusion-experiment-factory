@@ -324,6 +324,28 @@ therefore complementary, not redundant: the former lowers the defect
 magnitude, the latter optimally spends a fixed budget against whatever
 defect shape remains.
 
+\paragraph{Does an FID-faithful weighting help? No --- the decomposability
+wall, cross-family.} A natural refinement is to replace the pixel defect
+$d=\lVert\ddot x\rVert$ with the FID-faithful $d\cdot g$, where
+$g(t)$ is the Inception-feature sensitivity of the final sample to a state
+perturbation at time $t$ (finite-difference: perturb the reference
+trajectory at $t$, integrate to $t\!=\!1$, measure
+$\lVert\Delta\phi\rVert^2/\varepsilon^2$). The estimated $g$ is well-behaved
+(all positive, smooth, max/median $\approx35$) but peaks at the
+\emph{noise} end ($g\!\approx\!500\text{--}730$ near $t\!=\!0$, dipping to
+$\approx6$ near $t\!=\!0.7$) --- the flow is most sensitive to its initial
+condition. The resulting $d\cdot g$ schedule is \emph{worse than both pixel-$d$
+and uniform at every NFE} ($48.4/26.3/16.9/11.6/8.0$ vs uniform
+$37.9/19.7/13.4/10.3/7.8$). The reason is the same regime gap documented for
+the EDM family: $g$ is a \emph{local, linear} sensitivity, so it
+over-weights the noise end and pulls nodes away from the high-curvature
+data end that must be resolved at deployment NFE. The ``more principled''
+FID-faithful weighting is thus a regime-mismatched object; the
+parameter-free pixel-space calibration is not merely sufficient but
+\emph{superior}. This is the path/flow-family echo of the EDM finding that
+a decomposable, leading-order certificate cannot, by itself, yield the
+deployment-NFE-optimal schedule.
+
 \section{Conclusion}
 The reflow series isolates the path axis $P$ and confirms the certificate's
 two-term structure on it: each reflow step lowers the discretization defect

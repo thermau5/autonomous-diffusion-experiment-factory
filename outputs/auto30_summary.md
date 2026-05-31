@@ -36,6 +36,8 @@ Calibrate Euler defect `d(t)=‖ẍ(t)‖` on a 512-step reference (no FID feedb
 
 → The certificate's **schedule prescription generalizes off the EDM family**, parameter-free, to a different ODE + solver. Sensitivity: optimal exponent mildly NFE-dependent (p=2 best at K=5,8; p=1 best at K≥12; p=0.5 over-concentrates) — echoes the EDM in-regime-exponent finding.
 
+**FID-faithful weighting does NOT help (decomposability wall, cross-family).** Replacing pixel-`d` with `d·g` (g = feature-sensitivity, finite-difference) gives a *worse* schedule than both pixel-d and uniform at every NFE (48.4/26.3/16.9/11.6/8.0). g is well-behaved but peaks at the noise end (flow most sensitive to its initial condition), so `d·g` starves the high-curvature data end that needs resolution at deployment NFE. Same regime gap as EDM: the local/linear "principled" weighting is regime-mismatched; **parameter-free pixel-`d` is sufficient and superior.**
+
 **Path×schedule interaction (full grid).** The calibrated schedule wins in *every* (path, NFE) cell, but the gap shrinks monotonically with reflow:
 
 | ΔFID (proposed − uniform) | K=5 | K=8 | K=12 | K=18 | K=32 |
@@ -59,4 +61,4 @@ Mechanism (correcting a naive guess): reflow does **not** flatten the defect *sh
 - R2 inefficiency: recomputes the 128-step Heun reference per panel grid (~11 h); cache if rerun.
 
 ## Open / next
-- Untested: FID-faithful (feature-weighted) schedule on RF; OT-CFM path point (needs training, deferred).
+- OT-CFM path point (needs training, deferred). The reflow series already provides the controlled path-straightening ladder.
