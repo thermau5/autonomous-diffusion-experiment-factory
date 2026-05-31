@@ -176,3 +176,12 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   contracted toward data manifold. SANITY GATE PASSED -> proceed.
 - KEY: pixel-d ||xddot|| peaks near t->1, but g peaks near t->0, so d*g reweights node placement toward noise end.
 - rf_sched_fid.py running: proposed_dg (∝(d*g)^{1/2}) vs existing pixel-d-p1 / uniform on 1-RF, 3 seed.
+
+## Update 17 (FID-weighted schedule on RF -- clean NEGATIVE result, confirms decomposability wall)
+- proposed_dg (∝(d*g)^{1/2}, FID-faithful feature weighting): K5/8/12/18/32 = 48.36/26.33/16.90/11.58/8.02.
+  WORSE than BOTH uniform (37.94/19.74/13.39/10.26/7.80) AND pixel-d-p1 (37.17/19.07/12.23/8.90/6.79) at EVERY NFE.
+- WHY: local linear g peaks at noise end (t->0, ODE most sensitive to initial condition); d*g pulls nodes to t->0,
+  starves the high-curvature data end (t->1) that needs resolution at deployment NFE. Regime-mismatched weighting.
+- => Cross-family confirmation of the EDM decomposability wall: the "principled" FID-faithful local weighting HURTS;
+  the parameter-free pixel-space calibration (d=||xddot||, p=1) is SUFFICIENT and SUPERIOR. g sane but wrong regime.
+- Task #15 done. RF Level-3 program (P, m incl. FID-weighting test, R, s) COMPLETE. ~27h elapsed.
