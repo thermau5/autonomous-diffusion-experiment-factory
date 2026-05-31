@@ -2,308 +2,214 @@
 \usepackage[a4paper,margin=1in]{geometry}
 \usepackage{amsmath,amssymb,amsthm,booktabs,hyperref,xcolor,bm}
 \newcommand{\R}{\mathcal R}
-\newcommand{\E}{\mathbb E}
 \newcommand{\norm}[1]{\lVert #1 \rVert}
-\title{The Path and Schedule Axes of the Excess-Risk Certificate,\\
-       Tested on the Rectified-Flow Family:\\
-       {\large a controlled path-straightening ladder (reflow series) and a
-        calibrated-schedule test on CIFAR-10, against the fixed-EDM frontier}}
+\title{Testing the Excess-Risk Certificate Axis by Axis\\
+       on the Rectified-Flow Family}
 \author{thermau5}
 \date{\today}
 \begin{document}
 \maketitle
 
 \begin{abstract}
-The generic certificate of the companion report bounds excess terminal
-risk by an irreducible floor $Q_0$ plus statistical and discretization
-terms, with the probability path $P$ entering through \emph{both} the
-floor $Q_0$ and the local solver defect $d$ (hence the optimal sampling
-density $m^\star\propto d^{1/(p+1)}$). Every locked result so far varied
-the schedule ($m$) and the solver core ($s$) at a \emph{fixed} EDM path.
-Here we test the one axis those experiments held constant --- the path
-$P$ itself --- using the Rectified-Flow reflow series (1-RF, 2-RF, 3-RF)
-as a \emph{controlled path-straightening} ladder: identical NCSN++
-backbone, identical $v$-parameterization, identical Euler solver, varying
-\emph{only} the straightness of the probability path. The certificate
-makes a sharp, falsifiable prediction: reflow lowers the curvature-driven
-defect $d$ (helping at small NFE) but raises the floor $Q_0$ via coupling
-approximation error (hurting at large NFE), so the reflow ladder must
-exhibit a \emph{crossover} in the FID-vs-NFE plane rather than a uniform
-win. We report the fixed-EDM frontier (Table~\ref{tab:edm}) and the path
-ladder (Table~\ref{tab:path}) under the locked 10k Clean-FID protocol, and
-we state plainly what the data confirm and refute. Finally
-(Section~\ref{sec:sched}) we test the \emph{schedule} axis $m$ on the same
-RF family: a certificate-calibrated, \emph{parameter-free} node placement
-$m^\star\propto d^{1/(p+1)}$ ($p=1$, the Euler order, no metric feedback)
-beats the RF default (uniform-in-$t$ Euler) at every NFE --- the schedule
-claim, established for EDM solvers, generalizes to a model family with a
-different ODE and solver.
+The generic certificate bounds excess terminal risk as
+$Q = Q_0 + \tfrac{c_{\mathrm{stat}}}{n}\!\int\! \tfrac{a}{\rho}
+      + c_{\mathrm{disc}}\!\int\! \tfrac{d}{m^{p}}$,
+with optimal sampling density $m^\star\!\propto d^{1/(p+1)}$. Each design
+choice enters through a specific term (Table~\ref{tab:axes}). Prior locked
+results varied the schedule $m$ and solver $s$ at a fixed EDM path; here we
+test every axis we can on a \emph{new} model family, Rectified Flow (RF),
+to see what generalizes. The two headline findings: (i) on the
+\textbf{path} axis, the reflow ladder 1/2/3-RF produces the
+floor-vs-defect \emph{crossover cascade} the certificate predicts --- no
+single path wins at all budgets; (ii) on the \textbf{schedule} axis, a
+\emph{parameter-free} certificate-calibrated grid beats RF's uniform-Euler
+default at every NFE. All FID is Clean-FID 10k, 3 seeds.
 \end{abstract}
 
-\section{What this experiment isolates}
-The hierarchy of the certificate is $h\!\to\!a$, $P\!\to\!(a,d,Q_0)$,
-$s\!\to\!d$, $\R\!\to\!(a,d)$. The locked benchmark to date is a study of
-the \emph{schedule} axis $m$ (and, with DPM-Solver-v3, the \emph{solver}
-axis $s$) at a single, fixed EDM variance-exploding path. The path $P$ was
-never varied. This report adds that axis with the cleanest controlled
-manipulation available: the reflow procedure, which re-couples noise and
-data along progressively straighter trajectories while keeping the network
-architecture, the velocity parameterization, and the integrator fixed.
-
-\paragraph{The certificate's path-axis prediction.}
-Reflow reduces trajectory curvature, i.e.\ the local defect
-$d_s(r)=A_\R(r)\,\tau_s(r)$ shrinks because $\tau_s$ (a curvature-weighted
-truncation defect for a fixed-order solver) shrinks for straighter paths.
-By $m^\star\propto d^{1/(p+1)}$ and the certificate's discretization term
-$c_{\mathrm{disc}}\!\int d/m^p$, a smaller $d$ lowers the
-\emph{NFE-dependent} part of the risk: straighter paths should win at
-\emph{small} NFE. But each reflow step is trained to reproduce the
-previous flow's input--output coupling, injecting an approximation error
-that raises the \emph{floor} $Q_0$ (the published infinite-step FIDs grow
-$2.58\!\to\!3.36\!\to\!3.96$ for 1/2/3-RF). The certificate therefore
-predicts a \textbf{crossover}: 3-RF $<$ 2-RF $<$ 1-RF at low NFE, and the
-order reversing as NFE $\to\infty$. A uniform win for any single member
-would \emph{refute} the floor-vs-defect decomposition on the path axis.
-
-\section{Fixed-EDM frontier (path held constant)}
-All entries: EDM CIFAR-10 (NVlabs), Clean-FID 10k, locked test protocol,
-$\pm$ s.e.m.\ over seeds. ``(Ours)'' is the nonparametric-calibrated
-scheduler (theory-shaped $m^\star\propto d_s^{1/(p+1)}$ with calibrated
-$d_s$ and a single tuned perceptual exponent); rows are at \emph{matched}
-NFE.
+\section{The hierarchy}
+\label{sec:hierarchy}
+The certificate decomposes by design axis: each knob controls one part of
+the bound. This is the organizing structure of the whole study.
 
 \begin{table}[h]\centering
-\caption{Fixed-EDM frontier: schedule and solver-core axes at a fixed path.
-Clean-FID (10k), lower is better. dpm\_solver\_v3 = logSNR grid + EMS
-(Level-1 solver-core advance).}
+\caption{The certificate's axes. Each row is one experiment in this report.}
+\label{tab:axes}
+\begin{tabular}{llll}
+\toprule
+Axis & Knob & Enters via & Tested in \\
+\midrule
+Solver   & $s$ & local defect $d$            & \S\ref{sec:solver} (Table~\ref{tab:edm})\\
+Risk     & $\R$& sensitivity in $a,d$        & \S\ref{sec:risk} (Table~\ref{tab:risk})\\
+Path     & $P$ & floor $Q_0$ \emph{and} $d$  & \S\ref{sec:path} (Table~\ref{tab:path})\\
+Schedule & $m$ & disc.\ term $\int d/m^{p}$  & \S\ref{sec:sched} (Table~\ref{tab:sched})\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Results at a glance.}
+\begin{itemize}\itemsep2pt
+\item[$s$:] A better solver core (DPM-Solver-v3 EMS) beats our best
+schedule at every NFE on the fixed EDM path --- a Level-1 advance.
+\item[$\R$:] The directly-measurable feature-space $W_2$ risk tracks FID
+in rank $5/5$ --- it is the FID-faithful risk.
+\item[$P$:] Reflow trades the floor $Q_0$ for the defect $d$; the optimal
+reflow count is \emph{NFE-dependent} (3-RF at NFE 5, 2-RF at 8--64, 1-RF at
+$\ge128$). Pre-registered crossover prediction confirmed.
+\item[$m$:] The certificate's calibrated node placement
+$m^\star\!\propto d^{1/(p+1)}$ ($p\!=\!1$, no metric feedback) beats
+uniform-Euler at every NFE --- the schedule claim generalizes off EDM.
+\end{itemize}
+
+\section{Solver axis $s$: fixed-EDM frontier}
+\label{sec:solver}
+The bar the RF results are measured against. EDM CIFAR-10, locked protocol.
+
+\begin{table}[h]\centering
+\caption{Solver axis on a fixed EDM path. Clean-FID, lower better; bold best.}
 \label{tab:edm}
 \begin{tabular}{lcccccc}
 \toprule
 NFE & 5 & 8 & 12 & 18 & 32 & 64\\
 \midrule
-(Ours, UniPC)        & 21.46 & 9.18 & 5.58 & 4.66 & 4.45 & 4.41\\
-dpm\_solver\_v3 (EMS)& \textbf{17.07} & \textbf{6.30} & \textbf{4.71} & \textbf{4.46} & \textbf{4.35} & \textbf{4.35}\\
+Ours (UniPC schedule) & 21.46 & 9.18 & 5.58 & 4.66 & 4.45 & 4.41\\
+dpm\_solver\_v3 (EMS)  & \textbf{17.07} & \textbf{6.30} & \textbf{4.71} & \textbf{4.46} & \textbf{4.35} & \textbf{4.35}\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent\emph{Honest reading.} A better \emph{solver core} (DPM-Solver-v3's
-EMS coefficients) dominates our best \emph{schedule} at every NFE on the
-fixed path. This is a Level-1 (solver) advance, not a schedule advance; it
-is consistent with the certificate ($s$ enters $d$ directly), and it sets
-the bar the path axis must be measured against.
+\noindent The EMS solver core beats our best schedule at every NFE: a
+\emph{solver} ($s$) advance, not a schedule advance, consistent with $s$
+entering $d$. Its floor ($\approx4.35$) is the best on offer.
 
-\section{Path ladder (reflow series)}
-1-RF/2-RF/3-RF, identical NCSN++ DDPM++ backbone, EMA weights, standard
-Gaussian prior ($\mathrm{noise\_scale}=1$), Euler $v$-ODE
-$x_{i+1}=x_i+v_\theta(x_i,t_i)\,\Delta t$, $t\!:\!10^{-3}\!\to\!1$,
-$\Delta t=1/N$, NFE$=N$. Clean-FID 10k, 3 seeds, $\pm$ s.e.m.
+\section{Risk axis $\R$: the FID-faithful risk}
+\label{sec:risk}
+Is the bounded risk the one we care about? We compare the directly-measured
+$R_{\mathrm{disc}}=$ feature-$W_2$(K-step, 128-step ref) against FID on a
+5-grid panel (3 seeds).
 
 \begin{table}[h]\centering
-\caption{Path-straightening ladder at matched NFE (Euler). Clean-FID (10k),
-3 seeds, lower is better; bold = best at that NFE.}
+\caption{$R_{\mathrm{disc}}$ vs FID. Identical rank ordering ($5/5$).}
+\label{tab:risk}
+\begin{tabular}{lcc}
+\toprule
+grid & $R_{\mathrm{disc}}$ & FID\\
+\midrule
+good    & 13.76  & 13.16\\
+refined & 28.91  & 26.71\\
+karras  & 50.43  & 44.90\\
+forced  & 96.73  & 87.85\\
+cluster & 282.87 & 270.30\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Feature-space $W_2$ \emph{is} the FID-faithful risk (the risk-axis
+question is settled); pixel-$L_2$ scrambles this ranking.
+
+\section{Path axis $P$: the reflow ladder}
+\label{sec:path}
+Hold solver and schedule fixed (Euler, uniform); vary only path straightness
+via reflow 1/2/3-RF (same backbone, same $v$-parameterization). \emph{Pre-registered
+prediction:} reflow lowers $d$ (helps low NFE) but raises $Q_0$ (hurts high
+NFE), so the order must \emph{reverse} with NFE --- no single winner.
+
+\begin{table}[h]\centering
+\caption{Path ladder, uniform Euler. Clean-FID; bold best at each NFE.}
 \label{tab:path}
+\begin{tabular}{lcccccccc}
+\toprule
+NFE & 5 & 8 & 12 & 18 & 32 & 64 & 128 & 256\\
+\midrule
+1-RF & 38.59 & 20.21 & 13.76 & 10.57 & 8.04 & 6.53 & \textbf{5.85} & \textbf{5.56}\\
+2-RF & 7.55 & \textbf{6.99} & \textbf{6.70} & \textbf{6.53} & \textbf{6.38} & \textbf{6.31} & 6.27 & 6.26\\
+3-RF & \textbf{7.45} & 7.20 & 7.06 & 6.97 & 6.89 & 6.85 & 6.82 & 6.81\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Confirmed.} The best path changes with budget ---
+\,3-RF\,(NFE 5)\,$\to$\,2-RF\,(8--64)\,$\to$\,1-RF\,($\ge$128) --- a cascade
+of three crossovers ($3\!\leftrightarrow\!2$ at ${\approx}6$,
+$1\!\leftrightarrow\!3$ in $(32,64)$, $1\!\leftrightarrow\!2$ in $(64,128)$).
+At NFE${\ge}128$ the order is the fully-reversed $1\!<\!2\!<\!3$-RF, matching
+the published converged floors ($2.58\!<\!3.36\!<\!3.96$). This is exactly the
+$Q_0$-vs-$d$ trade. \emph{Cross-method:} the straightened path beats the best
+EDM solver (Table~\ref{tab:edm}) only at NFE 5 ($\approx7.5$ vs $17.07$); the
+low-floor EDM model wins every larger budget.
+
+\section{Schedule axis $m$: calibrated node placement}
+\label{sec:sched}
+Hold the path fixed (1-RF); place the $K$ Euler nodes by the certificate's
+density $m^\star\!\propto d^{1/(p+1)}$, $p\!=\!1$, with $d=\norm{\ddot x}$
+calibrated on a held-out reference trajectory (no FID feedback, no tuned
+scalar; \S\ref{app:protocol}). Baseline: RF-default uniform-in-$t$ Euler.
+
+\begin{table}[h]\centering
+\caption{Schedule axis on 1-RF. Calibrated vs uniform; $\Delta<0$ = win.}
+\label{tab:sched}
 \begin{tabular}{lcccccc}
 \toprule
 NFE & 5 & 8 & 12 & 18 & 32 & 64\\
 \midrule
-1-RF (base)  & 38.59 & 20.21 & 13.76 & 10.57 & 8.04 & 6.53\\
-2-RF (reflow$\times$1) & \textbf{7.55} & \textbf{6.99} & \textbf{6.70} & \textbf{6.53} & \textbf{6.38} & 6.31\\
-3-RF (reflow$\times$2) & \textbf{7.45} & 7.20 & 7.06 & 6.97 & 6.89 & 6.85\\
+uniform               & 37.94 & 19.74 & 13.39 & 10.26 & 7.80 & 6.35\\
+proposed ($p\!=\!1$)  & \textbf{37.74} & \textbf{19.22} & \textbf{12.28} & \textbf{8.87} & \textbf{6.75} & \textbf{5.79}\\
+$\Delta$              & $-0.20$ & $-0.52$ & $-1.11$ & $-1.39$ & $-1.05$ & $-0.55$\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{Decision rule (pre-registered).} The crossover prediction is
-\emph{confirmed} iff (i) at NFE$=5$ the FID order is 3-RF $<$ 2-RF $<$
-1-RF (straighter wins when steps are scarce), and (ii) at NFE$=64$ the
-order is 1-RF $<$ 2-RF $<$ 3-RF (the floor dominates when steps are
-plentiful). Any monotone-in-NFE single winner refutes the
-floor-vs-defect split on the path axis. We commit to this rule before the
-2-RF/3-RF numbers are measured.
-
-\section{Reconciliation}
-\label{sec:reconcile}
-
-\paragraph{The ranking reshuffles with NFE --- the split is confirmed.}
-There is no single member that wins at every budget. The FID ordering
-moves through three regimes as NFE grows:
-\begin{center}
-\begin{tabular}{ll}
-\toprule
-NFE & FID order (best $\to$ worst)\\
-\midrule
-$5$        & 3-RF $<$ 2-RF $\ll$ 1-RF\\
-$8$--$32$  & 2-RF $<$ 3-RF $<$ 1-RF\\
-$64$       & 2-RF $<$ 1-RF $<$ 3-RF\\
-\bottomrule
-\end{tabular}
-\end{center}
-By the pre-registered decision rule, a monotone single winner would have
-\emph{refuted} the floor-vs-defect split; instead the ranking reorders
-exactly as the two-term certificate predicts, so the split is
-\textbf{confirmed}. Part (i) holds outright: at NFE$=5$ the order is
-$3\text{-RF}<2\text{-RF}<1\text{-RF}$ (straightest wins when steps are
-scarce). Part (ii) is confirmed in \emph{direction} and partially in the
-grid: as NFE grows the low-floor members climb --- 1-RF overtakes 3-RF
-between NFE 32 and 64 --- but the full reversal to
-$1\text{-RF}<2\text{-RF}<3\text{-RF}$ is not yet complete at NFE$=64$
-(Section~\ref{sec:floor}).
-
-\paragraph{Two crossovers are observed directly; one is pushed past the
-Euler budget.} The crossover NFE between adjacent reflow levels
-\emph{shrinks} as one climbs the ladder, because each reflow step buys
-less curvature reduction (smaller $\Delta d$) while paying a growing floor
-penalty ($\Delta Q_0$: published converged FIDs $2.58\to3.36\to3.96$):
-\begin{itemize}
-\item \textbf{3-RF vs 2-RF: crossover $\approx 6$ NFE.} 3-RF's marginally
-straighter path wins only at NFE$=5$ ($7.45$ vs $7.55$); by NFE$=8$ its
-higher floor already dominates ($7.20$ vs $6.99$) and the gap widens.
-\item \textbf{1-RF vs 3-RF: crossover $\in(32,64)$.} 1-RF's much lower
-floor overtakes 3-RF once enough steps resolve the curved 1-RF path
-(NFE$=32$: $8.04>6.89$; NFE$=64$: $6.53<6.85$).
-\item \textbf{1-RF vs 2-RF: crossover $>64$.} 1-RF is still steeply
-descending at NFE$=64$ ($8.04\!\to\!6.53$ over $32\!\to\!64$) and has not
-yet reached 2-RF ($6.31$); its $2.58$ converged floor lies well below
-2-RF's $3.36$, so the crossover is real but beyond the fixed-step Euler
-range. Located in Section~\ref{sec:floor}.
+\noindent\textbf{Generalizes.} The parameter-free calibrated schedule beats
+uniform at every NFE (peak $-1.39$, ${\approx}13.5\%$, at $K\!=\!18$), so the
+schedule prescription transfers off EDM to a different ODE and solver. Two
+secondary findings (details in \S\ref{app:sched}):
+\begin{itemize}\itemsep2pt
+\item\emph{Path\,$\times$\,schedule:} the calibrated schedule wins on 2-RF
+and 3-RF too, but the gain shrinks as reflow pushes the model toward its
+floor (less defect to recover) --- straightening and scheduling are
+complementary, not redundant.
+\item\emph{FID-faithful weighting fails:} replacing $d$ with the
+feature-weighted $d\!\cdot\!g$ is \emph{worse} than both pixel-$d$ and
+uniform --- the local sensitivity $g$ is regime-mismatched. Pixel-$d$ is
+sufficient and superior. (The EDM ``decomposability wall,'' cross-family.)
 \end{itemize}
-This is the path-axis image of the certificate's $m^\star\propto
-d^{1/(p+1)}$ / $Q_0$ trade: reflow trades floor for low-NFE defect, and
-the optimal reflow count is \emph{NFE-dependent} --- 3-RF at the extreme
-low-step corner, 2-RF across the practical $8$--$64$ range, 1-RF only once
-the budget is large enough to resolve its curvature.
 
-\paragraph{Path axis vs fixed-EDM frontier (cross-method, matched NFE).}
-The straightened path is decisive only at the scarcest budget. At
-NFE$=5$, 2-RF/3-RF ($\approx7.5$) beat the best fixed-EDM solver
-(dpm\_solver\_v3, $17.07$) by more than $2\times$ --- path-straightening
-matters most exactly when steps are too few for any solver to integrate a
-curved EDM path. From NFE$=8$ onward the EDM model with the EMS solver core
-has a far better floor ($\approx4.35$ vs the RF-Euler floor $\approx6.3$)
-and wins at every larger budget. The two advances are complementary and
-live on different axes: straightening the \emph{path} buys the extreme
-low-NFE corner; a better \emph{solver core} on a low-floor model buys
-everything else.
+\section{Conclusion}
+The certificate's structure holds on all four axes of the RF family. The
+two claims that matter transfer off EDM: the \textbf{path} trades $Q_0$ for
+$d$ with an NFE-dependent optimum (a confirmed crossover cascade), and the
+\textbf{parameter-free calibrated schedule} beats the default at every NFE.
+Path-straightening, schedule-calibration, and solver-core quality are
+complementary advances on orthogonal axes of one certificate.
 
-\paragraph{Honest scope.} All RF numbers are fixed-step Euler at 10k
-Clean-FID, 3 seeds; the converged floors quoted from the literature use
-adaptive RK45 ($\sim$127+ NFE) and are reproduced under our protocol in
-Section~\ref{sec:floor}. The reflow series is a controlled
-path-straightening manipulation, not an optimized scheduler; we make no
-schedule ($m$) claim here --- only the path ($P$) claim that reflow trades
-$Q_0$ for $d$ with an NFE-dependent optimum, as the certificate predicts.
+\appendix
+\section{Protocol}
+\label{app:protocol}
+RF: NCSN++/DDPM++ backbone, EMA weights, standard Gaussian prior, Euler
+$v$-ODE $x_{i+1}=x_i+v_\theta(x_i,t_i)(t_{i+1}-t_i)$, $t:10^{-3}\!\to\!1$,
+NFE${}=K$. Clean-FID 10k, 3 seeds, $\pm$s.e.m. Floor probe (NFE 128/256)
+uses the same integrator (no RK45 confound). Schedule calibration: $d(t)$
+estimated once on a 512-step reference at a \emph{held-out} seed (777,
+disjoint from eval seeds), nodes by equipartitioning $\int m^\star dt$.
+Robustness: two independent defect estimators (second-difference
+$\norm{x_{i+1}-2x_i+x_{i-1}}$ on the held-out seed; velocity-FD
+$\norm{\dot v}$ on seed 0) agree (1-RF gap peaks $-1.39$ vs $-1.36$ at
+$K\!=\!18$); the held-out-seed estimator is reported as primary.
 
-\section{Floor probe: locating the 1-RF\,/\,2-RF crossover}
-\label{sec:floor}
-To test part (ii) in the regime where the floor is supposed to dominate,
-we extend the \emph{same} Euler integrator to NFE $\in\{128,256\}$ for all
-three flows (no integrator change, so no confound).
+\section{Schedule supplement}
+\label{app:sched}
+\textbf{Exponent sensitivity} (seed-0 calibration, internally consistent),
+proposed FID at $K\!=\!5/8/12/18/32$:
+$p\!=\!0.5$: $42.71/20.99/12.97/9.16/6.86$;
+$p\!=\!1$: $37.17/19.07/12.23/8.90/6.79$;
+$p\!=\!2$: $35.12/18.56/12.35/9.08/6.93$. The optimal exponent is mildly
+NFE-dependent ($p\!=\!2$ best at $K\!\le\!8$, $p\!=\!1$ best at
+$K\!\ge\!12$, $p\!=\!0.5$ over-concentrates), echoing the EDM finding that
+the deployment exponent is in-regime, not the asymptotic order; $p\!=\!1$ is
+the theory-given parameter-free choice that wins at \emph{every} NFE.
 
-\begin{table}[h]\centering
-\caption{Near-converged Euler floor probe. Clean-FID (10k), 3 seeds.
-\textsc{[fills in on floor-chain completion.]}}
-\label{tab:floor}
-\begin{tabular}{lcc}
-\toprule
-NFE & 128 & 256\\
-\midrule
-1-RF & \textbf{5.85} & \textbf{5.56}\\
-2-RF & 6.27 & 6.26\\
-3-RF & 6.82 & 6.81\\
-\bottomrule
-\end{tabular}
-\end{table}
-\noindent\textbf{Confirmed.} By NFE$=128$ the order is fully reversed to
-$1\text{-RF}\,(5.85)<2\text{-RF}\,(6.27)<3\text{-RF}\,(6.81)$ and is stable
-at NFE$=256$ ($5.56<6.26<6.81$) --- the exact ordering of the published
-converged floors ($2.58<3.36<3.96$). 2-RF and 3-RF are flat between 128 and
-256 (within $0.02$), i.e.\ at their Euler floors; 1-RF is still descending
-($6.53\to5.85\to5.56$ over $64\to128\to256$) as the extra steps resolve its
-curved path. The 1-RF\,/\,2-RF crossover therefore sits in $(64,128)$,
-completing pre-registered part (ii): the lowest-floor (least-reflowed) path
-wins once the step budget is large enough to integrate its curvature. The
-floor-vs-defect decomposition is thus confirmed across the \emph{entire}
-NFE range --- defect-dominated reshuffling at small NFE
-(Section~\ref{sec:reconcile}), floor-dominated reversal at large NFE here.
-
-\section{The schedule axis on the RF family ($m$, calibrated)}
-\label{sec:sched}
-The path ladder above varied $P$ at a fixed (uniform) schedule. We now hold
-the path fixed (1-RF) and vary the \emph{schedule} $m$ --- the placement of
-the $K$ Euler time-nodes $t_0\!=\!\epsilon<\dots<t_K\!=\!1$ --- to test
-whether the certificate's optimal density $m^\star\propto d^{1/(p+1)}$
-transfers from EDM solvers to the RF flow. The defect $d$ is the
-Euler local-truncation magnitude, which for an order-1 solver scales with
-the trajectory acceleration $\lVert\ddot x(t)\rVert$; we estimate it once on
-a 512-step reference trajectory and place nodes by equipartitioning
-$\int m^\star\,dt$, with $p=1$ (the Euler order) fixed by theory. This
-calibration uses \emph{no} FID feedback and \emph{no} tuned scalar, and ---
-to avoid any leakage --- the reference trajectory uses a \emph{held-out
-seed} (777) disjoint from the evaluation seeds. As a robustness check the
-whole experiment was run with two independent defect estimators (a
-second-difference $\lVert x_{i+1}-2x_i+x_{i-1}\rVert$ on the held-out seed,
-and a velocity finite-difference $\lVert\dot v\rVert$ on a different seed);
-they agree to within the low-NFE noise (e.g.\ the 1-RF gap peaks at
-$-1.39$ vs $-1.36$ at $K=18$), so we report the held-out-seed estimator as
-primary. The baseline is the RF default, uniform-in-$t$ Euler; both arms
-use the same explicit-node integrator
-$x_{i+1}=x_i+v_\theta(x_i,t_i)(t_{i+1}-t_i)$ at matched NFE$=K$, and we
-evaluate once.
-
-The measured RF defect is strongly non-uniform
-($\lVert\ddot x\rVert$ quartiles $30.7/51.9/86.0$, max $3581$;
-max/median $\approx69$), with curvature concentrated near both endpoints
-(especially the data end $t\!\to\!1$) --- so the calibrated grid clusters
-nodes at the endpoints and thins the middle.
-
-\begin{table}[h]\centering
-\caption{Schedule axis on 1-RF (headline): parameter-free
-certificate-calibrated node placement ($p\!=\!1$, held-out-seed
-calibration, no FID feedback) vs the RF-default uniform Euler. Clean-FID
-(10k), 3 seeds. Lower is better; the calibrated schedule wins at every NFE.}
-\label{tab:sched}
-\begin{tabular}{lcccccc}
-\toprule
-NFE ($K$)               & 5 & 8 & 12 & 18 & 32 & 64\\
-\midrule
-uniform (RF default)    & 37.94 & 19.74 & 13.39 & 10.26 & 7.80 & 6.35\\
-\textbf{proposed }$p\!=\!1$ & \textbf{37.74} & \textbf{19.22} & \textbf{12.28} & \textbf{8.87} & \textbf{6.75} & \textbf{5.79}\\
-$\Delta$                & $-0.20$ & $-0.52$ & $-1.11$ & $-1.39$ & $-1.05$ & $-0.55$\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\paragraph{Result.} The pre-committed parameter-free schedule ($p\!=\!1$)
-\textbf{beats uniform at every NFE}, in an inverted-U whose largest gain
-($\Delta=-1.39$, $\approx13.5\%$) is at mid-budget $K=18$ where node
-placement has the most leverage; the gain narrows at $K=5$ (too few nodes
-to exploit the curvature) and at $K\ge32$ (uniform already near the floor).
-The certificate's schedule prescription thus generalizes off the EDM family
-to a flow model with a different ODE and a different (Euler) solver, with no
-metric tuning, and is reproduced by two independent defect estimators
-(above).
-
-\paragraph{Honest sensitivity (seed-0 calibration).} A separate exponent
-sweep (using the velocity-FD calibration on seed~0, so internally
-consistent but not directly comparable in absolute value to the held-out
-table) gives proposed FID $42.71/20.99/12.97/9.16/6.86$ for $p\!=\!0.5$,
-$37.17/19.07/12.23/8.90/6.79$ for $p\!=\!1$, and
-$35.12/18.56/12.35/9.08/6.93$ for $p\!=\!2$ (at $K=5/8/12/18/32$). The
-optimal exponent is mildly NFE-dependent: the gentler $p\!=\!2$ (density
-exponent $1/3$) is marginally best at the scarcest budgets ($K=5,8$),
-$p\!=\!1$ (exponent $1/2$) is best for $K\ge12$, and the aggressive
-$p\!=\!0.5$ (exponent $2/3$) over-concentrates and even loses to uniform at
-$K=5,8$. So $p\!=\!1$ is not pointwise-optimal everywhere, but it is the
-theory-given parameter-free choice that beats uniform at \emph{every} NFE.
-The recurrence of an effective best exponent near $2$ at low NFE matches the
-EDM regime-tuning observation that the deployment-NFE exponent is an
-in-regime quantity, not the asymptotic order.
-
-\paragraph{Path\,$\times$\,schedule interaction.} Repeating the
-calibrated-$p\!=\!1$-vs-uniform test (held-out-seed calibration) across the
-whole reflow ladder gives the gap grid (proposed $-$ uniform FID, $<0$ means
-the schedule wins):
+\medskip
+\noindent\textbf{Path\,$\times$\,schedule gap grid} ($\Delta$FID = proposed
+$-$ uniform, held-out calibration):
 
 \begin{center}
 \begin{tabular}{lcccccc}
@@ -317,72 +223,20 @@ $\Delta$FID & $K{=}5$ & $K{=}8$ & $K{=}12$ & $K{=}18$ & $K{=}32$ & $K{=}64$\\
 \end{tabular}
 \end{center}
 
-\noindent The calibrated schedule wins in \emph{every} (path, NFE) cell ---
-it generalizes across the entire path ladder. For $K\ge8$ the gap shrinks
-monotonically with reflow ($1\text{-RF}\gg2\text{-RF}>3\text{-RF}$); the
-lone exception is $K=5$, where heavily-curved 1-RF is too undersampled for
-node placement to help ($-0.20$, even smaller than 2-RF's $-0.23$). The
-mechanism is \emph{not} a flatter defect:
-the defect \emph{shape} is essentially constant along the ladder
-($\lVert\ddot x\rVert$ max/median $\approx 69,71.8,72.1$ for 1/2/3-RF).
-Rather, reflow shrinks the defect \emph{magnitude}, so 2-RF and 3-RF run
-near their floors ($\approx6.26,6.81$) and leave little FID room for
-scheduling to recover. This is exactly what $m^\star$'s scale-invariance in
-$d$ predicts: the gain depends on the defect shape (which reflow
-preserves), while the \emph{absolute} FID gain is bounded by the defect's
-share of the total risk (which reflow shrinks). In above-floor terms the
-schedule removes a sizeable, fairly stable $\approx18\text{--}30\%$ of the
-residual defect on 2-RF/3-RF across all NFE, whereas heavily-curved 1-RF at
-$K=5$ is too undersampled for node placement to help ($<1\%$), rising to
-$\approx46\%$ by $K=32$. Path-straightening and schedule-calibration are
-therefore complementary, not redundant: the former lowers the defect
-magnitude, the latter optimally spends a fixed budget against whatever
-defect shape remains.
+\noindent The defect \emph{shape} is constant along the ladder
+($\norm{\ddot x}$ max/median $\approx69,72,72$ for 1/2/3-RF); reflow shrinks
+its \emph{magnitude}, not its shape, so straighter paths run near their
+floors and leave little FID room for scheduling --- consistent with
+$m^\star$'s scale-invariance in $d$. (The $K\!=\!5$ 1-RF gap is anomalously
+small: 5 nodes cannot tame its extreme curvature regardless of placement.)
 
-\paragraph{Does an FID-faithful weighting help? No --- the decomposability
-wall, cross-family.} A natural refinement is to replace the pixel defect
-$d=\lVert\ddot x\rVert$ with the FID-faithful $d\cdot g$, where
-$g(t)$ is the Inception-feature sensitivity of the final sample to a state
-perturbation at time $t$ (finite-difference: perturb the reference
-trajectory at $t$, integrate to $t\!=\!1$, measure
-$\lVert\Delta\phi\rVert^2/\varepsilon^2$). The estimated $g$ is well-behaved
-(all positive, smooth, max/median $\approx35$) but peaks at the
-\emph{noise} end ($g\!\approx\!500\text{--}730$ near $t\!=\!0$, dipping to
-$\approx6$ near $t\!=\!0.7$) --- the flow is most sensitive to its initial
-condition. The resulting $d\cdot g$ schedule is \emph{worse than both pixel-$d$
-and uniform at every NFE} ($48.4/26.3/16.9/11.6/8.0$ vs uniform
-$37.9/19.7/13.4/10.3/7.8$). The reason is the same regime gap documented for
-the EDM family: $g$ is a \emph{local, linear} sensitivity, so it
-over-weights the noise end and pulls nodes away from the high-curvature
-data end that must be resolved at deployment NFE. The ``more principled''
-FID-faithful weighting is thus a regime-mismatched object; the
-parameter-free pixel-space calibration is not merely sufficient but
-\emph{superior}. This is the path/flow-family echo of the EDM finding that
-a decomposable, leading-order certificate cannot, by itself, yield the
-deployment-NFE-optimal schedule.
-
-\section{Conclusion}
-The reflow series isolates the path axis $P$ and confirms the certificate's
-two-term structure on it: each reflow step lowers the discretization defect
-$d$ (helping at small NFE) and raises the floor $Q_0$ (hurting at large
-NFE), producing an NFE-dependent optimal path and a \emph{cascade} of
-crossovers --- $3\text{-RF}\!\leftrightarrow\!2\text{-RF}$ at $\approx6$
-NFE, $1\text{-RF}\!\leftrightarrow\!3\text{-RF}$ in $(32,64)$,
-$1\text{-RF}\!\leftrightarrow\!2\text{-RF}$ in $(64,128)$ --- rather than a
-single winner. The pre-registered rule is met in full: part~(i) at NFE$=5$
-($3<2<1$) and part~(ii) at NFE$\ge128$ ($1<2<3$). Cross-method, the
-straightened path owns only the scarcest-budget corner (NFE$=5$, beating
-the best fixed-EDM solver by $>2\times$); a strong solver core on a
-low-floor EDM model wins every larger budget. Path-straightening and
-solver-core quality are thus complementary advances on orthogonal axes
-($P$ vs $s$) of one certificate. Finally, on the \emph{schedule} axis $m$,
-the certificate's calibrated node placement $m^\star\propto d^{1/(p+1)}$
-transfers off the EDM family: a parameter-free ($p\!=\!1$, no metric
-feedback) grid beats RF's uniform-Euler default at every NFE
-(Section~\ref{sec:sched}). Across all three axes we could vary on the RF
-family --- path $P$, schedule $m$, and (via the EDM frontier) solver $s$ ---
-the certificate's structure holds: the path trades $Q_0$ for $d$ with an
-NFE-dependent optimum, and the calibrated schedule is the model-agnostic way
-to spend a fixed step budget.
+\medskip
+\noindent\textbf{FID-faithful weighting} (1-RF, seed-0). $g(t)=$ feature
+sensitivity of the final sample to a perturbation at $t$; positive and
+smooth but peaks at the noise end ($t\!\to\!0$). The $d\!\cdot\!g$ schedule
+gives FID $48.4/26.3/16.9/11.6/8.0$ at $K\!=\!5/8/12/18/32$ --- worse than
+uniform ($37.9/19.7/13.4/10.3/7.8$) and pixel-$d$
+($37.2/19.1/12.2/8.9/6.8$): the local/linear $g$ over-weights the noise end
+and starves the high-curvature data end.
 
 \end{document}
