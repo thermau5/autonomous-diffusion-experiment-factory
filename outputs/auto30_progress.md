@@ -113,3 +113,11 @@ Durability: commit after every completed step; this log is the resume anchor.
 - => The certificate's SCHEDULE claim (m*∝d^{1/(p+1)}) GENERALIZES to a new model family (RF/Euler flow,
   different ODE+solver from EDM), with NO metric tuning. Strengthens the locked EDM schedule result.
 - Sensitivity p={0.5,2} running next. Report write-up pending.
+
+## Update 9 (proposed_rf 1-RF: clear scheduler gain)
+- 1-RF calib curvature peaks at t=0.998 (max/med ~90x) -> grid packs steps near data end.
+- 1-RF proposed vs uniform (same integrator, 3-seed), delta=proposed-uniform:
+  NFE 5/8/12/18/32/64: proposed 37.74/19.22/12.28/8.87/6.75/5.79; uniform 37.94/19.74/13.39/10.26/7.80/6.35;
+  delta -0.20/-0.52/-1.11/-1.39/-1.05/-0.56. Inverted-U, peak -1.39 @NFE18 (~13 sem). SIGNIFICANT.
+  => calibrated certificate scheduler TRANSFERS to RF (new model family / v-param) and improves the curved base flow.
+- 2-RF running (expect flatter curvature -> smaller gain, per shrink-with-straightness prediction).
