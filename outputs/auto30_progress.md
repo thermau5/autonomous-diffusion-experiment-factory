@@ -185,3 +185,15 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - => Cross-family confirmation of the EDM decomposability wall: the "principled" FID-faithful local weighting HURTS;
   the parameter-free pixel-space calibration (d=||xddot||, p=1) is SUFFICIENT and SUPERIOR. g sane but wrong regime.
 - Task #15 done. RF Level-3 program (P, m incl. FID-weighting test, R, s) COMPLETE. ~27h elapsed.
+
+## Update 18 (INVESTIGATION: parallel proposed_rf track found -- independent confirmation)
+- Discovered chain3_proposed.sh + proposed_rf_sweep.py (from pre-compaction session) running in parallel:
+  an INDEPENDENT impl of the same schedule-axis test, with CLEANER methodology:
+  (a) calibrates on HELD-OUT seed 777 (mine used seed 0 = overlaps an eval seed -- mild issue);
+  (b) curvature via 2nd-difference x_{i+1}-2x_i+x_{i-1} (mine: velocity FD dv/dt); both estimate ||xddot||.
+- Results AGREE (robustness): 1-RF gap held-out -0.20/-0.52/-1.11/-1.39/-1.05/-0.55 (K=5..64) vs mine -0.77/-0.67/-1.16/-1.36/-1.01.
+  Mid/high-NFE near-identical; differ mainly @K=5 (held-out more conservative). 2-RF near-identical (-0.23/-0.18/-0.11/-0.07/-0.03).
+- Concurrent GPU use earlier was real but HARMLESS (FID deterministic per seed; only slowed sweeps).
+- ACTION: held-out-seed calibration is the cleaner PRIMARY; will reconcile report to it + note independent velocity-FD
+  cross-check agrees. (Switching to held-out numbers is the rigorous direction even though it shows SMALLER low-NFE gain --
+  NOT cherry-picking.) 3-RF proposed_rf running (curvature ~0, very straight -> proposed~uniform expected).
