@@ -140,3 +140,13 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - PREDICTION: 2-RF (straighter) has flatter defect d(t) -> smaller max/median than 1-RF's 69 -> smaller
   proposed-p1-vs-uniform gap than 1-RF. Falsifiable cross-axis interaction.
 - chain3_sched2.sh running: 2-RF calib diagnostic -> 2-RF schedule sweep (uniform + proposed_p1, 3 seed, K{5,8,12,18,32}).
+
+## Update 13 (path x schedule interaction RESULT, task #14)
+- 2-RF defect ratio max/median = 71.8 ~ 1-RF's 69: reflow does NOT flatten defect SHAPE (premise of naive prediction WRONG).
+- 2-RF proposed_p1 vs uniform (3-seed): K5 7.27/7.54; K8 6.79/6.98; K12 6.56/6.69; K18 6.43/6.51; K32 6.33/6.37.
+  Gaps: -0.27/-0.19/-0.13/-0.08/-0.04 (all negative -> proposed beats uniform at every NFE; schedule generalizes to 2-RF too).
+- Gap MUCH smaller than 1-RF (-0.77..-1.36) and shrinks toward floor. MECHANISM: reflow shrinks defect MAGNITUDE
+  (2-RF near floor ~6.26 -> little FID room), NOT defect shape. m* gain is scale-invariant in d -> depends on shape (preserved)
+  but absolute FID gain bounded by defect-fraction-of-FID (small for 2-RF).
+- Above-floor fraction removed by scheduling: 2-RF ~21-36% stable across NFE; 1-RF only ~2% @K5 (too undersampled to place)
+  rising to ~44% @K32. Honest: naive "straighter->flatter->smaller gap" wrong on premise, right on conclusion, diff mechanism.
