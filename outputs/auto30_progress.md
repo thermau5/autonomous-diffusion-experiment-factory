@@ -162,3 +162,9 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - Schedule beats uniform in EVERY (path,NFE) cell; gap shrinks monotonically with reflow (more floor-limited).
   Shape-driven leverage constant; absolute gain bounded by defect's share of FID. Path-straighten + schedule = complementary.
 - Level-3 program on RF COMPREHENSIVELY COMPLETE (axes P, m, R, s all tested). ~26h elapsed.
+
+## Update 15 (exploratory: FID-faithful weighted schedule on RF, gated)
+- Tests whether feature-weighted defect d*g (g = Inception-feature sensitivity to a state perturbation at t,
+  propagated to t=1 via fine Euler) beats pixel-d=||xddot|| for the RF schedule. Mirrors EDM perceptual-weight Q.
+- rf_gsens.py estimates g(t) on 49 nodes + SANITY GATE (positivity/smoothness/profile) before any sweep.
+  Clearly EXPLORATORY; honest report regardless of outcome. EDM precedent: feature-weighting did NOT beat tuned.
