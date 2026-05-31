@@ -234,3 +234,13 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - LEGITIMATE fair test (sanctioned protocol, tune_on=validation_only): validation-tune k (perceptual exponent) for dpm-v3,
   then ONE locked-test eval. NOT fishing on test. Honest caveat: may only RECOVER their schedule (tie), not beat -- report either way.
 - ems_defect.json saved. Launching validation k-sweep for proposed_dpm_v3.
+
+## Update 22 (EMS joint-opt RESULT: honest NEGATIVE -- our scheduler does NOT beat dpm-v3)
+- Validation k-sweep (tune_on=validation_only, legitimate): k in {-1,0,1,2,3}. Curve is a BOWL, minimum at k=2:
+  nfe5 by k: 253/245/132/25.7/67. Min (k=2)=25.7/12.4/7.4 -- LOSES to default 17.0/6.30/4.70 at every validation NFE.
+- k=2 = the borrowed-EDM value; its TEST curve vs default: nfe 5/8/12/18/32/64 = 25.77/12.47/7.44/5.45/4.69/4.34
+  vs 17.07/6.30/4.71/4.46/4.35/4.35. Delta +8.70/+6.18/+2.73/+0.99/+0.33/-0.01. Gap shrinks with NFE; TIE only at nfe64 (floor).
+- CONCLUSION (honest, no fishing): NO joint-opt with our certificate scheduler beats dpm-v3 at any NFE.
+  Mechanism: dpm-v3 schedule co-derived with EMS from same model statistics (joint solver+schedule opt); low-NFE co-design
+  dominates; high-NFE all schedules hit ~4.35 floor. Validation-tuning k cannot close it (bowl min 25.7 >> 17). EMS = BOUNDARY case.
+- Report EMS as documented boundary; cores (Heun/UniPC/DPM++/DEIS) + RF carry dominance. Did NOT extend grid (= fishing). GPU back to cores.
