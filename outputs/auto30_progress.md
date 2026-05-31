@@ -101,3 +101,15 @@ Durability: commit after every completed step; this log is the resume anchor.
   1-RF, NFE {5,8,12,18,32}, 3 seeds, evaluate ONCE. p={0.5,2} = labeled sensitivity only.
   Both use same explicit-node left-Euler integrator x+=v(x,t_i)*(t_{i+1}-t_i), matched NFE=K.
 - Sweep running. Scripts: rf_calib_diag.py, rf_sched_sweep.py. Calib: rf1diag_calib.json.
+
+## Update 10 (RF schedule-axis HEADLINE -- proposed p=1 beats uniform at every NFE)
+- 1-RF, 3-seed 10k Clean-FID, matched-node Euler. proposed p=1 (calibrated ||xddot||^{1/2}, NO FID feedback) vs uniform:
+  K=5:  37.17 vs 37.94 (-0.77)
+  K=8:  19.07 vs 19.74 (-0.67)
+  K=12: 12.23 vs 13.39 (-1.16)
+  K=18:  8.90 vs 10.26 (-1.36)
+  K=32:  6.79 vs  7.80 (-1.01)
+  Proposed wins at EVERY NFE; margin peaks ~K=18 (-13%). Parameter-free calibrated schedule.
+- => The certificate's SCHEDULE claim (m*∝d^{1/(p+1)}) GENERALIZES to a new model family (RF/Euler flow,
+  different ODE+solver from EDM), with NO metric tuning. Strengthens the locked EDM schedule result.
+- Sensitivity p={0.5,2} running next. Report write-up pending.
