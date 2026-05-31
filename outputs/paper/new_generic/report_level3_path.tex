@@ -94,7 +94,7 @@ $\Delta t=1/N$, NFE$=N$. Clean-FID 10k, 3 seeds, $\pm$ s.e.m.
 
 \begin{table}[h]\centering
 \caption{Path-straightening ladder at matched NFE (Euler). Clean-FID (10k),
-lower is better. \textsc{[2-RF / 3-RF rows fill in on chain completion.]}}
+3 seeds, lower is better; bold = best at that NFE.}
 \label{tab:path}
 \begin{tabular}{lcccccc}
 \toprule
@@ -219,5 +219,21 @@ wins once the step budget is large enough to integrate its curvature. The
 floor-vs-defect decomposition is thus confirmed across the \emph{entire}
 NFE range --- defect-dominated reshuffling at small NFE
 (Section~\ref{sec:reconcile}), floor-dominated reversal at large NFE here.
+
+\section{Conclusion}
+The reflow series isolates the path axis $P$ and confirms the certificate's
+two-term structure on it: each reflow step lowers the discretization defect
+$d$ (helping at small NFE) and raises the floor $Q_0$ (hurting at large
+NFE), producing an NFE-dependent optimal path and a \emph{cascade} of
+crossovers --- $3\text{-RF}\!\leftrightarrow\!2\text{-RF}$ at $\approx6$
+NFE, $1\text{-RF}\!\leftrightarrow\!3\text{-RF}$ in $(32,64)$,
+$1\text{-RF}\!\leftrightarrow\!2\text{-RF}$ in $(64,128)$ --- rather than a
+single winner. The pre-registered rule is met in full: part~(i) at NFE$=5$
+($3<2<1$) and part~(ii) at NFE$\ge128$ ($1<2<3$). Cross-method, the
+straightened path owns only the scarcest-budget corner (NFE$=5$, beating
+the best fixed-EDM solver by $>2\times$); a strong solver core on a
+low-floor EDM model wins every larger budget. Path-straightening and
+solver-core quality are thus complementary advances on orthogonal axes
+($P$ vs $s$) of one certificate.
 
 \end{document}

@@ -81,3 +81,12 @@ Durability: commit after every completed step; this log is the resume anchor.
 - NEW (user-requested): proposed_rf (calibrated nonuniform Euler t-grid, m*∝curvature^{1/(p+1)}, p=1 pre-registered,
   held-out calib seed 777) vs uniform, matched NFE, 1/2/3-RF. Prediction: gain shrinks with straightness.
   1-RF running now (chain3_proposed.sh). Evaluate ONCE.
+
+## Update 8 (FLOOR PROBE COMPLETE -- path program CLOSED)
+- Euler floor probe (10k, 3-seed): NFE 128/256:
+  1-RF 5.85/5.56 (still descending); 2-RF 6.27/6.26 (flat); 3-RF 6.82/6.81 (flat).
+- At NFE>=128 order fully reversed: 1-RF < 2-RF < 3-RF = published converged ordering (2.58<3.36<3.96).
+  PRE-REGISTERED part (ii) CONFIRMED. 1-RF<->2-RF crossover located in (64,128).
+- FULL CROSSOVER CASCADE: 3<->2-RF ~6 NFE; 1<->3-RF (32,64); 1<->2-RF (64,128). NFE-dependent optimal reflow.
+- report_level3_path.tex finalized (4pp, Tables: fixed-EDM frontier, path ladder, floor probe; reconciliation+conclusion). Builds clean.
+- Tasks #8/#10/#11 done. #12 (compile report) effectively done. Path-axis Level-3 program COMPLETE.
