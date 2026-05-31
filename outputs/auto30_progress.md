@@ -222,3 +222,15 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - LAUNCHED fair_table.sh: every proposed_<core> with per_core calibration vs own default (EMS row first, then Heun/DPM++/DEIS/UniPC),
   3 seeds, NFE{5,8,12,18,32,64}. Shared-calib dpm_v3 kept as ablation. Cell format (user): paired FID m*/default, bold winner.
 - ETA ~12-16h GPU (162 runs). Will report pivotal EMS-fair result first.
+
+## Update 21 (EMS joint-opt: d_EMS measured -- hypothesis REFUTED, redirect to validation-tuned k)
+- Measured EMS-corrected solver's OWN per-step defect d_EMS(sigma) along its real trajectory (return_intermediate
+  + Heun-substep reference). RESULT: d_EMS is NOT flat -- it PEAKS at low sigma (mean d at sigma<0.5 = 21.9 vs sigma>5 = 0.029,
+  lo/hi=766; max/median=198), SAME shape as Heun's d. So my "EMS flattens d -> m* recovers their schedule" hypothesis is WRONG.
+- Implication: m* from d_EMS ~ m* from d_Heun (same low-sigma-peaked shape) -> same losing schedule. Calibrating d to dpm-v3 won't fix it.
+- proposed_dpm_v3 ALREADY uses perceptual k=2 (= EDM's validation-tuned value, borrowed). So the real un-fairness parallel:
+  k=2 was tuned for EDM/Heun, NOT for the EMS solver. EMS corrects low-sigma error, so dpm-v3 likely wants LESS low-sigma
+  concentration -> a different (lower/negative) k.
+- LEGITIMATE fair test (sanctioned protocol, tune_on=validation_only): validation-tune k (perceptual exponent) for dpm-v3,
+  then ONE locked-test eval. NOT fishing on test. Honest caveat: may only RECOVER their schedule (tie), not beat -- report either way.
+- ems_defect.json saved. Launching validation k-sweep for proposed_dpm_v3.
