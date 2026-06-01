@@ -244,3 +244,15 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   Mechanism: dpm-v3 schedule co-derived with EMS from same model statistics (joint solver+schedule opt); low-NFE co-design
   dominates; high-NFE all schedules hit ~4.35 floor. Validation-tuning k cannot close it (bowl min 25.7 >> 17). EMS = BOUNDARY case.
 - Report EMS as documented boundary; cores (Heun/UniPC/DPM++/DEIS) + RF carry dominance. Did NOT extend grid (= fishing). GPU back to cores.
+
+## Update 23 (fair dominance table -- 4 EDM cores; 2 harness gotchas found + fixed)
+- Ran per-core proposed (per_core calib) vs own default, 3-seed, NFE{5,8,12,18,32,64}. Results:
+  - DPM++ : proposed 23.16/9.74/6.07/4.81/4.49/4.43 vs default 40.23/13.46/6.83/5.04/4.57/4.46 -> WIN (ties@64). CLEAN.
+  - UniPC : proposed 21.44/9.18/5.58/4.66/4.46 vs default 40.41/12.50/6.06/4.79/4.50 -> WIN (ties@32). CLEAN.
+  - DEIS  : CONTAMINATED -- proposed_deis per_core = seq AB-2 (flagged-buggy forced-smin path) -> 359/24.9/25.2 catastrophic.
+            FIX: re-run with AD_PROPOSED_CALIB=shared (d_Heun pointwise, the version that won in locked). [running]
+  - Heun  : default edm_heun requires ODD NFE (=2*steps-1); even grid {8..64} errored. FIX: re-run both arms at odd {5,9,13,19,33,65}. [running]
+- RF (1/2/3-RF) + EMS rows unchanged (RF wins every cell to floor; EMS boundary loses low-NFE ties@floor).
+- HEADLINE so far: our calibrated schedule beats each solver's own default on DPM++, UniPC (EDM) + 1/2/3-RF; ties at floor;
+  EMS is the one boundary. DEIS/Heun re-running with correct calib/grid. fix_rows.sh -> fix.log.
+- LESSON: per_core calibration is core-dependent: sound pointwise for heun/dpmpp/unipc, but =buggy seq for deis. Heun NFE must be odd.
