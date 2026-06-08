@@ -256,3 +256,13 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - HEADLINE so far: our calibrated schedule beats each solver's own default on DPM++, UniPC (EDM) + 1/2/3-RF; ties at floor;
   EMS is the one boundary. DEIS/Heun re-running with correct calib/grid. fix_rows.sh -> fix.log.
 - LESSON: per_core calibration is core-dependent: sound pointwise for heun/dpmpp/unipc, but =buggy seq for deis. Heun NFE must be odd.
+
+## Update 24 (VP-SDE path added -- third path family)
+- Goal: add VP as a 3rd probability-path family (VE/EDM + linear/RF + VP). RF clone stripped VP; found full score-SDE
+  codebase bundled in third_party/dpm_solver_v3/codebases/score_sde (VPSDE/subVPSDE/VESDE + vp/cifar10_ddpmpp_deep_continuous config).
+- CHECKPOINT saga: README link (1F74y6G) served JAX/msgpack checkpoints (incompatible w/ torch.load). Found PyTorch checkpoints
+  in score_sde_pytorch Drive (1tFmF...); traversed folder via gdown tree-listing -> vp/cifar10_ddpmpp_deep_continuous/checkpoint_8.pth
+  (id 16_-Ahc6ImZV5ClUc0vM5Iivf8OJ1VSif). Header PK = valid torch. Loads (step 400005), PF-ODE Euler samples sane ([-1.07,1.10], no nan).
+- LAUNCHED vp_sched.py: VP PF-ODE Euler, uniform-t (VP default) vs calibrated m* (d(t)=||xddot|| on ref traj, p=1), NFE{5,8,12,18,32,64},
+  3 seed, Clean-FID 10k. Parallels RF schedule test. -> vp_sched_results.json.
+- LESSON: nested Drive checkpoints -> gdown --folder prints all file IDs in the tree; grab the specific id, don't bulk-download.
