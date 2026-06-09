@@ -24,8 +24,9 @@ floor-vs-defect \emph{crossover cascade} the certificate predicts --- no
 single path wins at all budgets; (ii) on the \textbf{schedule} axis, a
 \emph{parameter-free} certificate-calibrated grid wins or ties the
 \emph{native default} of every configuration we test --- four EDM solver
-cores and three independent path families (EDM, RF, VP-SDE) --- with a single
-documented co-design boundary (Table~\ref{tab:dominance}). All FID is
+cores and three independent path families (EDM, RF, VP-SDE) --- the only
+losses being the EMS solver at the two lowest budgets, whose schedule is
+co-optimized with the solver itself (Table~\ref{tab:dominance}). All FID is
 Clean-FID 10k, 3 seeds.
 \end{abstract}
 
@@ -51,8 +52,9 @@ Schedule & $m$ & disc.\ term $\int d/m^{p}$  & \S\ref{sec:sched} (Table~\ref{tab
 
 \noindent\textbf{Results at a glance.}
 \begin{itemize}\itemsep2pt
-\item[$s$:] A better solver core (DPM-Solver-v3 EMS) beats our best
-schedule at every NFE on the fixed EDM path --- a Level-1 advance.
+\item[$s$:] DPM-Solver-v3 (EMS) is the strongest solver core --- best floor
+($\approx4.35$), winning at mid-to-high NFE on the fixed EDM path --- a
+Level-1 advance.
 \item[$\R$:] The directly-measurable feature-space $W_2$ risk tracks FID
 in rank $5/5$ --- it is the FID-faithful risk.
 \item[$P$:] Reflow trades the floor $Q_0$ for the defect $d$; the optimal
@@ -60,9 +62,8 @@ reflow count is \emph{NFE-dependent} (3-RF at NFE 5, 2-RF at 8--64, 1-RF at
 $\ge128$). Pre-registered crossover prediction confirmed.
 \item[$m$:] The certificate's calibrated node placement
 $m^\star\!\propto d^{1/(p+1)}$ ($p\!=\!1$, no metric feedback) wins or ties
-the native default schedule of every solver core and path family tested
-(Table~\ref{tab:dominance}); one boundary (EMS, where solver and schedule are
-co-designed).
+the native default schedule of every solver core and path family tested,
+except the EMS solver at the two lowest NFE (Table~\ref{tab:dominance}).
 \end{itemize}
 
 \section{Solver axis $s$: fixed-EDM frontier}
@@ -82,9 +83,11 @@ dpm\_solver\_v3 (EMS)  & \textbf{17.07} & \textbf{6.30} & \textbf{4.71} & \textb
 \end{tabular}
 \end{table}
 
-\noindent The EMS solver core beats our best schedule at every NFE: a
-\emph{solver} ($s$) advance, not a schedule advance, consistent with $s$
-entering $d$. Its floor ($\approx4.35$) is the best on offer.
+\noindent EMS beats our UniPC-schedule arm at every NFE here and has the best
+floor ($\approx4.35$) on offer: a \emph{solver} ($s$) advance, not a schedule
+advance, consistent with $s$ entering $d$. (It is not uniformly ahead of
+\emph{every} schedule, though: at the two lowest budgets our calibrated Heun
+schedule beats it --- Table~\ref{tab:dominance}, Heun vs EMS rows.)
 
 \section{Risk axis $\R$: the FID-faithful risk}
 \label{sec:risk}
@@ -157,9 +160,10 @@ boundary.
 \caption{\textbf{Schedule dominance.} Each cell is paired Clean-FID,
 \emph{our} $m^\star$ / that configuration's \emph{own default} schedule, at
 matched NFE (3 seeds). \textbf{Bold} marks a winner beyond $2\sigma$ of the
-per-seed difference; an unbolded pair is a statistical tie. Our calibrated
-schedule wins or ties \emph{every} cell of four EDM solver cores and three
-independent path families; the lone exception is the EMS boundary row.}
+per-seed difference; an unbolded pair is a statistical tie. Across four EDM
+solver cores and three independent path families, the \emph{only} losses are
+the EMS solver at the two lowest budgets (NFE 5,\,8); everywhere else ---
+including EMS at NFE$\,\ge\,$12 --- our schedule ties or wins.}
 \label{tab:dominance}
 \footnotesize
 \setlength{\tabcolsep}{4.5pt}
@@ -179,19 +183,22 @@ UniPC          & \textbf{21.44}/40.41 & \textbf{9.18}/12.50 & \textbf{5.58}/6.06
 3-RF   & \textbf{7.30}/7.40 & \textbf{7.06}/7.16 & 6.95/7.02 & 6.88/6.93 & 6.83/6.85 & 6.79/6.80\\
 VP-SDE & \textbf{236}/240 & \textbf{131}/151 & \textbf{67.29}/80.13 & \textbf{37.06}/43.06 & \textbf{19.55}/22.28 & \textbf{12.32}/14.11\\
 \midrule
-\multicolumn{7}{l}{\emph{Boundary --- solver and schedule jointly co-designed}}\\
-EMS$^\ast$ & 25.77/\textbf{17.07} & 12.47/\textbf{6.30} & 7.44/\textbf{4.71} & 5.45/\textbf{4.46} & 4.69/\textbf{4.35} & 4.34/4.35\\
+\multicolumn{7}{l}{\emph{EMS solver --- genuine per-core $m^\star(d_{\mathrm{EMS}})$ vs.\ its own jointly co-designed schedule}}\\
+EMS$^\ast$ & 19.33/\textbf{17.07} & 6.64/\textbf{6.30} & 4.71/4.71 & \textbf{4.38}/4.46 & 4.34/4.35 & ---$^\ddagger$\\
 \bottomrule
 \end{tabular}
 
 \smallskip
 {\footnotesize $^\dagger$Heun needs odd NFE ($2\,\mathrm{steps}{-}1$); it ran
 $\{5,9,13,19,33,65\}$, i.e.\ $+1$ NFE per column --- if anything generous to
-the default. $^\ast$EMS $=$ DPM-Solver-v3; its ``default'' is the EMS
-schedule, our arm is the same solver under $m^\star$ (validation-tuned
-$k\!=\!2$). The EMS schedule is derived \emph{jointly} with the solver from
-shared model statistics (\S\ref{sec:solver}), so it is not an independent
-schedule to beat: ours ties only at the floor.}
+the default. $^\ast$EMS $=$ DPM-Solver-v3; ``default'' is its own EMS
+schedule, co-derived \emph{jointly} with the solver from shared model
+statistics (\S\ref{sec:solver}); our arm is the same solver under genuine
+per-core $m^\star(d_{\mathrm{EMS}})$ at the borrowed $k\!=\!2$ (not re-tuned
+for EMS --- conservative). $^\ddagger$Genuine $d_{\mathrm{EMS}}$ is so
+low-$\sigma$-peaked (max/median $198$ vs Heun's $4.1$) that at NFE 64 the
+inverse-CDF placement crowds near-identical nodes and the EMS coefficient
+solve goes singular; all schedules tie at the floor there regardless.}
 \end{table}
 
 \noindent\textbf{Reading the table.} Wins concentrate where a schedule has
@@ -203,8 +210,23 @@ The pattern is uniform across four solver cores and, crucially, across three
 \emph{independent} path families --- VE/EDM, the linear-interpolant RF, and
 the VP-SDE --- so $m^\star$ is not an EDM artifact. VP-SDE is the cleanest
 case: Euler never reaches its floor in this NFE range, so $m^\star$ wins at
-\emph{every} budget ($12$--$16\%$). The one boundary is EMS, where the
-baseline schedule is itself co-derived with the solver.
+\emph{every} budget ($12$--$16\%$). The only place our schedule trails is the
+EMS solver at NFE 5--8; and even there --- against a schedule co-optimized
+with the solver itself --- our genuine per-core schedule ties at
+NFE$\,\ge\,$12 and edges ahead at 18.
+
+\medskip
+\noindent\textbf{Genuine per-core calibration matters.} Each core's
+$m^\star$ is built from \emph{that core's own} measured defect $d_s$. For
+EMS this required measuring $d_{\mathrm{EMS}}$ directly on the EMS trajectory
+--- its multistep-plus-corrector update does not fit the single-step
+calibration the other four cores share. An earlier version borrowed Heun's
+$d_{\mathrm{Heun}}$; that gives a $17$--$43\%$ different grid and loses at
+every NFE (e.g.\ $25.77$ vs $17.07$ at NFE 5). The genuine per-core defect
+closes most of that gap (NFE 5: $19.33$) and turns the mid-NFE losses into
+ties and a win. \emph{Per-core fairness needs the per-core defect, not merely
+per-core node placement} --- the same principle that motivated calibrating
+each core to itself in the first place.
 
 \medskip
 \noindent\textbf{Anatomy of one column} (1-RF, the cleanest single axis): the
@@ -241,8 +263,10 @@ that matter transfer off EDM: the \textbf{path} trades $Q_0$ for $d$ with an
 NFE-dependent optimum (a confirmed crossover cascade), and the
 \textbf{parameter-free calibrated schedule} wins or ties the native default
 of every solver core and every path family tested --- four EDM cores and
-three independent path families (EDM, RF, VP-SDE), with the single EMS
-co-design boundary (Table~\ref{tab:dominance}). Path-straightening,
+three independent path families (EDM, RF, VP-SDE) --- the only losses being
+the EMS solver at the two lowest budgets, and even there (with a genuine
+per-core defect) it ties at NFE$\,\ge\,$12 (Table~\ref{tab:dominance}).
+Path-straightening,
 schedule-calibration, and solver-core quality are complementary advances on
 orthogonal axes of one certificate.
 

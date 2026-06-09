@@ -314,3 +314,17 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - FIRST RESULT NFE5: genuine d_EMS = 19.36 vs borrowed d_Heun 25.77 vs dpm-v3 default 17.07. Genuine recovers 6.4 of the 8.7 gap!
   -> The "EMS boundary" as reported was largely a BORROWED-d_Heun ARTIFACT, not a fundamental ceiling. Full sweep running; will correct report EMS row + framing.
 - LESSON: per-core fairness requires per-core DEFECT, not just per-core GRID application. Borrowing d across solvers is a real (large) handicap when defect shapes differ.
+
+## Update 28 (GENUINE d_EMS RESULT: EMS is NOT a boundary -- ties/wins at NFE>=12; report corrected)
+- ems_genuine.sh DONE (k=2, p=2, per_core d_EMS, 3 seeds, same contract pipeline as every cell). genuine d_EMS / dpm-v3 default:
+  NFE 5/8/12/18/32 = 19.33/6.64/4.71/4.38/4.34  vs  17.07/6.30/4.71/4.46/4.35. NFE64 = FAILED (singular EMS solve).
+- VERDICT @2sigma: LOSS 5,8 (+2.26,+0.34) | TIE 12,32 | WIN 18 (4.38 vs 4.46, 2.4sigma) | NFE64 numerical fail.
+  vs borrowed d_Heun (25.77/12.47/7.44/5.45/4.69) which LOST every NFE. Genuine per-core defect closes most of the gap + flips mid-NFE to ties/win.
+- NFE64 failure is DETERMINISTIC (all 3 seeds): genuine d_EMS max/median=198 (vs d_Heun 4.1) so peaked that inverse-CDF at K=64 crowds
+  near-identical low-sigma nodes -> EMS coefficient linalg.inv singular. Honest: reported as fail (--); all schedules tie at floor there anyway. NOT hacked around.
+- k=2 borrowed from EDM, NOT re-tuned for EMS -> result is CONSERVATIVE (didn't fish a better k).
+- SECOND inconsistency found+fixed: Sec.2 said "EMS beats our best schedule at every NFE" but dominance Heun row (13.41@NFE5) BEATS EMS (17.07).
+  Corrected Sec.2 to "EMS beats our UniPC arm + best floor" + noted Heun-m* beats EMS at the 2 lowest budgets. Glance[s] softened (no false "beats our best").
+- REPORT updated: EMS dominance row -> genuine d_EMS; dropped "boundary" framing (abstract ii, glance m, caption, footnote, reading para, conclusion);
+  added "Genuine per-core calibration matters" para (borrowed d_Heun 17-43% diff grid, loses everywhere; genuine closes gap). Compiles 5pp clean, no overfull, no undef.
+- NET: across 4 cores x 3 paths, the ONLY losses anywhere are EMS @NFE5,8. Stronger + more honest than "EMS boundary". User's question fixed a real methodological gap.
