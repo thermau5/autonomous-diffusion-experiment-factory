@@ -301,3 +301,16 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   5pp, no overfull >20pt, no undefined refs. Also converted appendix-B exponent-sensitivity inline list -> tabular (cleared 65pt overfull).
 - HEADLINE: the certificate's parameter-free schedule m*=d^{1/(p+1)} (p=1) wins or ties the NATIVE DEFAULT of every solver core AND every
   path family tested, across 3 independent path families (EDM/RF/VP). One documented boundary: EMS (schedule co-designed with solver).
+
+## Update 27 (EMS row was BORROWED d_Heun, not genuine per-core -- user caught it; running genuine d_EMS)
+- User question: "is our m* on EMS genuine like the other cores or an approximated workaround?" -> CORRECT instinct.
+- DIAGNOSIS: proposed_dpm_solver_v3 applies the m* GRID genuinely (overrides EMS timesteps, runs true EMS update -- EMS is grid-agnostic),
+  BUT the DEFECT driving m* is BORROWED from Heun: calibrate() has no 'dpm_solver_v3' step fn (PER_CORE_STEP only has heun/dpmpp/unipc/deis),
+  so it ValueErrors on per_core and the sampler falls back to calib_id='heun' (d_Heun). The reported EMS row (25.77/...) = m*(d_Heun)+k=2 on EMS.
+- Earlier I INFERRED m*(d_EMS) ~ m*(d_Heun) ("same low-sigma shape") and never ran it. ems_genuine_calib.py REFUTES that inference:
+  d_EMS max/median=198 vs d_Heun max/median=4.1 (d_EMS far more peaked); resulting m* grids differ by rel-L1 17%(NFE5)->43%(NFE64). NOT the same schedule.
+- Built GENUINE d_EMS calibration (measured ON the EMS trajectory, Heun-substep ref -- SAME protocol as the other 4 cores), saved to
+  calib_dpm_solver_v3_988c93ee001e5fad.npz (net key MATCHES the other cores' calibs -> harness loads it). ems_genuine.sh sweep launched (per_core, k=2, p=2).
+- FIRST RESULT NFE5: genuine d_EMS = 19.36 vs borrowed d_Heun 25.77 vs dpm-v3 default 17.07. Genuine recovers 6.4 of the 8.7 gap!
+  -> The "EMS boundary" as reported was largely a BORROWED-d_Heun ARTIFACT, not a fundamental ceiling. Full sweep running; will correct report EMS row + framing.
+- LESSON: per-core fairness requires per-core DEFECT, not just per-core GRID application. Borrowing d across solvers is a real (large) handicap when defect shapes differ.
