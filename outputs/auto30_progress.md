@@ -328,3 +328,19 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - REPORT updated: EMS dominance row -> genuine d_EMS; dropped "boundary" framing (abstract ii, glance m, caption, footnote, reading para, conclusion);
   added "Genuine per-core calibration matters" para (borrowed d_Heun 17-43% diff grid, loses everywhere; genuine closes gap). Compiles 5pp clean, no overfull, no undef.
 - NET: across 4 cores x 3 paths, the ONLY losses anywhere are EMS @NFE5,8. Stronger + more honest than "EMS boundary". User's question fixed a real methodological gap.
+
+## Update 29 (user asked for BOTH follow-ups: genuine-by-construction + validation-tune k for d_EMS)
+- TASK 1 (genuine by construction, committed 3eadf43): added ProposedDPMSolverV3._calibrate_ems -- measures d_EMS ON the EMS
+  trajectory (Heun-substep ref, SAME protocol as the other 4 cores), packs into the standard Calibration. per_core now routes
+  through it natively (no saved-calib side door). Verified: reproduces side-door grid to ~0.5% (d_EMS max/med 195; NFE5 m*=[80,7.55,1.01,0.085,0.009]).
+- TASK 2 (validation-tune k for d_EMS, tune_on=validation_only): ems_kval.sh + ems_kval_ext.sh. VALIDATION FID (seed-mean) NFE 5/8/12/18/32:
+  default 17.01/6.30/4.70/4.43/4.32 | k=0 226/149/86/49/FAIL | k=1 60.8/24.9/16.7/9.4/5.10 | k=2 19.25/6.54/4.66/4.36/4.32 | k=3 201/125/FAIL.. | k=4 ALL FAIL.
+- RESULT: SHARP validation bowl, min at k*=2. k<=1 under-concentrates (^{1/3} flattens d_EMS's 195x peak so sigma^-k does the real
+  concentrating); k>=3 OVER-crowds nodes -> singular EMS solve (fails even at low NFE for k=4). Much sharper than d_Heun's bowl (k=3 merely worse).
+- So the pre-specified borrowed k=2 IS the d_EMS validation optimum. Validation tracks test near-exactly (val 19.25/6.54/4.66/4.36/4.32 vs
+  test 19.33/6.64/4.71/4.38/4.34) -> no overfitting, the existing k=2 TEST row IS the validation-confirmed answer. NO new test draw needed
+  (k=2 was never selected from test data; validation independently confirms). Clean under no-run-until-success.
+- NFE64 failure now fully explained: same over-concentration pathology that kills k>=3; at k*=2 the schedule sits at the numerical-stability
+  edge and NFE64 tips over. Floor-tie regardless. Report footnote updated: k=2 = validation-confirmed optimum (sharp bowl), not just "borrowed/conservative".
+- LESSON: when d is already peaked, the ^{1/(p+1)} exponent flattens it and the perceptual weight k carries the concentration; the k-optimum
+  is then SHARP and over-concentration is catastrophic (numerical, not just FID). Both follow-ups DONE; report compiles 5pp clean.

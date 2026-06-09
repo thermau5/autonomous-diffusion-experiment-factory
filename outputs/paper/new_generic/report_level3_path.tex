@@ -194,11 +194,14 @@ $\{5,9,13,19,33,65\}$, i.e.\ $+1$ NFE per column --- if anything generous to
 the default. $^\ast$EMS $=$ DPM-Solver-v3; ``default'' is its own EMS
 schedule, co-derived \emph{jointly} with the solver from shared model
 statistics (\S\ref{sec:solver}); our arm is the same solver under genuine
-per-core $m^\star(d_{\mathrm{EMS}})$ at the borrowed $k\!=\!2$ (not re-tuned
-for EMS --- conservative). $^\ddagger$Genuine $d_{\mathrm{EMS}}$ is so
-low-$\sigma$-peaked (max/median $198$ vs Heun's $4.1$) that at NFE 64 the
-inverse-CDF placement crowds near-identical nodes and the EMS coefficient
-solve goes singular; all schedules tie at the floor there regardless.}
+per-core $m^\star(d_{\mathrm{EMS}})$ at $k\!=\!2$, which a validation sweep
+confirms is the optimal perceptual exponent for $d_{\mathrm{EMS}}$ --- a
+sharp optimum ($k\!\le\!1$ under-concentrates, $k\!\ge\!3$ over-crowds the
+nodes and the EMS solve diverges). $^\ddagger$Genuine $d_{\mathrm{EMS}}$ is
+so low-$\sigma$-peaked (max/median $\approx195$ vs Heun's $4.1$) that at NFE
+64 the inverse-CDF placement crowds near-identical nodes and the EMS
+coefficient solve goes singular; all schedules tie at the floor there
+regardless.}
 \end{table}
 
 \noindent\textbf{Reading the table.} Wins concentrate where a schedule has
