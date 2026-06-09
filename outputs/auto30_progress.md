@@ -344,3 +344,13 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   edge and NFE64 tips over. Floor-tie regardless. Report footnote updated: k=2 = validation-confirmed optimum (sharp bowl), not just "borrowed/conservative".
 - LESSON: when d is already peaked, the ^{1/(p+1)} exponent flattens it and the perceptual weight k carries the concentration; the k-optimum
   is then SHARP and over-concentration is catastrophic (numerical, not just FID). Both follow-ups DONE; report compiles 5pp clean.
+
+## Update 30 (NEXT direction chosen by user: OT-CFM as a 4th path family)
+- Goal: add optimal-transport CFM as a 4th path family (EDM/RF/VP + OT-CFM) to the schedule-dominance table; test whether m* generalizes to an OT-straightened path.
+- No downloadable OT-CFM CIFAR ckpt (TorchCFM ships code not weights). Chose: fine-tune the converged 1-RF model with MINIBATCH-OT COUPLING (scipy linear_sum_assignment,
+  exact for equal batches) -- SAME NCSN++ backbone as the 1/2/3-RF rows, ONLY the coupling differs (independent->OT), so OT-CFM vs 1-RF isolates coupling-driven straightening.
+  Warm-start is legitimate (field converges to genuine OT-CFM optimum regardless of init = same logic reflow uses); train to loss-plateau, NOT a borrowed approximation.
+- Self-contained ot_cfm_train.py (avoids RF run_lib pipeline): load 1-RF EMA, CIFAR-10 [-1,1], Adam lr1e-4, EMA 0.9999, OT-reorder z0<->x1 per batch, CFM loss on linear interpolant.
+  Smoke-tested OK (61.8M params, loss ~0.147). LAUNCHED 30k steps (0.25s/it ~2.1h), ckpt every 5k -> otcfm_ck/. Monitoring loss for plateau (= OT field converged).
+- ot_cfm_sched.py READY (mirrors vp_sched): calibrate d(t)=||xddot|| on OT-CFM (seed 777 held-out), m*(p=1) vs uniform-t, NFE{5,8,12,18,32,64}, 3 seeds, Clean-FID.
+- NEXT: when training plateaus -> run ot_cfm_sched -> add OT-CFM row to dominance table (report) as the 4th path family. Compare defect max/median vs 1-RF (~69) to see how much OT straightens.
