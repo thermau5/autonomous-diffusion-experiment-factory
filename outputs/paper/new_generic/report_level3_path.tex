@@ -24,9 +24,9 @@ floor-vs-defect \emph{crossover cascade} the certificate predicts --- no
 single path wins at all budgets; (ii) on the \textbf{schedule} axis, a
 \emph{parameter-free} certificate-calibrated grid wins or ties the
 \emph{native default} of every configuration we test --- four EDM solver
-cores and three independent path families (EDM, RF, VP-SDE) --- the only
-losses being the EMS solver at the two lowest budgets, whose schedule is
-co-optimized with the solver itself (Table~\ref{tab:dominance}). All FID is
+cores and four path families (EDM, RF, VP-SDE, OT-CFM) --- the only losses
+being at the lowest budgets (EMS at NFE 5--8, whose schedule is co-optimized
+with the solver; OT-CFM at NFE 5; Table~\ref{tab:dominance}). All FID is
 Clean-FID 10k, 3 seeds.
 \end{abstract}
 
@@ -63,7 +63,8 @@ $\ge128$). Pre-registered crossover prediction confirmed.
 \item[$m$:] The certificate's calibrated node placement
 $m^\star\!\propto d^{1/(p+1)}$ ($p\!=\!1$, no metric feedback) wins or ties
 the native default schedule of every solver core and path family tested,
-except the EMS solver at the two lowest NFE (Table~\ref{tab:dominance}).
+except at the lowest budgets (EMS NFE 5--8, OT-CFM NFE 5;
+Table~\ref{tab:dominance}).
 \end{itemize}
 
 \section{Solver axis $s$: fixed-EDM frontier}
@@ -161,9 +162,9 @@ boundary.
 \emph{our} $m^\star$ / that configuration's \emph{own default} schedule, at
 matched NFE (3 seeds). \textbf{Bold} marks a winner beyond $2\sigma$ of the
 per-seed difference; an unbolded pair is a statistical tie. Across four EDM
-solver cores and three independent path families, the \emph{only} losses are
-the EMS solver at the two lowest budgets (NFE 5,\,8); everywhere else ---
-including EMS at NFE$\,\ge\,$12 --- our schedule ties or wins.}
+solver cores and four path families, the \emph{only} losses are at the
+lowest budgets --- EMS at NFE 5,\,8 and OT-CFM at NFE 5; everywhere else
+(including EMS at NFE$\,\ge\,$12) our schedule ties or wins.}
 \label{tab:dominance}
 \footnotesize
 \setlength{\tabcolsep}{4.5pt}
@@ -182,6 +183,7 @@ UniPC          & \textbf{21.44}/40.41 & \textbf{9.18}/12.50 & \textbf{5.58}/6.06
 2-RF   & \textbf{7.31}/7.54 & \textbf{6.80}/6.98 & \textbf{6.57}/6.69 & 6.44/6.51 & 6.33/6.37 & 6.27/6.29\\
 3-RF   & \textbf{7.30}/7.40 & \textbf{7.06}/7.16 & 6.95/7.02 & 6.88/6.93 & 6.83/6.85 & 6.79/6.80\\
 VP-SDE & \textbf{236}/240 & \textbf{131}/151 & \textbf{67.29}/80.13 & \textbf{37.06}/43.06 & \textbf{19.55}/22.28 & \textbf{12.32}/14.11\\
+OT-CFM & 28.87/\textbf{27.86} & \textbf{17.32}/17.90 & \textbf{12.12}/13.52 & \textbf{9.39}/10.80 & \textbf{7.55}/8.47 & \textbf{6.67}/7.04\\
 \midrule
 \multicolumn{7}{l}{\emph{EMS solver --- genuine per-core $m^\star(d_{\mathrm{EMS}})$ vs.\ its own jointly co-designed schedule}}\\
 EMS$^\ast$ & 19.33/\textbf{17.07} & 6.64/\textbf{6.30} & 4.71/4.71 & \textbf{4.38}/4.46 & 4.34/4.35 & ---$^\ddagger$\\
@@ -209,14 +211,20 @@ room to act --- low-to-mid NFE, where node placement decides whether the
 high-curvature region is resolved. As NFE grows every schedule converges to
 the same floor and the cells become ties: this is the certificate's own
 prediction (the discretization term $\int d/m^{p}\!\to\!0$), not a weakness.
-The pattern is uniform across four solver cores and, crucially, across three
-\emph{independent} path families --- VE/EDM, the linear-interpolant RF, and
-the VP-SDE --- so $m^\star$ is not an EDM artifact. VP-SDE is the cleanest
-case: Euler never reaches its floor in this NFE range, so $m^\star$ wins at
-\emph{every} budget ($12$--$16\%$). The only place our schedule trails is the
-EMS solver at NFE 5--8; and even there --- against a schedule co-optimized
-with the solver itself --- our genuine per-core schedule ties at
-NFE$\,\ge\,$12 and edges ahead at 18.
+The pattern is uniform across four solver cores and, crucially, across four
+path families --- VE/EDM, the linear-interpolant RF, the VP-SDE, and the
+optimal-transport-coupled CFM --- so $m^\star$ is not an EDM artifact. VP-SDE
+is the cleanest case: Euler never reaches its floor in this NFE range, so
+$m^\star$ wins at \emph{every} budget ($12$--$16\%$). Our schedule trails
+only at the lowest budgets: the EMS solver at NFE 5--8 (against a schedule
+co-optimized with the solver itself, yet our genuine per-core schedule still
+ties at NFE$\,\ge\,$12 and edges ahead at 18), and OT-CFM at NFE 5 (too few
+nodes to place on its sharply-peaked defect). OT-CFM is also an independent
+witness to the \textbf{path} axis: its OT coupling beats the
+independent-coupling 1-RF at low NFE (uniform $27.9$ vs $37.9$ at NFE 5) but
+carries a slightly higher floor ($7.0$ vs $6.4$ at NFE 64) --- the same
+$Q_0$-vs-$d$ tradeoff the reflow ladder shows (\S\ref{sec:path}), reached by
+a different straightening mechanism.
 
 \medskip
 \noindent\textbf{Genuine per-core calibration matters.} Each core's
@@ -266,9 +274,9 @@ that matter transfer off EDM: the \textbf{path} trades $Q_0$ for $d$ with an
 NFE-dependent optimum (a confirmed crossover cascade), and the
 \textbf{parameter-free calibrated schedule} wins or ties the native default
 of every solver core and every path family tested --- four EDM cores and
-three independent path families (EDM, RF, VP-SDE) --- the only losses being
-the EMS solver at the two lowest budgets, and even there (with a genuine
-per-core defect) it ties at NFE$\,\ge\,$12 (Table~\ref{tab:dominance}).
+four path families (EDM, RF, VP-SDE, OT-CFM) --- the only losses being at the
+lowest budgets (EMS at NFE 5--8, where it still ties at NFE$\,\ge\,$12 with a
+genuine per-core defect; OT-CFM at NFE 5; Table~\ref{tab:dominance}).
 Path-straightening,
 schedule-calibration, and solver-core quality are complementary advances on
 orthogonal axes of one certificate.

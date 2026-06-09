@@ -354,3 +354,15 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   Smoke-tested OK (61.8M params, loss ~0.147). LAUNCHED 30k steps (0.25s/it ~2.1h), ckpt every 5k -> otcfm_ck/. Monitoring loss for plateau (= OT field converged).
 - ot_cfm_sched.py READY (mirrors vp_sched): calibrate d(t)=||xddot|| on OT-CFM (seed 777 held-out), m*(p=1) vs uniform-t, NFE{5,8,12,18,32,64}, 3 seeds, Clean-FID.
 - NEXT: when training plateaus -> run ot_cfm_sched -> add OT-CFM row to dominance table (report) as the 4th path family. Compare defect max/median vs 1-RF (~69) to see how much OT straightens.
+
+## Update 31 (OT-CFM DONE -- 4th path family added; m* generalizes; bonus floor-vs-defect tradeoff)
+- Training 30k steps DONE (loss plateaued 0.147->0.1385 by ~5k; warm-start converges fast; EMA 0.9999 ~95% fine-tuned by 30k). otcfm_30000.pth.
+- ot_cfm_sched.py DONE. OT-CFM defect ||xddot|| max/median = 90 (vs 1-RF ~69 -> MORE peaked, NOT flatter; minibatch-OT@batch128 doesn't flatten per-traj curvature on CIFAR).
+- m*(p=1) vs uniform-t (Clean-FID 10k, 3 seeds): NFE 5/8/12/18/32/64
+  uniform  27.86/17.90/13.52/10.80/8.47/7.04 ; m* 28.87/17.32/12.12/9.39/7.55/6.67 ; delta +1.01/-0.58/-1.39/-1.41/-0.92/-0.37.
+  VERDICT @2sigma: LOSS@5 (too few nodes on sharply-peaked defect), WIN 8/12/18/32/64. So m* GENERALIZES to the OT-coupled path (wins NFE>=8).
+- BONUS (path axis): OT-CFM uniform BEATS 1-RF uniform at low NFE (27.86 vs 37.94 @5; 17.90 vs 19.74 @8) but has a HIGHER floor (7.04 vs 6.35 @64)
+  -> the SAME Q0-vs-d floor-vs-defect tradeoff the reflow ladder shows, reached by a DIFFERENT straightening mechanism (OT coupling). Nice independent corroboration of the path axis.
+- REPORT: added OT-CFM row to dominance table (4th path family); updated abstract/glance/caption/reading/conclusion (3->4 path families; losses now EMS@5,8 + OT-CFM@5);
+  added the OT-CFM floor-vs-defect note to the reading para. Compiles 5pp clean. build_table.py updated (reproduces the row).
+- NET: across 4 solver cores x 4 path families, m* wins-or-ties every cell except the lowest budgets (EMS@5,8; OT-CFM@5). Scripts: ot_cfm_train.py, ot_cfm_sched.py, otcfm_ck/.
