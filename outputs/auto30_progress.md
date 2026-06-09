@@ -266,3 +266,19 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - LAUNCHED vp_sched.py: VP PF-ODE Euler, uniform-t (VP default) vs calibrated m* (d(t)=||xddot|| on ref traj, p=1), NFE{5,8,12,18,32,64},
   3 seed, Clean-FID 10k. Parallels RF schedule test. -> vp_sched_results.json.
 - LESSON: nested Drive checkpoints -> gdown --folder prints all file IDs in the tree; grab the specific id, don't bulk-download.
+
+## Update 25 (VP-SDE schedule axis -- CLEAN POSITIVE; m* generalizes to a 3rd path family)
+- vp_sched.py COMPLETE. Calibrate VP defect d(t)=||xddot|| on a ref PF-ODE trajectory (seed 777, disjoint from eval seeds 0/1/2),
+  place K Euler-t nodes ~ d^{1/(p+1)}, p=1 pinned (Euler order, parameter-free, NO FID feedback). Baseline = VP default uniform-t.
+  Both arms share the same drift_f Euler loop + endpoints T->eps; only interior node placement differs. VP defect max/median=29.6, peaks at data end t~0.005.
+- RESULT (Clean-FID 10k, 3 seeds, all SEM<=0.32 so every gap is 12-23 sigma):
+  NFE      5       8       12      18      32      64
+  uniform  240.35  150.94  80.13   43.06   22.28   14.11
+  m* (p=1) 235.71  131.47  67.29   37.06   19.55   12.32
+  Delta    -4.64   -19.47  -12.84  -6.00   -2.73   -1.79   (rel -1.9/-12.9/-16.0/-13.9/-12.2/-12.7%)
+- VERDICT: calibrated schedule m* beats VP's uniform-t default at EVERY NFE. Peak relative gain ~16% mid-budget (K=12);
+  K=5 gain anomalously small (1.9%) -- same pattern as RF (VP-Euler@K=5 is FID 240, too undersampled for placement to help).
+- HEADLINE: the certificate's schedule prescription now generalizes across THREE independent path families --
+  VE/EDM (Karras), linear-interp/Rectified-Flow, and VP-SDE -- parameter-free, FID-feedback-free, at every NFE. Not an EDM artifact.
+- LESSON: VP-Euler is step-hungry (uniform-t FID 240 @K=5); the absolute FIDs are high but the schedule COMPARISON is what the axis tests,
+  and it is clean. Same protocol, same conclusion as RF -> robust cross-family generalization.
