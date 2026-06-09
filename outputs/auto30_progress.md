@@ -282,3 +282,22 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   VE/EDM (Karras), linear-interp/Rectified-Flow, and VP-SDE -- parameter-free, FID-feedback-free, at every NFE. Not an EDM artifact.
 - LESSON: VP-Euler is step-hungry (uniform-t FID 240 @K=5); the absolute FIDs are high but the schedule COMPARISON is what the axis tests,
   and it is clean. Same protocol, same conclusion as RF -> robust cross-family generalization.
+
+## Update 26 (dominance table assembled + 2 stale-source bugs caught + integrated into report)
+- Rebuilt build_table.py to assemble the full schedule-dominance table (m*/own-default paired FID, bold winner @2-SIGMA of the seed diff,
+  ~ = tie). Caught TWO assembler bugs while finalizing (NOT data bugs -- the data was correct, the assembler read the wrong source):
+  1. DEIS row was showing the CONTAMINATED per_core seq-AB2 numbers (359/24.9/25.2) from fair.log; the corrected shared-calib run lives
+     in fix.log (28.59/11.62/7.51/5.50/4.69/4.48). Fixed: read DEIS proposed from fix.log. -> DEIS WINS NFE5/8, TIES 12-64 (weakest core).
+  2. Heun row only had NFE5 (assembler keyed even grid; Heun ran ODD {5,9,13,19,33,65}). Fixed: map odd grid -> even columns (+1 NFE/cell).
+     -> Heun HUGE WIN 5-18 (13.41 vs 338.52!), ties at floor.
+- Also switched hard 0.05 tie-threshold -> 2-sigma of the per-seed difference (honest: floor sems ~0.04-0.1, so 0.05 was too tight;
+  demoted several marginal floor "wins" to ties; 1-RF@NFE5 win->tie).
+- FINAL DOMINANCE TABLE (m* wins-or-ties EVERY cell across 4 EDM cores x 3 path families; lone exception = EMS boundary):
+  Heun  WIN 5/8/12/18, tie 32/64    | DPM++ WIN 5/8/12/18, tie 32/64 | DEIS WIN 5/8, tie 12-64
+  UniPC WIN 5/8/12/18, tie 32/64    | 1-RF  tie 5, WIN 8-64          | 2-RF WIN 5/8/12, tie 18-64
+  3-RF  WIN 5/8, tie 12-64          | VP-SDE WIN ALL 6 NFE (cleanest -- never hits floor) | EMS LOSS 5-32, tie 64 (boundary)
+- INTEGRATED into report_level3_path.tex: restructured Sec.5 to LEAD with the dominance table (Table 5, tab:dominance), kept 1-RF as
+  the "anatomy of one column" zoom-in; updated abstract (ii), Sec.1 glance [m], axis-map table ref, and Conclusion. Compiles clean,
+  5pp, no overfull >20pt, no undefined refs. Also converted appendix-B exponent-sensitivity inline list -> tabular (cleared 65pt overfull).
+- HEADLINE: the certificate's parameter-free schedule m*=d^{1/(p+1)} (p=1) wins or ties the NATIVE DEFAULT of every solver core AND every
+  path family tested, across 3 independent path families (EDM/RF/VP). One documented boundary: EMS (schedule co-designed with solver).

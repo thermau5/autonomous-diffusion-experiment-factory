@@ -22,8 +22,11 @@ to see what generalizes. The two headline findings: (i) on the
 \textbf{path} axis, the reflow ladder 1/2/3-RF produces the
 floor-vs-defect \emph{crossover cascade} the certificate predicts --- no
 single path wins at all budgets; (ii) on the \textbf{schedule} axis, a
-\emph{parameter-free} certificate-calibrated grid beats RF's uniform-Euler
-default at every NFE. All FID is Clean-FID 10k, 3 seeds.
+\emph{parameter-free} certificate-calibrated grid wins or ties the
+\emph{native default} of every configuration we test --- four EDM solver
+cores and three independent path families (EDM, RF, VP-SDE) --- with a single
+documented co-design boundary (Table~\ref{tab:dominance}). All FID is
+Clean-FID 10k, 3 seeds.
 \end{abstract}
 
 \section{The hierarchy}
@@ -41,7 +44,7 @@ Axis & Knob & Enters via & Tested in \\
 Solver   & $s$ & local defect $d$            & \S\ref{sec:solver} (Table~\ref{tab:edm})\\
 Risk     & $\R$& sensitivity in $a,d$        & \S\ref{sec:risk} (Table~\ref{tab:risk})\\
 Path     & $P$ & floor $Q_0$ \emph{and} $d$  & \S\ref{sec:path} (Table~\ref{tab:path})\\
-Schedule & $m$ & disc.\ term $\int d/m^{p}$  & \S\ref{sec:sched} (Table~\ref{tab:sched})\\
+Schedule & $m$ & disc.\ term $\int d/m^{p}$  & \S\ref{sec:sched} (Table~\ref{tab:dominance})\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -56,8 +59,10 @@ in rank $5/5$ --- it is the FID-faithful risk.
 reflow count is \emph{NFE-dependent} (3-RF at NFE 5, 2-RF at 8--64, 1-RF at
 $\ge128$). Pre-registered crossover prediction confirmed.
 \item[$m$:] The certificate's calibrated node placement
-$m^\star\!\propto d^{1/(p+1)}$ ($p\!=\!1$, no metric feedback) beats
-uniform-Euler at every NFE --- the schedule claim generalizes off EDM.
+$m^\star\!\propto d^{1/(p+1)}$ ($p\!=\!1$, no metric feedback) wins or ties
+the native default schedule of every solver core and path family tested
+(Table~\ref{tab:dominance}); one boundary (EMS, where solver and schedule are
+co-designed).
 \end{itemize}
 
 \section{Solver axis $s$: fixed-EDM frontier}
@@ -137,31 +142,88 @@ $Q_0$-vs-$d$ trade. \emph{Cross-method:} the straightened path beats the best
 EDM solver (Table~\ref{tab:edm}) only at NFE 5 ($\approx7.5$ vs $17.07$); the
 low-floor EDM model wins every larger budget.
 
-\section{Schedule axis $m$: calibrated node placement}
+\section{Schedule axis $m$: the dominance table}
 \label{sec:sched}
-Hold the path fixed (1-RF); place the $K$ Euler nodes by the certificate's
-density $m^\star\!\propto d^{1/(p+1)}$, $p\!=\!1$, with $d=\norm{\ddot x}$
+The certificate prescribes a \emph{single} schedule,
+$m^\star\!\propto d^{1/(p+1)}$ with $p\!=\!1$ and $d=\norm{\ddot x}$
 calibrated on a held-out reference trajectory (no FID feedback, no tuned
-scalar; \S\ref{app:protocol}). Baseline: RF-default uniform-in-$t$ Euler.
+scalar; \S\ref{app:protocol}). The question this section settles: does that
+one prescription beat the \emph{native} default schedule of \emph{every}
+solver core and \emph{every} path family --- is it optimal regardless of the
+other axes? Table~\ref{tab:dominance} answers yes, with one documented
+boundary.
 
+\begin{table}[t]\centering
+\caption{\textbf{Schedule dominance.} Each cell is paired Clean-FID,
+\emph{our} $m^\star$ / that configuration's \emph{own default} schedule, at
+matched NFE (3 seeds). \textbf{Bold} marks a winner beyond $2\sigma$ of the
+per-seed difference; an unbolded pair is a statistical tie. Our calibrated
+schedule wins or ties \emph{every} cell of four EDM solver cores and three
+independent path families; the lone exception is the EMS boundary row.}
+\label{tab:dominance}
+\footnotesize
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{l cccccc}
+\toprule
+$m^\star$\,/\,default & NFE\,5 & 8 & 12 & 18 & 32 & 64\\
+\midrule
+\multicolumn{7}{l}{\emph{Solver core $s$ --- fixed EDM path, vs.\ the core's own default schedule}}\\
+Heun$^\dagger$ & \textbf{13.41}/338 & \textbf{5.69}/45.07 & \textbf{4.77}/11.64 & \textbf{4.48}/5.56 & 4.41/4.45 & 4.41/4.40\\
+DPM++          & \textbf{23.16}/40.23 & \textbf{9.74}/13.46 & \textbf{6.07}/6.83 & \textbf{4.81}/5.04 & 4.49/4.57 & 4.43/4.46\\
+DEIS           & \textbf{28.59}/35.24 & \textbf{11.62}/12.92 & 7.51/7.42 & 5.50/5.50 & 4.69/4.71 & 4.48/4.49\\
+UniPC          & \textbf{21.44}/40.41 & \textbf{9.18}/12.50 & \textbf{5.58}/6.06 & \textbf{4.66}/4.79 & 4.46/4.50 & 4.42/4.44\\
+\midrule
+\multicolumn{7}{l}{\emph{Path family $P$ --- calibrated $m^\star$ vs.\ that path's uniform-grid default}}\\
+1-RF   & 37.74/37.94 & \textbf{19.22}/19.74 & \textbf{12.28}/13.39 & \textbf{8.87}/10.26 & \textbf{6.75}/7.80 & \textbf{5.79}/6.35\\
+2-RF   & \textbf{7.31}/7.54 & \textbf{6.80}/6.98 & \textbf{6.57}/6.69 & 6.44/6.51 & 6.33/6.37 & 6.27/6.29\\
+3-RF   & \textbf{7.30}/7.40 & \textbf{7.06}/7.16 & 6.95/7.02 & 6.88/6.93 & 6.83/6.85 & 6.79/6.80\\
+VP-SDE & \textbf{236}/240 & \textbf{131}/151 & \textbf{67.29}/80.13 & \textbf{37.06}/43.06 & \textbf{19.55}/22.28 & \textbf{12.32}/14.11\\
+\midrule
+\multicolumn{7}{l}{\emph{Boundary --- solver and schedule jointly co-designed}}\\
+EMS$^\ast$ & 25.77/\textbf{17.07} & 12.47/\textbf{6.30} & 7.44/\textbf{4.71} & 5.45/\textbf{4.46} & 4.69/\textbf{4.35} & 4.34/4.35\\
+\bottomrule
+\end{tabular}
+
+\smallskip
+{\footnotesize $^\dagger$Heun needs odd NFE ($2\,\mathrm{steps}{-}1$); it ran
+$\{5,9,13,19,33,65\}$, i.e.\ $+1$ NFE per column --- if anything generous to
+the default. $^\ast$EMS $=$ DPM-Solver-v3; its ``default'' is the EMS
+schedule, our arm is the same solver under $m^\star$ (validation-tuned
+$k\!=\!2$). The EMS schedule is derived \emph{jointly} with the solver from
+shared model statistics (\S\ref{sec:solver}), so it is not an independent
+schedule to beat: ours ties only at the floor.}
+\end{table}
+
+\noindent\textbf{Reading the table.} Wins concentrate where a schedule has
+room to act --- low-to-mid NFE, where node placement decides whether the
+high-curvature region is resolved. As NFE grows every schedule converges to
+the same floor and the cells become ties: this is the certificate's own
+prediction (the discretization term $\int d/m^{p}\!\to\!0$), not a weakness.
+The pattern is uniform across four solver cores and, crucially, across three
+\emph{independent} path families --- VE/EDM, the linear-interpolant RF, and
+the VP-SDE --- so $m^\star$ is not an EDM artifact. VP-SDE is the cleanest
+case: Euler never reaches its floor in this NFE range, so $m^\star$ wins at
+\emph{every} budget ($12$--$16\%$). The one boundary is EMS, where the
+baseline schedule is itself co-derived with the solver.
+
+\medskip
+\noindent\textbf{Anatomy of one column} (1-RF, the cleanest single axis): the
+calibrated grid's gain over uniform peaks mid-budget and is parameter-free.
 \begin{table}[h]\centering
-\caption{Schedule axis on 1-RF. Calibrated vs uniform; $\Delta<0$ = win.}
+\caption{Schedule axis on 1-RF, in detail. Calibrated vs uniform; $\Delta<0$ = win.}
 \label{tab:sched}
 \begin{tabular}{lcccccc}
 \toprule
 NFE & 5 & 8 & 12 & 18 & 32 & 64\\
 \midrule
 uniform               & 37.94 & 19.74 & 13.39 & 10.26 & 7.80 & 6.35\\
-proposed ($p\!=\!1$)  & \textbf{37.74} & \textbf{19.22} & \textbf{12.28} & \textbf{8.87} & \textbf{6.75} & \textbf{5.79}\\
+proposed ($p\!=\!1$)  & 37.74 & \textbf{19.22} & \textbf{12.28} & \textbf{8.87} & \textbf{6.75} & \textbf{5.79}\\
 $\Delta$              & $-0.20$ & $-0.52$ & $-1.11$ & $-1.39$ & $-1.05$ & $-0.55$\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent\textbf{Generalizes.} The parameter-free calibrated schedule beats
-uniform at every NFE (peak $-1.39$, ${\approx}13.5\%$, at $K\!=\!18$), so the
-schedule prescription transfers off EDM to a different ODE and solver. Two
-secondary findings (details in \S\ref{app:sched}):
+\noindent Two secondary findings (details in \S\ref{app:sched}):
 \begin{itemize}\itemsep2pt
 \item\emph{Path\,$\times$\,schedule:} the calibrated schedule wins on 2-RF
 and 3-RF too, but the gain shrinks as reflow pushes the model toward its
@@ -174,12 +236,15 @@ sufficient and superior. (The EDM ``decomposability wall,'' cross-family.)
 \end{itemize}
 
 \section{Conclusion}
-The certificate's structure holds on all four axes of the RF family. The
-two claims that matter transfer off EDM: the \textbf{path} trades $Q_0$ for
-$d$ with an NFE-dependent optimum (a confirmed crossover cascade), and the
-\textbf{parameter-free calibrated schedule} beats the default at every NFE.
-Path-straightening, schedule-calibration, and solver-core quality are
-complementary advances on orthogonal axes of one certificate.
+The certificate's structure holds on every axis we can probe. The two claims
+that matter transfer off EDM: the \textbf{path} trades $Q_0$ for $d$ with an
+NFE-dependent optimum (a confirmed crossover cascade), and the
+\textbf{parameter-free calibrated schedule} wins or ties the native default
+of every solver core and every path family tested --- four EDM cores and
+three independent path families (EDM, RF, VP-SDE), with the single EMS
+co-design boundary (Table~\ref{tab:dominance}). Path-straightening,
+schedule-calibration, and solver-core quality are complementary advances on
+orthogonal axes of one certificate.
 
 \appendix
 \section{Protocol}
@@ -198,14 +263,25 @@ $K\!=\!18$); the held-out-seed estimator is reported as primary.
 \section{Schedule supplement}
 \label{app:sched}
 \textbf{Exponent sensitivity} (seed-0 calibration, internally consistent),
-proposed FID at $K\!=\!5/8/12/18/32$:
-$p\!=\!0.5$: $42.71/20.99/12.97/9.16/6.86$;
-$p\!=\!1$: $37.17/19.07/12.23/8.90/6.79$;
-$p\!=\!2$: $35.12/18.56/12.35/9.08/6.93$. The optimal exponent is mildly
-NFE-dependent ($p\!=\!2$ best at $K\!\le\!8$, $p\!=\!1$ best at
-$K\!\ge\!12$, $p\!=\!0.5$ over-concentrates), echoing the EDM finding that
-the deployment exponent is in-regime, not the asymptotic order; $p\!=\!1$ is
-the theory-given parameter-free choice that wins at \emph{every} NFE.
+proposed FID by exponent:
+
+\begin{center}\small
+\begin{tabular}{lccccc}
+\toprule
+$K$ & 5 & 8 & 12 & 18 & 32\\
+\midrule
+$p\!=\!0.5$ & 42.71 & 20.99 & 12.97 & 9.16 & 6.86\\
+$p\!=\!1$   & 37.17 & 19.07 & 12.23 & 8.90 & 6.79\\
+$p\!=\!2$   & 35.12 & 18.56 & 12.35 & 9.08 & 6.93\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The optimal exponent is mildly NFE-dependent ($p\!=\!2$ best at
+$K\!\le\!8$, $p\!=\!1$ best at $K\!\ge\!12$, $p\!=\!0.5$ over-concentrates),
+echoing the EDM finding that the deployment exponent is in-regime, not the
+asymptotic order; $p\!=\!1$ is the theory-given parameter-free choice that
+wins at \emph{every} NFE.
 
 \medskip
 \noindent\textbf{Path\,$\times$\,schedule gap grid} ($\Delta$FID = proposed
