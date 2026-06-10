@@ -366,3 +366,12 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - REPORT: added OT-CFM row to dominance table (4th path family); updated abstract/glance/caption/reading/conclusion (3->4 path families; losses now EMS@5,8 + OT-CFM@5);
   added the OT-CFM floor-vs-defect note to the reading para. Compiles 5pp clean. build_table.py updated (reproduces the row).
 - NET: across 4 solver cores x 4 path families, m* wins-or-ties every cell except the lowest budgets (EMS@5,8; OT-CFM@5). Scripts: ot_cfm_train.py, ot_cfm_sched.py, otcfm_ck/.
+
+## Update 32 (NEXT baseline: is m* FID-OPTIMAL, not just better than naive default? -- running)
+- Gap: dominance table shows m* beats each config's NATIVE DEFAULT; hasn't shown m* matches an OPTIMIZED schedule. Running the decisive test.
+- rf_fidopt.py: free-node black-box search for the FID-minimizing K-node Euler schedule on 1-RF, seeded from BOTH m* and uniform (so not anchored),
+  searched on a FIXED held-out seed (1000) @5k, then VALIDATED on test seeds 0/1/2 @10k. Also DP-optimal of the truncation surrogate Sum d*(dt)^{p+1} (theory-optimal discrete).
+  Nelder-Mead (cma not installed), softmax-gap node param (guaranteed monotone), NFE 8 (7-dim) + 12 (11-dim). Smoke-tested OK (DP-opt nodes DIFFER from m* -> informative).
+- LAUNCHED (pid running, ~5h). -> rf_fidopt_results.json. Compares uniform / m* / dp_opt / FID-opt-found at each NFE.
+- Interpretation plan: if m* within ~noise of the search optimum -> m* is FID-optimal (strong claim, not just beats-default). If search beats m* materially -> honest gap.
+  NOTE Nelder-Mead in 11-dim is weak; from_uniform start is the key anti-anchoring control (if even from uniform it can't beat m*, strong evidence).
