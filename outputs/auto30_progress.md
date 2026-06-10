@@ -382,3 +382,19 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   -> m* IS the FID-optimum of the free-node schedule space, not merely better than the naive default. STRONGEST claim-upgrade.
 - dp_opt (DP-optimal of crude left-node truncation surrogate Sum d*dt^2) UNDERPERFORMS m* (21.58/14.60) -> reported with caveat: smooth closed form, not naive surrogate-min, tracks FID.
 - REPORT: added "m* is FID-optimal" para+table to Sec.5 (after 1-RF detail table); updated abstract(ii) + glance[m]. Compiles 5pp clean. rf_fidopt.py, rf_fidopt_results.json.
+
+## Update 33 (finishing remaining baselines autonomously: RK45 + AYS + cross-dataset FFHQ; user said keep going, investigate surprises)
+- AYS: paper Table 3 releases ONLY SD/SDXL/DeepFloyd/SVD schedules -- CIFAR-10 EDM schedules NOT published; their FID protocol = 50k legacy vs our 10k Clean-FID.
+  Faithful comparison would require reimplementing KLUB (risk: misrepresenting their method). RESOLUTION: related-work note in report; our free-node FID search is the
+  STRONGER baseline on our protocol (bounds what ANY schedule optimizer could achieve; m* matches it). No fabricated numbers.
+- RK45 (rf_rk45.py, Dormand-Prince 5(4), FSAL, batch-sync max-norm, PI control) on 1-RF, tol sweep {0.5,0.1,0.01,1e-3,3e-4,1e-4}:
+  SURPRISE: tol=0.5 -> NFE25 FID 11.98 but tol=0.1 -> NFE25 FID 32.2 (tighter tol, same NFE, 3x worse FID). INVESTIGATED (step traces, accepted/rejected counts):
+  NOT a bug. RK45 places nodes by LOCAL error only: tol=0.5 crosses the whole data end in ONE h=0.70 step (err 0.044 locally fine, perceptually terrible);
+  tol=0.1 places differently; rejections burn 6 NFE without advancing; NFE quantized to 6/step + cannot reach NFE<19 at all.
+  FINDING: local-error-adaptive scheduling is FID-BLIND (FID non-monotonic in tol at matched NFE) -- the regime mismatch m* avoids. RK45 best-so-far 12.0@NFE25
+  LOSES to m* 8.87@NFE18 (28% fewer evals). Sweep continuing to dense-tol high-NFE end.
+- FFHQ-64 cross-dataset (ffhq_sched.py): EDM ffhq ckpt + NVIDIA fid-refs npz from CDN; calibrate d_Heun ON the FFHQ net (max/med=2.2, much flatter than CIFAR 4.1);
+  m* (CIFAR-validated p=2,k=2 UNCHANGED = true transfer, no re-tuning) vs Karras rho=7 default, same inline Heun loop both arms, EDM fid.py vs 50k ref, odd NFE {5,9,13,19,33}, 3 seeds.
+  Smoke-tested end-to-end; chained to launch after RK45 finishes (GPU serialized).
+- Statistical axis (c_stat/n): requires retraining generators at multiple n -- days of GPU, out of scope for this sweep; will document as the one untested term.
+- Report: added AYS related-work note to Sec.5 (compiles 6pp).

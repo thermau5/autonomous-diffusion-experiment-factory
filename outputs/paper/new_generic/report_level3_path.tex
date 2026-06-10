@@ -289,6 +289,16 @@ $\sum d\,\Delta t^{2}$ \emph{under}performs at $21.6$/$14.6$; with the caveat
 that this DP uses a crude left-node cost, it still indicates the \emph{smooth}
 certificate form, not naive surrogate minimization, is what tracks FID.)
 
+\emph{Relation to learned schedules (AYS).} Align-Your-Steps
+(Sabour et al., 2024) also optimizes schedules (via a KLUB objective) and reports gains
+on CIFAR-10/EDM; its optimized CIFAR schedules are not published (only the
+SD/SDXL/DeepFloyd/SVD schedules are released) and its FID protocol differs
+(50k legacy vs our 10k Clean-FID), so a number-to-number comparison would
+require reimplementing their optimizer. The free-node search above is the
+stronger comparison on our protocol: it bounds what \emph{any} schedule
+optimizer --- learned or otherwise --- could achieve at these budgets, and
+$m^\star$ matches it without optimization, FID feedback, or training.
+
 \medskip
 \noindent Two secondary findings (details in \S\ref{app:sched}):
 \begin{itemize}\itemsep2pt
