@@ -160,8 +160,9 @@ boundary.
 \begin{table}[t]\centering
 \caption{\textbf{Schedule dominance.} Each cell is paired Clean-FID,
 \emph{our} $m^\star$ / that configuration's \emph{own default} schedule, at
-matched NFE (3 seeds). \textbf{Bold} marks a winner beyond $2\sigma$ of the
-per-seed difference; an unbolded pair is a statistical tie. Across four EDM
+matched NFE (3 seeds). \textbf{Bold} marks the better arm when it leads
+beyond $2\sigma$ of the per-seed difference, or \emph{both} arms when they
+tie within $2\sigma$ (joint-best). Across four EDM
 solver cores and four path families, the \emph{only} losses are at the
 lowest budgets --- EMS at NFE 5,\,8 and OT-CFM at NFE 5; everywhere else
 (including EMS at NFE$\,\ge\,$12) our schedule ties or wins.}
@@ -173,20 +174,20 @@ lowest budgets --- EMS at NFE 5,\,8 and OT-CFM at NFE 5; everywhere else
 $m^\star$\,/\,default & NFE\,5 & 8 & 12 & 18 & 32 & 64\\
 \midrule
 \multicolumn{7}{l}{\emph{Solver core $s$ --- fixed EDM path, vs.\ the core's own default schedule}}\\
-Heun$^\dagger$ & \textbf{13.41}/338 & \textbf{5.69}/45.07 & \textbf{4.77}/11.64 & \textbf{4.48}/5.56 & 4.41/4.45 & 4.41/4.40\\
-DPM++          & \textbf{23.16}/40.23 & \textbf{9.74}/13.46 & \textbf{6.07}/6.83 & \textbf{4.81}/5.04 & 4.49/4.57 & 4.43/4.46\\
-DEIS           & \textbf{28.59}/35.24 & \textbf{11.62}/12.92 & 7.51/7.42 & 5.50/5.50 & 4.69/4.71 & 4.48/4.49\\
-UniPC          & \textbf{21.44}/40.41 & \textbf{9.18}/12.50 & \textbf{5.58}/6.06 & \textbf{4.66}/4.79 & 4.46/4.50 & 4.42/4.44\\
+Heun$^\dagger$ & \textbf{13.41}/338 & \textbf{5.69}/45.07 & \textbf{4.77}/11.64 & \textbf{4.48}/5.56 & \textbf{4.41}/\textbf{4.45} & \textbf{4.41}/\textbf{4.40}\\
+DPM++          & \textbf{23.16}/40.23 & \textbf{9.74}/13.46 & \textbf{6.07}/6.83 & \textbf{4.81}/5.04 & \textbf{4.49}/\textbf{4.57} & \textbf{4.43}/\textbf{4.46}\\
+DEIS           & \textbf{28.59}/35.24 & \textbf{11.62}/12.92 & \textbf{7.51}/\textbf{7.42} & \textbf{5.50}/\textbf{5.50} & \textbf{4.69}/\textbf{4.71} & \textbf{4.48}/\textbf{4.49}\\
+UniPC          & \textbf{21.44}/40.41 & \textbf{9.18}/12.50 & \textbf{5.58}/6.06 & \textbf{4.66}/4.79 & \textbf{4.46}/\textbf{4.50} & \textbf{4.42}/\textbf{4.44}\\
 \midrule
 \multicolumn{7}{l}{\emph{Path family $P$ --- calibrated $m^\star$ vs.\ that path's uniform-grid default}}\\
-1-RF   & 37.74/37.94 & \textbf{19.22}/19.74 & \textbf{12.28}/13.39 & \textbf{8.87}/10.26 & \textbf{6.75}/7.80 & \textbf{5.79}/6.35\\
-2-RF   & \textbf{7.31}/7.54 & \textbf{6.80}/6.98 & \textbf{6.57}/6.69 & 6.44/6.51 & 6.33/6.37 & 6.27/6.29\\
-3-RF   & \textbf{7.30}/7.40 & \textbf{7.06}/7.16 & 6.95/7.02 & 6.88/6.93 & 6.83/6.85 & 6.79/6.80\\
+1-RF   & \textbf{37.74}/\textbf{37.94} & \textbf{19.22}/19.74 & \textbf{12.28}/13.39 & \textbf{8.87}/10.26 & \textbf{6.75}/7.80 & \textbf{5.79}/6.35\\
+2-RF   & \textbf{7.31}/7.54 & \textbf{6.80}/6.98 & \textbf{6.57}/6.69 & \textbf{6.44}/\textbf{6.51} & \textbf{6.33}/\textbf{6.37} & \textbf{6.27}/\textbf{6.29}\\
+3-RF   & \textbf{7.30}/7.40 & \textbf{7.06}/7.16 & \textbf{6.95}/\textbf{7.02} & \textbf{6.88}/\textbf{6.93} & \textbf{6.83}/\textbf{6.85} & \textbf{6.79}/\textbf{6.80}\\
 VP-SDE & \textbf{236}/240 & \textbf{131}/151 & \textbf{67.29}/80.13 & \textbf{37.06}/43.06 & \textbf{19.55}/22.28 & \textbf{12.32}/14.11\\
 OT-CFM & 28.87/\textbf{27.86} & \textbf{17.32}/17.90 & \textbf{12.12}/13.52 & \textbf{9.39}/10.80 & \textbf{7.55}/8.47 & \textbf{6.67}/7.04\\
 \midrule
 \multicolumn{7}{l}{\emph{EMS solver --- genuine per-core $m^\star(d_{\mathrm{EMS}})$ vs.\ its own jointly co-designed schedule}}\\
-EMS$^\ast$ & 19.33/\textbf{17.07} & 6.64/\textbf{6.30} & 4.71/4.71 & \textbf{4.38}/4.46 & 4.34/4.35 & ---$^\ddagger$\\
+EMS$^\ast$ & 19.33/\textbf{17.07} & 6.64/\textbf{6.30} & \textbf{4.71}/\textbf{4.71} & \textbf{4.38}/4.46 & \textbf{4.34}/\textbf{4.35} & ---$^\ddagger$\\
 \bottomrule
 \end{tabular}
 
@@ -249,8 +250,8 @@ calibrated grid's gain over uniform peaks mid-budget and is parameter-free.
 \toprule
 NFE & 5 & 8 & 12 & 18 & 32 & 64\\
 \midrule
-uniform               & 37.94 & 19.74 & 13.39 & 10.26 & 7.80 & 6.35\\
-proposed ($p\!=\!1$)  & 37.74 & \textbf{19.22} & \textbf{12.28} & \textbf{8.87} & \textbf{6.75} & \textbf{5.79}\\
+uniform               & \textbf{37.94} & 19.74 & 13.39 & 10.26 & 7.80 & 6.35\\
+proposed ($p\!=\!1$)  & \textbf{37.74} & \textbf{19.22} & \textbf{12.28} & \textbf{8.87} & \textbf{6.75} & \textbf{5.79}\\
 $\Delta$              & $-0.20$ & $-0.52$ & $-1.11$ & $-1.39$ & $-1.05$ & $-0.55$\\
 \bottomrule
 \end{tabular}
