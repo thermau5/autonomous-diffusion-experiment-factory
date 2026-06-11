@@ -398,3 +398,17 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   Smoke-tested end-to-end; chained to launch after RK45 finishes (GPU serialized).
 - Statistical axis (c_stat/n): requires retraining generators at multiple n -- days of GPU, out of scope for this sweep; will document as the one untested term.
 - Report: added AYS related-work note to Sec.5 (compiles 6pp).
+
+## Update 34 (RK45 sweep + FFHQ-64 transfer COMPLETE; both in report; baselines DONE)
+- RK45 final (rf_rk45_results.json): tol 0.5->FID 11.97@NFE25, 0.1->32.21@NFE25 (FID-blind confirmed at scale), 0.01->5.88@NFE43,
+  1e-3->5.29@NFE83, 3e-4->5.27@NFE114, 1e-4->5.28@NFE146 (plateau). Crosses Euler frontier only NFE>~40 where the 5th-order CORE
+  (s-axis) dominates, mirroring EMS. Report para (Sec.5, after AYS note) was already drafted; numbers verified against final JSON.
+- FFHQ-64 cross-dataset (ffhq_sched_results.json): m* with CIFAR-validated (p,k)=(2,2) UNCHANGED vs Karras rho=7, identical Heun both arms,
+  EDM fid.py vs NVIDIA 50k ref, odd NFE {5,9,13,19,33}, 10k x 3 seeds:
+  default 345.81/58.50/17.10/6.40/3.89 ; m* 37.17/11.33/6.34/4.39/3.79. m* WINS ALL FIVE budgets incl. NFE33 (delta -0.10 > 2sigma 0.054).
+  FFHQ defect is FLATTER (max/med 2.2 vs CIFAR 4.1) -> calibration does the work, not a memorized shape. TRUE transfer, zero re-tuning.
+- REPORT: added FFHQ transfer para + table to Sec.5; abstract, glance[m], conclusion mention the transfer; protocol appendix documents
+  the FFHQ setup (and that FFHQ FID = EDM fid.py both arms, not Clean-FID). Compiles 6pp clean.
+- Baseline sweep from Update 32-33 now fully closed: free-node FID-opt (m* IS optimal), DP surrogate (caveated), AYS (related-work note,
+  schedules unpublished), RK45 adaptive (FID-blind pathology), FFHQ-64 (transfers). Remaining untested term: statistical axis c_stat/n
+  (requires multi-n retraining, documented as out of scope).

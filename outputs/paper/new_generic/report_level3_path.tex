@@ -29,7 +29,10 @@ being at the lowest budgets (EMS at NFE 5--8, whose schedule is co-optimized
 with the solver; OT-CFM at NFE 5; Table~\ref{tab:dominance}). Where we can
 search exhaustively (free-node optimization on 1-RF), the closed form is
 statistically indistinguishable from the \emph{FID-optimal} schedule --- not
-merely better than the default. All FID is Clean-FID 10k, 3 seeds.
+merely better than the default; and it transfers across datasets --- on
+FFHQ-64 it beats the Karras default at every budget with the CIFAR-validated
+exponents unchanged. All FID is Clean-FID 10k, 3 seeds (FFHQ: EDM's FID
+implementation, both arms).
 \end{abstract}
 
 \section{The hierarchy}
@@ -67,7 +70,8 @@ $m^\star\!\propto d^{1/(p+1)}$ ($p\!=\!1$, no metric feedback) wins or ties
 the native default schedule of every solver core and path family tested,
 except at the lowest budgets (EMS NFE 5--8, OT-CFM NFE 5;
 Table~\ref{tab:dominance}); a free-node search on 1-RF cannot beat it, so it
-is statistically the \emph{FID-optimal} schedule, not just better than default.
+is statistically the \emph{FID-optimal} schedule, not just better than
+default; and it transfers to FFHQ-64 with no re-tuning, winning every budget.
 \end{itemize}
 
 \section{Solver axis $s$: fixed-EDM frontier}
@@ -299,6 +303,46 @@ stronger comparison on our protocol: it bounds what \emph{any} schedule
 optimizer --- learned or otherwise --- could achieve at these budgets, and
 $m^\star$ matches it without optimization, FID feedback, or training.
 
+\emph{Adaptive step-size control is not a substitute.} A Dormand--Prince
+RK45 solver (local-error-adaptive steps, the classical ``automatic
+schedule'') on the same 1-RF ODE: it cannot operate below NFE ${\approx}19$
+at all (each step costs 6 evaluations); at NFE 25 it is \emph{FID-blind} ---
+FID is non-monotonic in the tolerance at matched NFE ($12.0$ at
+tol $0.5$ vs $32.2$ at tol $0.1$), because the local error norm accepts a
+single giant step across the high-curvature data end that is perceptually
+catastrophic. It crosses the Euler frontier only at NFE ${\gtrsim}40$
+($5.88$ at NFE 43, $5.29$ at NFE 83), where its \emph{fifth-order core} ---
+an $s$-axis advantage, not a scheduling one --- dominates, mirroring EMS on
+EDM. At deployment budgets, error-adaptive placement is exactly the
+local/linear regime mismatch that $m^\star$'s calibrated global placement
+avoids.
+
+\medskip
+\noindent\textbf{Cross-dataset transfer (FFHQ-64).} The recipe transfers to a
+new dataset with \emph{nothing} re-tuned: on EDM's FFHQ-64 model we calibrate
+$d$ on the FFHQ net (held-out seed, as always) and reuse the CIFAR-validated
+exponents $(p,k)=(2,2)$ unchanged. Both arms are the identical Heun loop;
+only the grid differs (FID: EDM's reference implementation against NVIDIA's
+50k FFHQ statistics, same metric both arms; odd NFE; 10k, 3 seeds).
+$m^\star$ beats the Karras $\rho\!=\!7$ default at \emph{every} budget,
+including the highest ($\Delta=-0.10$ at NFE 33 exceeds $2\sigma=0.05$):
+
+\begin{center}\small
+\begin{tabular}{lccccc}
+\toprule
+FFHQ-64 (Heun) & NFE 5 & 9 & 13 & 19 & 33\\
+\midrule
+Karras $\rho\!=\!7$ default & $345.81$ & $58.50$ & $17.10$ & $6.40$ & $3.89$\\
+$m^\star$ (CIFAR $(p,k)$, no re-tuning) & $\mathbf{37.17}$ & $\mathbf{11.33}$ & $\mathbf{6.34}$ & $\mathbf{4.39}$ & $\mathbf{3.79}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The FFHQ defect profile is genuinely different (max/median $2.2$
+vs CIFAR's $4.1$ --- much flatter), so this is the calibration doing the
+work, not a memorized CIFAR shape: the same closed form, fed a new $d$,
+places nodes correctly on a new dataset.
+
 \medskip
 \noindent Two secondary findings (details in \S\ref{app:sched}):
 \begin{itemize}\itemsep2pt
@@ -320,7 +364,8 @@ NFE-dependent optimum (a confirmed crossover cascade), and the
 of every solver core and every path family tested --- four EDM cores and
 four path families (EDM, RF, VP-SDE, OT-CFM) --- the only losses being at the
 lowest budgets (EMS at NFE 5--8, where it still ties at NFE$\,\ge\,$12 with a
-genuine per-core defect; OT-CFM at NFE 5; Table~\ref{tab:dominance}).
+genuine per-core defect; OT-CFM at NFE 5; Table~\ref{tab:dominance}), and it
+carries to a new dataset (FFHQ-64) with no re-tuning.
 Path-straightening,
 schedule-calibration, and solver-core quality are complementary advances on
 orthogonal axes of one certificate.
@@ -338,6 +383,10 @@ Robustness: two independent defect estimators (second-difference
 $\norm{x_{i+1}-2x_i+x_{i-1}}$ on the held-out seed; velocity-FD
 $\norm{\dot v}$ on seed 0) agree (1-RF gap peaks $-1.39$ vs $-1.36$ at
 $K\!=\!18$); the held-out-seed estimator is reported as primary.
+FFHQ-64 transfer: EDM's pretrained \texttt{ffhq-64x64} model, $d_{\mathrm{Heun}}$
+calibrated on the FFHQ net at the held-out seed, Heun loop identical in both
+arms, odd NFE ($=2\,\mathrm{steps}-1$), 10k samples $\times$ 3 seeds, FID via
+EDM's \texttt{fid.py} against NVIDIA's 50k FFHQ reference statistics.
 
 \section{Schedule supplement}
 \label{app:sched}
