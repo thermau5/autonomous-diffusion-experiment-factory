@@ -412,3 +412,15 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - Baseline sweep from Update 32-33 now fully closed: free-node FID-opt (m* IS optimal), DP surrogate (caveated), AYS (related-work note,
   schedules unpublished), RK45 adaptive (FID-blind pathology), FFHQ-64 (transfers). Remaining untested term: statistical axis c_stat/n
   (requires multi-n retraining, documented as out of scope).
+
+## Update 35 (baseline round 2 LAUNCHED: tuned-rho + GITS-DP + free-node-on-Heun; user asked for more schedule baselines)
+- Gap being closed: "m* is FID-optimal" was exhaustively verified only on 1-RF @ NFE 8/12; other cells only beat their NATIVE default.
+- tuned_rho.py: per-NFE practitioner-tuned Karras rho on EDM/Heun (rho in {2,3,4,5,7,10,15,20} swept on VALIDATION seed 1000 @5k;
+  best rho per NFE evaluated ONCE on test 0/1/2 @10k), odd NFE {5,9,13,19,33,65}. Tests whether m*'s Heun wins survive a tuned default.
+- gits_dp.py: GITS-style reimplementation (Chen et al. 2024) on 1-RF: reference ensemble (256 trajs, 128-node fine grid, held-out seed 777),
+  cost c[i][j]=mean||x_ref[j]-(x_ref[i]+v_i(t_j-t_i))|| (direct trajectory deviation), DP K-step path, test once @10k x 3 seeds, NFE {5,8,12,18,32,64}.
+  A PUBLISHED schedule optimizer baseline (unlike AYS whose CIFAR schedules are unpublished).
+- freenode_heun.py: free-node Nelder-Mead extended to EDM/Heun NFE {9,13} (interior log-sigma nodes, endpoints smax/0 fixed), seeded from
+  m*(p=2,k=2) AND karras7, search seed 1000 @5k only, test once @10k x 3. Extends the optimality claim to a 2nd cell/family.
+- All three SMOKE-TESTED end-to-end (theta round-trip preserves m*: search-seed 102.333 vs reconstructed 102.305). Chained serially
+  (baselines2.sh): tuned_rho (~2-3h) -> gits (~2h) -> freenode_heun (overnight). Logs + JSONs in .claude/jobs/auto30/.
