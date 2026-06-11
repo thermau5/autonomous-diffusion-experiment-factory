@@ -424,3 +424,23 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   m*(p=2,k=2) AND karras7, search seed 1000 @5k only, test once @10k x 3. Extends the optimality claim to a 2nd cell/family.
 - All three SMOKE-TESTED end-to-end (theta round-trip preserves m*: search-seed 102.333 vs reconstructed 102.305). Chained serially
   (baselines2.sh): tuned_rho (~2-3h) -> gits (~2h) -> freenode_heun (overnight). Logs + JSONs in .claude/jobs/auto30/.
+
+## Update 36 (tuned-rho + GITS results; GITS@5 loss DIAGNOSED = lever-arm blindness of the certificate at tiny K)
+- tuned_rho DONE: best-of-8 rho per NFE (validation-swept, test-once) CANNOT rescue Karras at low NFE: tuned 245.0/43.9/9.98/5.19/4.41/4.37
+  vs m* 13.41/5.69/4.77/4.48/4.41/4.41 -> m* wins 5/9/13/19, ties 33/65. The low-NFE failure is the FAMILY's shape, not the rho=7 setting.
+- gits_dp DONE (1-RF): GITS 34.49/18.78/12.41/9.02/6.83/6.00 vs m* 37.17/19.07/12.23/8.90/6.79/5.79 -> GITS WINS @5 (-2.68, >2sig),
+  TIES @8/12/18/32, m* WINS @64 (+0.20, 2sig 0.05). First baseline to compete; boundary exactly at the known low-NFE breakdown regime.
+- DIAGNOSIS of the @5 loss (gits_diag.py, held-out seed 777 only, no test contact):
+  * Node placements INVERT: m* packs the data end (last interior node .913) because d(t) peaks at t=.996 (max/med 69);
+    GITS packs the noise end and takes its BIGGEST jump (.750->1.0) straight across the curvature spike.
+  * Ground truth (free-running endpoint deviation, 64 trajs): gits 13.62 < m* 16.37 < uniform 17.91 -- EXACTLY the FID order. Real, mechanical.
+  * Certificate surrogate Sum dbar*dt^2 CANNOT see it: 13.30(gits)/13.80(m*)/13.33(unif) -- no resolving power at K=5.
+  * MECHANISM: one Euler jump's endpoint error ~ int a(s)*(t_end - s) ds -- curvature near the END of a jump has ~zero lever.
+    38.4% of total curvature mass sits in t in [.95,1] where lever <= .05: m* spends ~2 of 5 nodes guarding a spike that barely
+    moves the endpoint; GITS jumps it and spends nodes at the noise end (28% of mass, long lever).
+    Lever-corrected cost Sum_i int a(s)(t_{i+1}-s) ds ranks all three correctly: 7.12(gits) < 7.51(m*) < 7.71(unif).
+  * The certificate's Sum d*dt^{p+1} is a triangle-inequality bound treating every interval's error as fully propagating (lever-blind);
+    in the many-step limit the lever ~ dt and the bound's optimal density converges to the truth (why m* = free-node optimum at NFE>=8);
+    at K=5 with end-spiked d it costs 2.7 FID. Same root cause as EMS@5-8 and OT-CFM@5 losses = now a unified explanation.
+- Absolute-scale note: 1-RF@5 ~ 35-38 FID for ANY schedule; the right fix at NFE5 is the PATH axis (3-RF 7.30, 2-RF 7.31, EDM/Heun m* 13.41)
+  -- schedule gains are second-order exactly where the table says path/core dominate. freenode_heun still running.
