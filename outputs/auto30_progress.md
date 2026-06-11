@@ -444,3 +444,14 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
     at K=5 with end-spiked d it costs 2.7 FID. Same root cause as EMS@5-8 and OT-CFM@5 losses = now a unified explanation.
 - Absolute-scale note: 1-RF@5 ~ 35-38 FID for ANY schedule; the right fix at NFE5 is the PATH axis (3-RF 7.30, 2-RF 7.31, EDM/Heun m* 13.41)
   -- schedule gains are second-order exactly where the table says path/core dominate. freenode_heun still running.
+
+## Update 37 (user challenge: GITS comparison ran on the WEAK cell -- queue GITS on strong cells)
+- Legit concern: the GITS-vs-m* comparison fixed path=1-RF, solver=Euler (chosen because all locked schedule numbers live there),
+  but that cell is ~35-38 FID @5 for ANY schedule -- "GITS wins where everything is bad" is weak evidence.
+- gits_strong.py (smoke-tested, QUEUED behind freenode_heun): same single-knob protocol on the two STRONG low-NFE cells:
+  Cell A 2-RF+Euler NFE {5,8} (right PATH at low NFE; locked m* 7.31@5) -- Euler-jump DP cost, 128-node fine t-grid, seed-777 ensemble.
+  Cell B EDM+Heun NFE {5,9,13} (right CORE; locked m* 13.41@5) -- HEUN-jump DP cost on a 96-node log-sigma fine grid (solver-consistent).
+  Test once on locked seeds 0/1/2 @10k.
+- Lever-arm prediction registered IN ADVANCE: GITS's edge should SHRINK on 2-RF (straightening removes the end-spiked curvature mass
+  that made lever-blindness expensive) and on Heun (2nd-order jump cancels the leading curvature term the lever argument lives on).
+  If GITS still wins big there, the lever story is incomplete and m* has a genuine low-NFE problem on strong cells too.
