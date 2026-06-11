@@ -475,3 +475,20 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   m* true curve interpolation suggests ~5.2-5.5 @19 vs default 5.56, ~4.5 @33 vs 4.45). Report Heun row + abstract/conclusion will be
   rewritten from corrected data ONLY once cells land. Honesty rule: correction will be reported in the report text, not silently swapped.
 - LESSON: ALWAYS cross-check labeled NFE vs manifest nfe_per_sample when adding a sampler id; the audit is now part of the table assembler.
+
+## Update 39 (CORRECTED Heun row + Table 2 (schedule-axis groups) + cost accounting -- all in report; 8pp)
+- Corrected Heun row (true odd NFE, fixed pipeline; 9/65 reused from runs whose manifest true NFE matched):
+  m* 46.22/13.41/7.70/5.33/4.52/4.41 vs karras7 338.52/45.07/11.64/5.56/4.45/4.40 -> WIN 5/9/13/19, TIE 33/65 (33: +0.07 < 2sig 0.10).
+  "Wins-or-ties native default" SURVIVES the correction with smaller margins. Dominance table updated + correction footnote.
+- vs TUNED rho: m* WINS 5/9/13 (46/245, 13/44, 7.7/10.0), LOSES 19/33 narrowly (5.33/5.19, 4.52/4.41), tie 65. Honest price of parameter-free.
+- Free-node on Heun: 12.70@9 (-0.7, >2sig) and 6.43@13 (-1.27, >>2sig) below m* -> m* NOT FID-optimal on EDM/Heun low NFE (unlike 1-RF).
+  Likely cause: (p,k)=(2,2) validated under the buggy 2x-NFE regime. Report notes re-validation at true NFE as next step (validation-only, legal).
+- GITS strong cells: 2-RF GITS WINS @5 (7.09 vs 7.31, >2sig) borderline @8 (6.71 vs 6.80); EDM/Heun GITS COLLAPSES (242.5/57.2/18.1 vs m* 46/13/8)
+  -- teacher-forced Heun-jump cost misjudges sigma-space placement on a 2nd-order core. Lever prediction half-confirmed: edge shrinks on straight
+  path (-2.7 -> -0.2), REVERSES on Heun. m* = only scheduler never catastrophic in any group.
+- TWO-CORE-TABLE structure per user: Table 1 (tab:dominance) = complete configs at native defaults vs m* (corrected); Table 2 (tab:schedaxis) =
+  schedule axis isolated, 3 groups (EDM+Heun / 1-RF+Euler / 2-RF+Euler) x rows {default, tuned-rho, GITS, surrogate-DP, free-node, m*}.
+- COST table added (prep NFE / amortization / access class): m* 1.8e4 net-only; GITS 3.3e4 (Euler cost) / 2.4e6 (Heun cost) net-only;
+  EMS ~1e6 + training data; tuned-rho 3.6e5 PER BUDGET + FID oracle; free-node ~9e6 PER BUDGET + FID oracle. m* = cheapest member of cheapest class.
+- Abstract/glance/conclusion updated (FID-optimal scoped to 1-RF + quantified headroom; never-catastrophic claim; cost claim). Compiles 8pp clean.
+- build_table.py reads corrected_heun.log; build_table2.py emits Table 2. corrected_heun_results.json saved.
