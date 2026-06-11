@@ -455,3 +455,23 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
 - Lever-arm prediction registered IN ADVANCE: GITS's edge should SHRINK on 2-RF (straightening removes the end-spiked curvature mass
   that made lever-blindness expensive) and on Heun (2nd-order jump cancels the leading curvature term the lever argument lives on).
   If GITS still wins big there, the lever story is incomplete and m* has a genuine low-NFE problem on strong cells too.
+
+## Update 38 (CRITICAL BUG FOUND AND FIXED: Heun dominance row INVALID -- proposed arm ran ~2x NFE)
+- Discovery path: building Table-2 (schedule-axis groups), freenode_heun's internal m* test @NFE9 = 13.30 vs locked row 5.69 -> traced.
+- ROOT CAUSE: run_generate.py two_call_per_step = {"edm_heun","dpm_solver"} did NOT include proposed_heun -> proposed_heun --nfe N ran
+  num_steps=N Heun steps = TRUE NFE 2N-1, labeled N. Manifests prove it (nfe_per_sample: proposed_heun@9 -> 17; edm_heun@9 -> 9).
+  The locked Heun row compared m*@{9,17,25,37,65,129} vs Karras@{5,9,13,19,33,65}. m* arm had ~2x compute. ROW INVALID.
+- FULL AUDIT of all run manifests (labeled vs nfe_per_sample): proposed_dpmpp/unipc/deis(shared)/dpm_solver_v3 + all defaults + seq variants
+  CLEAN (true==label). proposed_deis +1 mismatch exists ONLY in the discarded ab2_sequence contaminated batch (never used).
+  Damage confined to the Heun row m* arm. RF/VP/OT-CFM/FFHQ/tuned-rho/GITS/freenode all used inline loops with correct accounting -> valid.
+  (FFHQ transfer table: both arms identical inline Heun loop, steps=(NFE+1)//2 -> VALID. tuned-rho default arm numbers VALID.)
+- Also resolved en route: two CIFAR calib caches (988c93ee current-net hash, e05bbebd stale May-23 net-hash w/ different d shape);
+  current pipeline resolves 988c93ee; e05bbebd grid measures 33.8@NFE9 (neither matches the phantom 5.69 -- it was the 2x-NFE artifact).
+- FIX: proposed_heun (+proposed_control alias) added to two_call_per_step in run_generate.py.
+- CORRECTION RUNS QUEUED (chain2.sh, after freenode): proposed_heun at true odd NFE {5,13,19,33} (steps 3,7,10,17), 3 test seeds, 10k,
+  SAME pipeline as the locked default arm. NFE9 + NFE65 cells REUSED from existing locked runs whose true NFE was 9 (labeled 5: 13.41)
+  and 65 (labeled 33: 4.41) -- same config, no second test draw.
+- KNOWN CORRECTED CELLS: NFE9 m* 13.41 vs 45.07 WIN. NFE65 4.41 vs 4.40 tie. Pending: 5/13/19/33 (19 and 33 may flip to loss/tie --
+  m* true curve interpolation suggests ~5.2-5.5 @19 vs default 5.56, ~4.5 @33 vs 4.45). Report Heun row + abstract/conclusion will be
+  rewritten from corrected data ONLY once cells land. Honesty rule: correction will be reported in the report text, not silently swapped.
+- LESSON: ALWAYS cross-check labeled NFE vs manifest nfe_per_sample when adding a sampler id; the audit is now part of the table assembler.

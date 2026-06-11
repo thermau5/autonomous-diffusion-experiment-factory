@@ -85,7 +85,12 @@ def main(
     # Restart has a more complex NFE that depends on inner_steps + num_restart;
     # for sweeps we treat the user-supplied NFE as the target num_steps for
     # the base solver and let the actual NFE be reported by the sampler.
-    two_call_per_step = {"edm_heun", "dpm_solver"}
+    # proposed_heun shares the Heun core, so it MUST get the same odd-NFE
+    # mapping as edm_heun; its absence here caused the proposed arm to run
+    # num_steps=nfe (true NFE = 2*nfe-1) while being labeled nfe -- a ~2x
+    # compute advantage over the default arm (caught 2026-06-11, see
+    # outputs/auto30_progress.md Update 38).
+    two_call_per_step = {"edm_heun", "dpm_solver", "proposed_heun", "proposed_control"}
     if sampler_id in two_call_per_step:
         if nfe % 2 == 0:
             raise click.UsageError(f"{sampler_id} NFE must be odd (NFE = 2*num_steps - 1)")
