@@ -303,10 +303,15 @@ that this DP uses a crude left-node cost, it still indicates the \emph{smooth}
 certificate form, not naive surrogate minimization, is what tracks FID.)
 This optimality is \emph{not} universal: the same search run on EDM/Heun
 (Table~\ref{tab:schedaxis}) finds schedules $0.7$/$1.3$ FID below $m^\star$
-at NFE 9/13 --- genuine headroom on that cell, plausibly because the
-exponents $(p,k)$ were validated under the pre-correction NFE accounting
-(footnote, Table~\ref{tab:dominance}); re-validating them at true NFE is the
-obvious next step and is permitted by our protocol (validation-only tuning).
+at NFE 9/13. A full re-validation of $(p,k)$ at true NFE (18 configurations
+$\times$ 5 budgets, validation seed only) \emph{rules out} mis-tuning as the
+cause: the incumbent $(2,2)$ remains the global validation optimum ---
+per-budget best outright at NFE 5--9 and within $0.1$ FID of best elsewhere
+--- yet no member of the family reaches the search's schedules ($16.24$ vs
+$15.55$ at NFE 9 on the same validation seed). The headroom is a genuine
+limitation of the closed-form $(d\,\sigma^{-k})^{1/(p+1)}$ family at low NFE
+on this cell --- the same finite-step regime where the bound's
+lever-blindness binds --- not a tuning artifact.
 
 \medskip
 \noindent\textbf{The schedule axis in isolation (Table~\ref{tab:schedaxis}).}

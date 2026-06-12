@@ -499,3 +499,12 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   replaced (re-validated config = separate Table-2 row). Motivation: free-node grids differ from m*(2,2) mainly in the last interior
   node (0.143 vs 0.114 @NFE9) -> k=2 over-concentrates at low sigma at true NFE; original k=2 was validated under the 2x-NFE bug.
 - Smoke-tested; launched (~4-6h: 90 val FIDs @5k + conditional 18 test FIDs @10k).
+
+## Update 41 ((p,k) re-validation DONE: incumbent (2,2) CONFIRMED at true NFE; headroom = family limitation, not mis-tuning)
+- 18 configs x 5 budgets, validation seed 1000 @5k. WINNER by mean relative regret: p2_k2.0 (regret 1.0086) -- per-budget BEST outright
+  at NFE 5 (49.31) and 9 (16.24), within 0.1 of best at 13/19/33 (p3_k3.0 marginally better there but much worse at low NFE).
+  Runner-up p3_k3.0 regret 1.064. NO new test draw (winner == incumbent; same pattern as the EMS k-validation).
+- DECISIVE NEGATIVE: no family member reaches the free-node schedules -- (2,2) val 16.24 @9 vs search 15.55 on the SAME seed. So the
+  0.7-1.3 FID headroom on EDM/Heun @9-13 is a GENUINE limitation of the closed-form (d*sigma^-k)^{1/(p+1)} family at low NFE (the
+  lever-blind finite-step regime), NOT a tuning artifact of the bug era. The bug-era k=2 choice was coincidentally correct at true NFE.
+- Report Sec.5 sentence updated with the result (was: "re-validating is the next step"). Compiles 8pp clean.
