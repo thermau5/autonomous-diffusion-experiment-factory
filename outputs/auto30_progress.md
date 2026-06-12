@@ -492,3 +492,10 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   EMS ~1e6 + training data; tuned-rho 3.6e5 PER BUDGET + FID oracle; free-node ~9e6 PER BUDGET + FID oracle. m* = cheapest member of cheapest class.
 - Abstract/glance/conclusion updated (FID-optimal scoped to 1-RF + quantified headroom; never-catastrophic claim; cost claim). Compiles 8pp clean.
 - build_table.py reads corrected_heun.log; build_table2.py emits Table 2. corrected_heun_results.json saved.
+
+## Update 40 ((p,k) re-validation at TRUE NFE -- running)
+- heun_pk_val.py: grid p{1,2,3} x k{0,1,1.5,2,2.5,3} x NFE{5,9,13,19,33}, VALIDATION seed 1000 @5k ONLY; ONE global (p,k) by mean
+  relative regret (tuned once per family, NOT per budget); winner tested ONCE @10k x 3 iff != incumbent (2,2); locked (2,2) row NOT
+  replaced (re-validated config = separate Table-2 row). Motivation: free-node grids differ from m*(2,2) mainly in the last interior
+  node (0.143 vs 0.114 @NFE9) -> k=2 over-concentrates at low sigma at true NFE; original k=2 was validated under the 2x-NFE bug.
+- Smoke-tested; launched (~4-6h: 90 val FIDs @5k + conditional 18 test FIDs @10k).
