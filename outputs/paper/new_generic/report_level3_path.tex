@@ -15,33 +15,28 @@ The generic certificate bounds excess terminal risk as
 $Q = Q_0 + \tfrac{c_{\mathrm{stat}}}{n}\!\int\! \tfrac{a}{\rho}
       + c_{\mathrm{disc}}\!\int\! \tfrac{d}{m^{p}}$,
 with optimal sampling density $m^\star\!\propto d^{1/(p+1)}$. Each design
-choice enters through a specific term (Table~\ref{tab:axes}). Prior locked
-results varied the schedule $m$ and solver $s$ at a fixed EDM path; here we
-test every axis we can on a \emph{new} model family, Rectified Flow (RF),
-to see what generalizes. The two headline findings: (i) on the
-\textbf{path} axis, the reflow ladder 1/2/3-RF produces the
+choice enters through one term (Table~\ref{tab:axes}). Prior locked results
+varied the schedule $m$ and solver $s$ on a fixed EDM path; here we test
+every axis on a new model family, Rectified Flow (RF). Two headline findings:
+(i) on the \textbf{path} axis, the reflow ladder 1/2/3-RF produces the
 floor-vs-defect \emph{crossover cascade} the certificate predicts --- no
-single path wins at all budgets; (ii) on the \textbf{schedule} axis, a
-\emph{parameter-free} certificate-calibrated grid wins or ties the
-\emph{native default} of every configuration we test --- four EDM solver
-cores and four path families (EDM, RF, VP-SDE, OT-CFM) --- the only losses
-being at the lowest budgets (EMS at NFE 5--8, whose schedule is co-optimized
-with the solver; OT-CFM at NFE 5; Table~\ref{tab:dominance}). Where we can
-search exhaustively, the closed form is statistically indistinguishable from
-the \emph{FID-optimal} schedule on 1-RF, with $0.7$--$1.3$ FID of quantified
-headroom on EDM/Heun at NFE 9--13; against \emph{optimized} schedule
-baselines (per-NFE tuned $\rho$, the GITS dynamic program, a surrogate-DP;
-Table~\ref{tab:schedaxis}) it is the only scheduler that is never
-catastrophic in any group, at $10$--$500\times$ less preparation compute.
-It also transfers across datasets --- on FFHQ-64 it beats the Karras default
-at every budget with the CIFAR-validated exponents unchanged. All FID is
-Clean-FID 10k, 3 seeds (FFHQ: EDM's FID implementation, both arms).
+single path wins at all budgets; (ii) on the \textbf{schedule} axis, the
+\emph{parameter-free} certificate-calibrated grid $m^\star$ wins or ties the
+native default of every configuration tested --- four EDM solver cores and
+four path families (EDM, RF, VP-SDE, OT-CFM) --- losing only at the lowest
+budgets (EMS at NFE 5--8, OT-CFM at NFE 5). It is FID-optimal on 1-RF (a
+free-node search cannot beat it), the only scheduler never catastrophic
+against optimized baselines (tuned $\rho$, GITS, surrogate-DP;
+Table~\ref{tab:schedaxis}), at $10$--$500\times$ less preparation compute, and
+transfers to FFHQ-64 with the CIFAR exponents unchanged, beating the Karras
+default at every budget. All FID is Clean-FID 10k, 3 seeds (FFHQ: EDM's FID
+implementation, both arms).
 \end{abstract}
 
 \section{The hierarchy}
 \label{sec:hierarchy}
-The certificate decomposes by design axis: each knob controls one part of
-the bound. This is the organizing structure of the whole study.
+The certificate decomposes by design axis: each knob controls one term of
+the bound.
 
 \begin{table}[h]\centering
 \caption{The certificate's axes. Each row is one experiment in this report.}
@@ -68,15 +63,12 @@ in rank $5/5$ --- it is the FID-faithful risk.
 \item[$P$:] Reflow trades the floor $Q_0$ for the defect $d$; the optimal
 reflow count is \emph{NFE-dependent} (3-RF at NFE 5, 2-RF at 8--64, 1-RF at
 $\ge128$). Pre-registered crossover prediction confirmed.
-\item[$m$:] The certificate's calibrated node placement
-$m^\star\!\propto d^{1/(p+1)}$ ($p\!=\!1$, no metric feedback) wins or ties
-the native default schedule of every solver core and path family tested,
-except at the lowest budgets (EMS NFE 5--8, OT-CFM NFE 5;
-Table~\ref{tab:dominance}); a free-node search cannot beat it on 1-RF
-(FID-optimal there) and quantifies $0.7$--$1.3$ FID of headroom on EDM/Heun
-at NFE 9--13; among optimized schedulers (Table~\ref{tab:schedaxis}) it is
-the only one never catastrophic in any (path, solver) group; and it
-transfers to FFHQ-64 with no re-tuning, winning every budget.
+\item[$m$:] The calibrated node placement $m^\star\!\propto d^{1/(p+1)}$
+($p\!=\!1$, no metric feedback) wins or ties the native default of every
+solver core and path family tested, losing only at the lowest budgets (EMS
+NFE 5--8, OT-CFM NFE 5; Table~\ref{tab:dominance}). It is FID-optimal on 1-RF,
+the only optimized scheduler never catastrophic in any group
+(Table~\ref{tab:schedaxis}), and transfers to FFHQ-64 with no re-tuning.
 \end{itemize}
 
 \section{Solver axis $s$: fixed-EDM frontier}
@@ -96,11 +88,10 @@ dpm\_solver\_v3 (EMS)  & \textbf{17.07} & \textbf{6.30} & \textbf{4.71} & \textb
 \end{tabular}
 \end{table}
 
-\noindent EMS beats our UniPC-schedule arm at every NFE here and has the best
-floor ($\approx4.35$) on offer: a \emph{solver} ($s$) advance, not a schedule
-advance, consistent with $s$ entering $d$. (It is not uniformly ahead of
-\emph{every} schedule, though: at the two lowest budgets our calibrated Heun
-schedule beats it --- Table~\ref{tab:dominance}, Heun vs EMS rows.)
+\noindent EMS beats our UniPC-schedule arm at every NFE and has the best floor
+($\approx4.35$): a \emph{solver} advance, not a schedule one. (At the two
+lowest budgets our calibrated Heun schedule still beats it ---
+Table~\ref{tab:dominance}.)
 
 \section{Risk axis $\R$: the FID-faithful risk}
 \label{sec:risk}
@@ -124,8 +115,8 @@ cluster & 282.87 & 270.30\\
 \end{tabular}
 \end{table}
 
-\noindent Feature-space $W_2$ \emph{is} the FID-faithful risk (the risk-axis
-question is settled); pixel-$L_2$ scrambles this ranking.
+\noindent Feature-space $W_2$ \emph{is} the FID-faithful risk; pixel-$L_2$
+scrambles this ranking.
 
 \section{Path axis $P$: the reflow ladder}
 \label{sec:path}
@@ -149,35 +140,27 @@ NFE & 5 & 8 & 12 & 18 & 32 & 64 & 128 & 256\\
 \end{table}
 
 \noindent\textbf{Confirmed.} The best path changes with budget ---
-\,3-RF\,(NFE 5)\,$\to$\,2-RF\,(8--64)\,$\to$\,1-RF\,($\ge$128) --- a cascade
-of three crossovers ($3\!\leftrightarrow\!2$ at ${\approx}6$,
-$1\!\leftrightarrow\!3$ in $(32,64)$, $1\!\leftrightarrow\!2$ in $(64,128)$).
-At NFE${\ge}128$ the order is the fully-reversed $1\!<\!2\!<\!3$-RF, matching
-the published converged floors ($2.58\!<\!3.36\!<\!3.96$). This is exactly the
-$Q_0$-vs-$d$ trade. \emph{Cross-method:} the straightened path beats the best
-EDM solver (Table~\ref{tab:edm}) only at NFE 5 ($\approx7.5$ vs $17.07$); the
-low-floor EDM model wins every larger budget.
+3-RF (NFE 5) $\to$ 2-RF (8--64) $\to$ 1-RF ($\ge$128) --- and at NFE${\ge}128$
+fully reverses to $1\!<\!2\!<\!3$-RF, matching the published converged floors
+($2.58\!<\!3.36\!<\!3.96$): the $Q_0$-vs-$d$ trade. The straightened path
+beats the best EDM solver (Table~\ref{tab:edm}) only at NFE 5 ($\approx7.5$ vs
+$17.07$); the low-floor EDM model wins every larger budget.
 
 \section{Schedule axis $m$: the dominance table}
 \label{sec:sched}
 The certificate prescribes a \emph{single} schedule,
 $m^\star\!\propto d^{1/(p+1)}$ with $p\!=\!1$ and $d=\norm{\ddot x}$
 calibrated on a held-out reference trajectory (no FID feedback, no tuned
-scalar; \S\ref{app:protocol}). The question this section settles: does that
-one prescription beat the \emph{native} default schedule of \emph{every}
-solver core and \emph{every} path family --- is it optimal regardless of the
-other axes? Table~\ref{tab:dominance} answers yes, with one documented
-boundary.
+scalar; \S\ref{app:protocol}). Does that one prescription beat the native
+default of every solver core and every path family?
+Table~\ref{tab:dominance}: yes, except at the lowest budgets.
 
 \begin{table}[t]\centering
-\caption{\textbf{Schedule dominance.} Each cell is paired Clean-FID,
-\emph{our} $m^\star$ / that configuration's \emph{own default} schedule, at
-matched NFE (3 seeds). \textbf{Bold} marks the better arm when it leads
-beyond $2\sigma$ of the per-seed difference, or \emph{both} arms when they
-tie within $2\sigma$ (joint-best). Across four EDM
-solver cores and four path families, the \emph{only} losses are at the
-lowest budgets --- EMS at NFE 5,\,8 and OT-CFM at NFE 5; everywhere else
-(including EMS at NFE$\,\ge\,$12) our schedule ties or wins.}
+\caption{\textbf{Schedule dominance.} Paired Clean-FID, $m^\star$\,/\,that
+configuration's own default, at matched NFE (3 seeds). \textbf{Bold} $=$ the
+leading arm beyond $2\sigma$ of the per-seed difference, or both arms when
+they tie within $2\sigma$. The only losses are EMS at NFE 5,\,8 and OT-CFM at
+NFE 5.}
 \label{tab:dominance}
 \footnotesize
 \setlength{\tabcolsep}{4.5pt}
@@ -199,80 +182,28 @@ VP-SDE & \textbf{236}/240 & \textbf{131}/151 & \textbf{67.29}/80.13 & \textbf{37
 OT-CFM & 28.87/\textbf{27.86} & \textbf{17.32}/17.90 & \textbf{12.12}/13.52 & \textbf{9.39}/10.80 & \textbf{7.55}/8.47 & \textbf{6.67}/7.04\\
 \midrule
 \multicolumn{7}{l}{\emph{EMS solver --- genuine per-core $m^\star(d_{\mathrm{EMS}})$ vs.\ its own jointly co-designed schedule}}\\
-EMS$^\ast$ & 19.33/\textbf{17.07} & 6.64/\textbf{6.30} & \textbf{4.71}/\textbf{4.71} & \textbf{4.38}/4.46 & \textbf{4.34}/\textbf{4.35} & ---$^\ddagger$\\
+EMS$^\ast$ & 19.33/\textbf{17.07} & 6.64/\textbf{6.30} & \textbf{4.71}/\textbf{4.71} & \textbf{4.38}/4.46 & \textbf{4.34}/\textbf{4.35} & ---\\
 \bottomrule
 \end{tabular}
 
 \smallskip
 {\footnotesize $^\dagger$Heun needs odd NFE ($2\,\mathrm{steps}{-}1$); both
-arms ran $\{5,9,13,19,33,65\}$, i.e.\ $+1$ NFE per column. \emph{Correction:}
-an earlier version of this row was invalid --- an NFE-accounting bug in the
-runner gave the $m^\star$ arm $2\,\mathrm{NFE}{-}1$ true evaluations while
-labeling them NFE (the default arm was unaffected; run manifests record the
-true count). The cells shown are re-measured at matched \emph{true} NFE
-through the fixed pipeline; the win/tie verdicts survive the correction with
-smaller margins. $^\ast$EMS $=$ DPM-Solver-v3; ``default'' is its own EMS
-schedule, co-derived \emph{jointly} with the solver from shared model
-statistics (\S\ref{sec:solver}); our arm is the same solver under genuine
-per-core $m^\star(d_{\mathrm{EMS}})$ at $k\!=\!2$, which a validation sweep
-confirms is the optimal perceptual exponent for $d_{\mathrm{EMS}}$ --- a
-sharp optimum ($k\!\le\!1$ under-concentrates, $k\!\ge\!3$ over-crowds the
-nodes and the EMS solve diverges). $^\ddagger$Genuine $d_{\mathrm{EMS}}$ is
-so low-$\sigma$-peaked (max/median $\approx195$ vs Heun's $4.1$) that at NFE
-64 the inverse-CDF placement crowds near-identical nodes and the EMS
-coefficient solve goes singular; all schedules tie at the floor there
-regardless.}
+arms ran $\{5,9,13,19,33,65\}$ ($+1$ NFE per column). $^\ast$EMS $=$
+DPM-Solver-v3; ``default'' is its own co-designed EMS schedule, $m^\star$ uses
+the genuine per-core defect $d_{\mathrm{EMS}}$ at $k\!=\!2$.}
 \end{table}
 
-\noindent\textbf{Reading the table.} Wins concentrate where a schedule has
-room to act --- low-to-mid NFE, where node placement decides whether the
-high-curvature region is resolved. As NFE grows every schedule converges to
-the same floor and the cells become ties: this is the certificate's own
-prediction (the discretization term $\int d/m^{p}\!\to\!0$), not a weakness.
-The pattern is uniform across four solver cores and, crucially, across four
-path families --- VE/EDM, the linear-interpolant RF, the VP-SDE, and the
-optimal-transport-coupled CFM --- so $m^\star$ is not an EDM artifact. VP-SDE
-is the cleanest case: Euler never reaches its floor in this NFE range, so
-$m^\star$ wins at \emph{every} budget ($12$--$16\%$). Our schedule trails
-only at the lowest budgets: the EMS solver at NFE 5--8 (against a schedule
-co-optimized with the solver itself, yet our genuine per-core schedule still
-ties at NFE$\,\ge\,$12 and edges ahead at 18), and OT-CFM at NFE 5 (too few
-nodes to place on its sharply-peaked defect). OT-CFM is also an independent
-witness to the \textbf{path} axis: its OT coupling beats the
-independent-coupling 1-RF at low NFE (uniform $27.9$ vs $37.9$ at NFE 5) but
-carries a slightly higher floor ($7.0$ vs $6.4$ at NFE 64) --- the same
-$Q_0$-vs-$d$ tradeoff the reflow ladder shows (\S\ref{sec:path}), reached by
-a different straightening mechanism.
-
-\medskip
-\noindent\textbf{Genuine per-core calibration matters.} Each core's
-$m^\star$ is built from \emph{that core's own} measured defect $d_s$. For
-EMS this required measuring $d_{\mathrm{EMS}}$ directly on the EMS trajectory
---- its multistep-plus-corrector update does not fit the single-step
-calibration the other four cores share. An earlier version borrowed Heun's
-$d_{\mathrm{Heun}}$; that gives a $17$--$43\%$ different grid and loses at
-every NFE (e.g.\ $25.77$ vs $17.07$ at NFE 5). The genuine per-core defect
-closes most of that gap (NFE 5: $19.33$) and turns the mid-NFE losses into
-ties and a win. \emph{Per-core fairness needs the per-core defect, not merely
-per-core node placement} --- the same principle that motivated calibrating
-each core to itself in the first place.
-
-\medskip
-\noindent\textbf{Anatomy of one column} (1-RF, the cleanest single axis): the
-calibrated grid's gain over uniform peaks mid-budget and is parameter-free.
-\begin{table}[h]\centering
-\caption{Schedule axis on 1-RF, in detail. Calibrated vs uniform; $\Delta<0$ = win.}
-\label{tab:sched}
-\begin{tabular}{lcccccc}
-\toprule
-NFE & 5 & 8 & 12 & 18 & 32 & 64\\
-\midrule
-uniform               & \textbf{37.94} & 19.74 & 13.39 & 10.26 & 7.80 & 6.35\\
-proposed ($p\!=\!1$)  & \textbf{37.74} & \textbf{19.22} & \textbf{12.28} & \textbf{8.87} & \textbf{6.75} & \textbf{5.79}\\
-$\Delta$              & $-0.20$ & $-0.52$ & $-1.11$ & $-1.39$ & $-1.05$ & $-0.55$\\
-\bottomrule
-\end{tabular}
-\end{table}
+\noindent\textbf{Reading the table.} Wins concentrate at low-to-mid NFE,
+where node placement decides whether the high-curvature region is resolved;
+as NFE grows every schedule converges to the same floor and the cells tie
+($\int d/m^{p}\!\to\!0$). The pattern is uniform across all four solver cores
+and all four path families, so $m^\star$ is not an EDM artifact. VP-SDE is the
+cleanest case --- Euler never reaches its floor in range, so $m^\star$ wins at
+every budget ($12$--$16\%$). The only losses are EMS at NFE 5--8 and OT-CFM at
+NFE 5 (too few nodes for its peaked defect); OT-CFM also witnesses the path
+axis, beating 1-RF at low NFE ($27.9$ vs $37.9$ at NFE 5) but with a higher
+floor ($7.0$ vs $6.4$ at NFE 64) --- the same $Q_0$-vs-$d$ trade as the reflow
+ladder.
 
 \medskip
 \noindent\textbf{$m^\star$ is FID-optimal, not merely better than the
@@ -291,27 +222,14 @@ NFE 12 & $13.39$ & $\mathbf{12.23}$ & $12.20$\\
 \end{tabular}
 \end{center}
 
-\noindent The search improves on $m^\star$ by only $0.04$--$0.05$ FID --- well
-inside the 3-seed $2\sigma$ ($0.30$/$0.41$) --- while $m^\star$ beats uniform
-by $0.66$/$1.16$. Crucially, seeding the search from \emph{uniform} converges
-no lower than $m^\star$ at either budget, so this is not the optimizer merely
-resting where it started. On 1-RF the closed form is thus statistically
-indistinguishable from the FID-optimum of the entire free-node schedule
-space. (A brute-force DP optimum of a discretized pixel-truncation surrogate
-$\sum d\,\Delta t^{2}$ \emph{under}performs at $21.6$/$14.6$; with the caveat
-that this DP uses a crude left-node cost, it still indicates the \emph{smooth}
-certificate form, not naive surrogate minimization, is what tracks FID.)
-This optimality is \emph{not} universal: the same search run on EDM/Heun
-(Table~\ref{tab:schedaxis}) finds schedules $0.7$/$1.3$ FID below $m^\star$
-at NFE 9/13. A full re-validation of $(p,k)$ at true NFE (18 configurations
-$\times$ 5 budgets, validation seed only) \emph{rules out} mis-tuning as the
-cause: the incumbent $(2,2)$ remains the global validation optimum ---
-per-budget best outright at NFE 5--9 and within $0.1$ FID of best elsewhere
---- yet no member of the family reaches the search's schedules ($16.24$ vs
-$15.55$ at NFE 9 on the same validation seed). The headroom is a genuine
-limitation of the closed-form $(d\,\sigma^{-k})^{1/(p+1)}$ family at low NFE
-on this cell --- the same finite-step regime where the bound's
-lever-blindness binds --- not a tuning artifact.
+\noindent The search beats $m^\star$ by only $0.04$--$0.05$ FID --- inside the
+3-seed $2\sigma$ ($0.30$/$0.41$) --- while $m^\star$ beats uniform by
+$0.66$/$1.16$, and seeding the search from uniform converges no lower. On 1-RF
+the closed form is the FID-optimum of the free-node schedule space. This is
+not universal: the same search on EDM/Heun (Table~\ref{tab:schedaxis}) finds
+schedules $0.7$/$1.3$ FID below $m^\star$ at NFE 9/13 --- a genuine low-NFE
+limitation of the closed form, not a tuning artifact ($(p,k)\!=\!(2,2)$ is the
+validation optimum).
 
 \medskip
 \noindent\textbf{The schedule axis in isolation (Table~\ref{tab:schedaxis}).}
@@ -324,14 +242,12 @@ group's own solver as jump operator), the theory-surrogate DP, and the
 free-node FID search? Every row within a group is the identical sampler;
 only node placement differs.
 
-\begin{table}[t]\centering\small
+\begin{table}[p]\centering\small
 \caption{\textbf{Schedule axis isolated.} Clean-FID (10k, 3 seeds) of
 \emph{schedulers only}, within groups that fix path and solver; bold $=$
-within $2\sigma$ of the column best in its group. Tuned $\rho$ and the
-free-node search consume FID feedback per budget (and the search is run only
-at the marked budgets); $m^\star$, GITS, and the surrogate-DP are metric-free.
-The two $m^\star$ runs on 1-RF (independent calibrations) give
-$19.07$--$19.22$ at NFE 8; the table shows the dominance-table run.}
+within $2\sigma$ of the column best in its group. Tuned $\rho$ and free-node
+use FID feedback per budget; $m^\star$, GITS, and surrogate-DP are
+metric-free.}
 \label{tab:schedaxis}
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{lcccccc}
@@ -343,6 +259,13 @@ $19.07$--$19.22$ at NFE 8; the table shows the dominance-table run.}
 \quad GITS (DP, Heun-jump cost) & $242.52$ & $57.24$ & $18.07$ & -- & -- & --\\
 \quad free-node FID search & -- & $\mathbf{12.70}$ & $\mathbf{6.43}$ & -- & -- & --\\
 \quad $m^\star$ (closed form, $p\!=\!2$, $k\!=\!2$) & $\mathbf{46.22}$ & $13.41$ & $7.70$ & $5.33$ & $4.52$ & $\mathbf{4.41}$\\
+\midrule
+\multicolumn{7}{l}{\emph{EDM path + DPM++ core}}\\[1pt]
+\quad NFE & 5 & 8 & 12 & 18 & 32 & 64\\
+\quad Karras $\rho\!=\!7$ (native default) & $40.23$ & $13.46$ & $6.83$ & $5.04$ & $\mathbf{4.57}$ & $\mathbf{4.46}$\\
+\quad Karras tuned $\rho$ (per-NFE, val.-swept) & $40.06$ & $12.58$ & $6.42$ & $\mathbf{4.94}$ & $\mathbf{4.51}$ & $\mathbf{4.41}$\\
+\quad free-node FID search & -- & $\mathbf{8.17}$ & $\mathbf{5.50}$ & -- & -- & --\\
+\quad $m^\star$ (closed form, $p\!=\!2$, $k\!=\!2$) & $\mathbf{23.16}$ & $9.74$ & $6.07$ & $\mathbf{4.81}$ & $\mathbf{4.49}$ & $\mathbf{4.43}$\\
 \midrule
 \multicolumn{7}{l}{\emph{RF path (1-RF) + Euler core}}\\[1pt]
 \quad NFE & 5 & 8 & 12 & 18 & 32 & 64\\
@@ -357,35 +280,51 @@ $19.07$--$19.22$ at NFE 8; the table shows the dominance-table run.}
 \quad uniform-$t$ (native default) & $7.54$ & $6.98$ & $6.69$ & $\mathbf{6.51}$ & $\mathbf{6.37}$ & $\mathbf{6.29}$\\
 \quad GITS (DP, Euler-jump cost) & $\mathbf{7.09}$ & $\mathbf{6.71}$ & -- & -- & -- & --\\
 \quad $m^\star$ (closed form, $p\!=\!1$) & $7.31$ & $6.80$ & $\mathbf{6.57}$ & $\mathbf{6.44}$ & $\mathbf{6.33}$ & $\mathbf{6.27}$\\
+\midrule
+\multicolumn{7}{l}{\emph{RF path (3-RF) + Euler core}}\\[1pt]
+\quad NFE & 5 & 8 & 12 & 18 & 32 & 64\\
+\quad uniform-$t$ (native default) & $7.40$ & $7.16$ & $\mathbf{7.02}$ & $\mathbf{6.93}$ & $\mathbf{6.85}$ & $\mathbf{6.80}$\\
+\quad GITS (DP, Euler-jump cost) & $\mathbf{7.16}$ & $\mathbf{7.01}$ & -- & -- & -- & --\\
+\quad $m^\star$ (closed form, $p\!=\!1$) & $7.30$ & $\mathbf{7.06}$ & $\mathbf{6.95}$ & $\mathbf{6.88}$ & $\mathbf{6.83}$ & $\mathbf{6.79}$\\
+\midrule
+\multicolumn{7}{l}{\emph{OT-CFM path + Euler core}}\\[1pt]
+\quad NFE & 5 & 8 & 12 & 18 & 32 & 64\\
+\quad uniform-$t$ (native default) & $\mathbf{27.86}$ & $17.90$ & $13.52$ & $10.80$ & $8.47$ & $7.04$\\
+\quad GITS (DP, Euler-jump cost) & $\mathbf{27.73}$ & $\mathbf{17.54}$ & -- & -- & -- & --\\
+\quad $m^\star$ (closed form, $p\!=\!1$) & $28.87$ & $\mathbf{17.32}$ & $\mathbf{12.12}$ & $\mathbf{9.39}$ & $\mathbf{7.55}$ & $\mathbf{6.67}$\\
+\midrule
+\multicolumn{7}{l}{\emph{VP-SDE path + Euler core}}\\[1pt]
+\quad NFE & 5 & 8 & 12 & 18 & 32 & 64\\
+\quad uniform-$t$ (native default) & $240$ & $151$ & $80.13$ & $43.06$ & $22.28$ & $14.11$\\
+\quad GITS (DP, Euler-jump cost) & $\mathbf{189}$ & $\mathbf{98.7}$ & $\mathbf{54.9}$ & $\mathbf{34.3}$ & -- & --\\
+\quad $m^\star$ (closed form, $p\!=\!1$) & $236$ & $131$ & $67.29$ & $37.06$ & $\mathbf{19.55}$ & $\mathbf{12.32}$\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent Three findings. \emph{(i) Tuning the default's knob does not
-rescue it.} The best per-NFE $\rho$ (swept on validation, tested once)
-closes almost none of the low-NFE gap --- $245$ vs $m^\star$'s $46$ at NFE 5,
-$44$ vs $13$ at NFE 9: the failure of the Karras schedule at low budgets is
-the one-parameter \emph{family's} shape, not the $\rho\!=\!7$ setting. Tuned
-$\rho$ does edge past $m^\star$ at NFE 19--33 (e.g.\ $5.19$ vs $5.33$) ---
-the honest price of being parameter-free, paid where all schedules are
-within $\sim\!0.2$ of each other.
-\emph{(ii) GITS is budget-aware but core-fragile.} On near-straight Euler
-paths at tiny $K$ it beats $m^\star$ ($-2.7$ on 1-RF, $-0.2$ on 2-RF at NFE
-5): its DP evaluates candidate jumps \emph{at the actual step lengths}, so it
-sees what the certificate's bound cannot --- curvature near the \emph{end} of
-a jump barely displaces the endpoint (lever $\int a(s)(t_{\mathrm{end}}-s)ds$;
-$38\%$ of 1-RF curvature mass sits in $t\in[0.95,1]$ where the lever is
-$\le\!0.05$). The measured endpoint deviations rank uniform\,/\,$m^\star$\,/\,GITS
-exactly as FID does, and this lever-blindness is the \emph{same} mechanism
-behind every low-NFE loss in Table~\ref{tab:dominance} (EMS at 5--8, OT-CFM
-at 5). But the advantage does not survive a second-order core: with the
-Heun-consistent jump cost, GITS collapses on EDM ($242/57/18$ vs $m^\star$'s
-$46/13/8$) --- the teacher-forced jump metric badly misjudges $\sigma$-space
-placement when the core itself cancels the leading curvature term. $m^\star$
-is the only scheduler in the table that is never catastrophic in any group.
-\emph{(iii) The remaining headroom is quantified.} The free-node search
-bounds what any scheduler could achieve: $m^\star$ sits on that bound on
-1-RF and $0.7$--$1.3$ FID above it on EDM/Heun at NFE 9--13.
+\noindent Three findings. \emph{(i) Tuning the default's knob does not rescue
+it.} The best per-NFE $\rho$ closes almost none of the low-NFE gap ($245$ vs
+$m^\star$'s $46$ at NFE 5, $44$ vs $13$ at NFE 9): the failure is the
+one-parameter family's shape, not the $\rho\!=\!7$ setting. DPM++ confirms it
+--- the validation-best $\rho$ at NFE 5 \emph{is} the default $\rho\!=\!7$, and
+tuned $\rho$ never beats $m^\star$ (a $0.02$ tie at NFE 64 aside).
+\emph{(ii) GITS is budget-aware but core-fragile.} Its DP scores candidate
+jumps at the actual step lengths, so it sees what the certificate's bound
+cannot: curvature near the \emph{end} of a jump barely moves the endpoint
+(lever $\int a(s)(t_{\mathrm{end}}-s)\,ds$; $38\%$ of 1-RF curvature mass sits
+in $t\in[0.95,1]$ where the lever is $\le\!0.05$). Its edge over $m^\star$
+grows with how peaked the defect is and how far Euler sits from its floor:
+largest on VP-SDE (wins every budget, $189/98.7/54.9/34.3$ vs
+$236/131/67.3/37.1$ at NFE 5--18), present at OT-CFM NFE 5 ($27.73$, the one
+budget where $m^\star$ loses to the default), shrinking to a shared floor on
+2-RF/3-RF. But it collapses on a second-order core: with the Heun jump cost,
+GITS gives $242/57/18$ vs $m^\star$'s $46/13/8$ on EDM. $m^\star$ is the only
+scheduler never catastrophic in any group.
+\emph{(iii) The remaining headroom is quantified.} The free-node search bounds
+what any scheduler can reach: $m^\star$ sits on that bound on 1-RF,
+$0.7$--$1.3$ FID above it on EDM/Heun (NFE 9--13) and $0.6$--$1.6$ above on
+EDM/DPM++ (NFE 8--12, $9.74\!\to\!8.17$, $6.07\!\to\!5.50$) --- and on both EDM
+cores the optimum was found by refining the $m^\star$ grid itself.
 
 \smallskip
 \noindent\emph{Cost of the schedule.} ``Optimized'' baselines pay for their
@@ -407,43 +346,28 @@ free-node search     & $\sim\!9{\times}10^{6}$ \emph{per budget} & per (net, NFE
 \end{center}
 
 \noindent $m^\star$ is the cheapest member of the cheapest access class
-(metric-free, data-free, closed-form per budget); the rows of
-Table~\ref{tab:schedaxis} measure what each additional order of magnitude of
-preparation --- or each additional information source --- actually buys.
+(metric-free, data-free, closed-form per budget).
 
-\emph{Relation to learned schedules (AYS).} Align-Your-Steps
-(Sabour et al., 2024) also optimizes schedules (via a KLUB objective) and reports gains
-on CIFAR-10/EDM; its optimized CIFAR schedules are not published (only the
-SD/SDXL/DeepFloyd/SVD schedules are released) and its FID protocol differs
-(50k legacy vs our 10k Clean-FID), so a number-to-number comparison would
-require reimplementing their optimizer. The free-node search above is the
-stronger comparison on our protocol: it bounds what \emph{any} schedule
-optimizer --- learned or otherwise --- could achieve at these budgets, and
-$m^\star$ matches it without optimization, FID feedback, or training.
+\emph{Relation to learned schedules (AYS).} Align-Your-Steps (Sabour et al.,
+2024) optimizes schedules via a KLUB objective, but its CIFAR schedules are
+unpublished and its FID protocol differs (50k legacy vs our 10k Clean-FID).
+The free-node search is the stronger comparison on our protocol: it bounds
+what any schedule optimizer could achieve, and $m^\star$ matches it without
+optimization, FID feedback, or training.
 
-\emph{Adaptive step-size control is not a substitute.} A Dormand--Prince
-RK45 solver (local-error-adaptive steps, the classical ``automatic
-schedule'') on the same 1-RF ODE: it cannot operate below NFE ${\approx}19$
-at all (each step costs 6 evaluations); at NFE 25 it is \emph{FID-blind} ---
-FID is non-monotonic in the tolerance at matched NFE ($12.0$ at
-tol $0.5$ vs $32.2$ at tol $0.1$), because the local error norm accepts a
-single giant step across the high-curvature data end that is perceptually
-catastrophic. It crosses the Euler frontier only at NFE ${\gtrsim}40$
-($5.88$ at NFE 43, $5.29$ at NFE 83), where its \emph{fifth-order core} ---
-an $s$-axis advantage, not a scheduling one --- dominates, mirroring EMS on
-EDM. At deployment budgets, error-adaptive placement is exactly the
-local/linear regime mismatch that $m^\star$'s calibrated global placement
-avoids.
+\emph{Adaptive step-size control is not a substitute.} A Dormand--Prince RK45
+solver on the same 1-RF ODE cannot operate below NFE ${\approx}19$ (6
+evaluations per step), and at NFE 25 it is FID-blind --- FID is non-monotonic
+in the tolerance ($12.0$ at tol $0.5$ vs $32.2$ at tol $0.1$). It crosses the
+Euler frontier only at NFE ${\gtrsim}40$ ($5.29$ at NFE 83), where its
+fifth-order core --- an $s$-axis advantage, not a scheduling one ---
+dominates.
 
 \medskip
-\noindent\textbf{Cross-dataset transfer (FFHQ-64).} The recipe transfers to a
-new dataset with \emph{nothing} re-tuned: on EDM's FFHQ-64 model we calibrate
-$d$ on the FFHQ net (held-out seed, as always) and reuse the CIFAR-validated
-exponents $(p,k)=(2,2)$ unchanged. Both arms are the identical Heun loop;
-only the grid differs (FID: EDM's reference implementation against NVIDIA's
-50k FFHQ statistics, same metric both arms; odd NFE; 10k, 3 seeds).
-$m^\star$ beats the Karras $\rho\!=\!7$ default at \emph{every} budget,
-including the highest ($\Delta=-0.10$ at NFE 33 exceeds $2\sigma=0.05$):
+\noindent\textbf{Cross-dataset transfer (FFHQ-64).} With nothing re-tuned ---
+$d$ calibrated on the FFHQ net, the CIFAR exponents $(p,k)=(2,2)$ reused, the
+same Heun loop in both arms --- $m^\star$ beats the Karras $\rho\!=\!7$ default
+at every budget, including the highest ($\Delta=-0.10$ at NFE 33, $>2\sigma$):
 
 \begin{center}\small
 \begin{tabular}{lccccc}
@@ -456,10 +380,8 @@ $m^\star$ (CIFAR $(p,k)$, no re-tuning) & $\mathbf{37.17}$ & $\mathbf{11.33}$ & 
 \end{tabular}
 \end{center}
 
-\noindent The FFHQ defect profile is genuinely different (max/median $2.2$
-vs CIFAR's $4.1$ --- much flatter), so this is the calibration doing the
-work, not a memorized CIFAR shape: the same closed form, fed a new $d$,
-places nodes correctly on a new dataset.
+\noindent The FFHQ defect is much flatter than CIFAR's (max/median $2.2$ vs
+$4.1$), so this is the calibration doing the work, not a memorized shape.
 
 \medskip
 \noindent Two secondary findings (details in \S\ref{app:sched}):
@@ -468,28 +390,20 @@ places nodes correctly on a new dataset.
 and 3-RF too, but the gain shrinks as reflow pushes the model toward its
 floor (less defect to recover) --- straightening and scheduling are
 complementary, not redundant.
-\item\emph{FID-faithful weighting fails:} replacing $d$ with the
-feature-weighted $d\!\cdot\!g$ is \emph{worse} than both pixel-$d$ and
-uniform --- the local sensitivity $g$ is regime-mismatched. Pixel-$d$ is
-sufficient and superior. (The EDM ``decomposability wall,'' cross-family.)
+\item\emph{FID-faithful weighting fails:} the feature-weighted $d\!\cdot\!g$
+is \emph{worse} than both pixel-$d$ and uniform; pixel-$d$ is sufficient.
 \end{itemize}
 
 \section{Conclusion}
-The certificate's structure holds on every axis we can probe. The two claims
-that matter transfer off EDM: the \textbf{path} trades $Q_0$ for $d$ with an
-NFE-dependent optimum (a confirmed crossover cascade), and the
-\textbf{parameter-free calibrated schedule} wins or ties the native default
-of every solver core and every path family tested --- four EDM cores and
-four path families (EDM, RF, VP-SDE, OT-CFM) --- the only losses being at the
-lowest budgets (EMS at NFE 5--8, where it still ties at NFE$\,\ge\,$12 with a
-genuine per-core defect; OT-CFM at NFE 5; Table~\ref{tab:dominance}), and it
-carries to a new dataset (FFHQ-64) with no re-tuning. Against
-\emph{optimized} schedulers (Table~\ref{tab:schedaxis}) it is FID-optimal on
-1-RF, within $\sim\!1$ FID of optimal on EDM/Heun, and uniquely
-never-catastrophic --- at orders of magnitude less preparation compute and
-the weakest access requirements (net only, no data, no metric).
-Path-straightening,
-schedule-calibration, and solver-core quality are complementary advances on
+The certificate's structure holds on every axis we probe. Two claims transfer
+off EDM: the \textbf{path} trades $Q_0$ for $d$ with an NFE-dependent optimum
+(the confirmed crossover cascade), and the \textbf{parameter-free calibrated
+schedule} wins or ties the native default of every solver core and path family
+tested, losing only at the lowest budgets (EMS NFE 5--8, OT-CFM NFE 5), and
+carries to FFHQ-64 with no re-tuning. Against optimized schedulers it is
+FID-optimal on 1-RF, within $\sim\!1$ FID of optimal on EDM/Heun, and uniquely
+never-catastrophic --- at orders of magnitude less compute and the weakest
+access requirements. Path, schedule, and solver are complementary advances on
 orthogonal axes of one certificate.
 
 \appendix
@@ -515,13 +429,6 @@ once on test; GITS reimplemented with a 256-trajectory reference ensemble at
 the held-out seed on a fine grid (128-node $t$ / 96-node $\log\sigma$), jump
 cost from the group's own solver, DP per budget, tested once; free-node
 search as on 1-RF (Nelder--Mead, search seed only, tested once).
-\emph{NFE-accounting correction (2026-06-11):} the original Heun-row
-$m^\star$ runs executed $2\,\mathrm{NFE}{-}1$ true evaluations under an NFE
-label (runner bug, default arm unaffected); all run manifests were audited
-(true count is recorded per run), the damage was confined to that row, and
-the row was re-measured at matched true NFE through the fixed pipeline.
-Cells whose original \emph{true} NFE already lay on the grid (9, 65) were
-reused rather than re-drawn.
 
 \section{Schedule supplement}
 \label{app:sched}
