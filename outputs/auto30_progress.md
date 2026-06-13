@@ -508,3 +508,12 @@ Full table (1-RF, 3-seed 10k Clean-FID, matched-node Euler):
   0.7-1.3 FID headroom on EDM/Heun @9-13 is a GENUINE limitation of the closed-form (d*sigma^-k)^{1/(p+1)} family at low NFE (the
   lever-blind finite-step regime), NOT a tuning artifact of the bug era. The bug-era k=2 choice was coincidentally correct at true NFE.
 - Report Sec.5 sentence updated with the result (was: "re-validating is the next step"). Compiles 8pp clean.
+
+## Update 42 (Table-2 expansion LAUNCHED: 3 more groups -- user asked for more groups)
+- New groups: 3-RF+Euler and OT-CFM+Euler (GITS rows @5/8 -- tests the lever prediction across path families: OT-CFM defect MORE
+  peaked (90) than 1-RF (69) -> GITS should win @5; 3-RF near floor -> all close), VP-SDE+Euler (GITS @5/8/12/18), and
+  DPM++(2M) as a SECOND SOLVER-CORE group with optimized baselines: tuned-rho (val-swept per NFE, test-once, all 6 budgets) +
+  free-node search @8/12 (seeded from m*(per-core d_dpmpp) AND karras7, search seed 1000 @5k, test-once).
+- All single-knob: same sampler within group, only node placement differs. DPM++ inline loop reuses _dpmpp_step (1 eval/step, NFE=steps,
+  verified vs locked row via sanity line). GITS = Euler-jump DP, held-out seed-777 ensemble, same as existing groups.
+- Scripts: gits_paths.py, gits_vp.py (score_sde stack), dpmpp_group.py. All smoke-tested. chain3.sh running (~10-12h total).
