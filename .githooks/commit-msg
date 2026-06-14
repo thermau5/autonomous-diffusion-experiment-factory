@@ -1,0 +1,7 @@
+#!/bin/bash
+# Policy: commit messages carry no AI co-author / generated-by signature (clean attribution).
+# Strips any "Co-Authored-By: Claude ..." or "Generated with ... Claude ..." line in place.
+msg="$1"
+sed -i -E '/co-authored-by:[[:space:]]*claude/Id; /generated with.*claude/Id' "$msg"
+# drop a trailing blank line left behind, if any
+sed -i -e :a -e '/^\n*$/{$d;N;ba}' "$msg" 2>/dev/null || true
