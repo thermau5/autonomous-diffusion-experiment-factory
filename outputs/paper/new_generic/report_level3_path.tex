@@ -441,9 +441,12 @@ halves the excess. The sample energy distance fits across its full range
 ($R^2\!=\!0.997$), as the theory requires for the pure statistical term. Below
 $n\!=\!128$ the model memorizes and the error falls \emph{faster} than $1/n$;
 above $n\!\approx\!10^3$ each measure saturates at its own floor (model
-capacity for the score risk, sample count for the energy distance). The
-$c_{\mathrm{stat}}/n$ term --- the last of the certificate's five --- behaves
-as predicted.
+capacity for the score risk, sample count for the energy distance). A capacity
+sweep confirms the score-risk floor is approximation error: at $n\!=\!16384$ it
+falls from $0.007$ to $0.003$ as the MLP widens ($32\!\to\!256$) then plateaus,
+while at $n\!=\!1024$ extra width instead \emph{raises} the risk (overfitting)
+--- bias and variance cleanly separated. The $c_{\mathrm{stat}}/n$ term ---
+the last of the certificate's five --- behaves as predicted.
 
 \section{Conclusion}
 The certificate's structure holds on every axis we probe. Two claims transfer
