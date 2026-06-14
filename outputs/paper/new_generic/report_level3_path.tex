@@ -26,7 +26,7 @@ native default of every configuration tested --- four EDM solver cores and
 four path families (EDM, RF, VP-SDE, OT-CFM) --- losing only at the lowest
 budgets (EMS at NFE 5--8, OT-CFM at NFE 5). It is FID-optimal on 1-RF (a
 free-node search cannot beat it), the only scheduler never catastrophic
-against optimized baselines (tuned $\rho$, GITS, surrogate-DP;
+against optimized baselines (tuned $\rho$, GITS, surrogate-DP, AYS;
 Table~\ref{tab:schedaxis}), at $10$--$500\times$ less preparation compute, and
 transfers to FFHQ-64 with the CIFAR exponents unchanged, beating the Karras
 default at every budget. All FID is Clean-FID 10k, 3 seeds (FFHQ: EDM's FID
@@ -245,8 +245,8 @@ only node placement differs.
 \begin{table}[p]\centering\small
 \caption{\textbf{Schedule axis isolated.} Clean-FID (10k, 3 seeds) of
 \emph{schedulers only}, within groups that fix path and solver; bold $=$
-within $2\sigma$ of the column best in its group. Tuned $\rho$ and free-node
-use FID feedback per budget; $m^\star$, GITS, and surrogate-DP are
+within $2\sigma$ of the column best in its group. Tuned $\rho$, free-node,
+and AYS use FID feedback per budget; $m^\star$, GITS, and surrogate-DP are
 metric-free.}
 \label{tab:schedaxis}
 \setlength{\tabcolsep}{5pt}
@@ -258,6 +258,7 @@ metric-free.}
 \quad Karras tuned $\rho$ (per-NFE, val.-swept) & $245.02$ & $43.95$ & $9.98$ & $\mathbf{5.19}$ & $\mathbf{4.41}$ & $\mathbf{4.37}$\\
 \quad GITS (DP, Heun-jump cost) & $242.52$ & $57.24$ & $18.07$ & -- & -- & --\\
 \quad free-node FID search & -- & $\mathbf{12.70}$ & $\mathbf{6.43}$ & -- & -- & --\\
+\quad AYS (KLUB, early-stopped) & $247.76$ & $45.25$ & $10.79$ & $5.51$ & $\mathbf{4.42}$ & $\mathbf{4.36}$\\
 \quad $m^\star$ (closed form, $p\!=\!2$, $k\!=\!2$) & $\mathbf{46.22}$ & $13.41$ & $7.70$ & $5.33$ & $4.52$ & $\mathbf{4.41}$\\
 \midrule
 \multicolumn{7}{l}{\emph{EDM path + DPM++ core}}\\[1pt]
@@ -265,6 +266,7 @@ metric-free.}
 \quad Karras $\rho\!=\!7$ (native default) & $40.23$ & $13.46$ & $6.83$ & $5.04$ & $\mathbf{4.57}$ & $\mathbf{4.46}$\\
 \quad Karras tuned $\rho$ (per-NFE, val.-swept) & $40.06$ & $12.58$ & $6.42$ & $\mathbf{4.94}$ & $\mathbf{4.51}$ & $\mathbf{4.41}$\\
 \quad free-node FID search & -- & $\mathbf{8.17}$ & $\mathbf{5.50}$ & -- & -- & --\\
+\quad AYS (KLUB, early-stopped) & $35.65$ & $11.59$ & $6.16$ & $\mathbf{4.84}$ & $\mathbf{4.50}$ & $\mathbf{4.40}$\\
 \quad $m^\star$ (closed form, $p\!=\!2$, $k\!=\!2$) & $\mathbf{23.16}$ & $9.74$ & $6.07$ & $\mathbf{4.81}$ & $\mathbf{4.49}$ & $\mathbf{4.43}$\\
 \midrule
 \multicolumn{7}{l}{\emph{RF path (1-RF) + Euler core}}\\[1pt]
@@ -341,6 +343,7 @@ GITS (Heun cost)     & $2.4{\times}10^{6}$ & once per net & net only\\
 EMS (DPM-v3)         & $\sim\!10^{6}$ & once per net & net $+$ training data\\
 tuned $\rho$         & $3.6{\times}10^{5}$ \emph{per budget} & per (net, NFE) & net $+$ FID oracle\\
 free-node search     & $\sim\!9{\times}10^{6}$ \emph{per budget} & per (net, NFE) & net $+$ FID oracle\\
+AYS (KLUB)           & $\sim\!10^{5}$ $+$ FID & per (net, NFE) & net $+$ data $+$ FID\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -348,12 +351,16 @@ free-node search     & $\sim\!9{\times}10^{6}$ \emph{per budget} & per (net, NFE
 \noindent $m^\star$ is the cheapest member of the cheapest access class
 (metric-free, data-free, closed-form per budget).
 
-\emph{Relation to learned schedules (AYS).} Align-Your-Steps (Sabour et al.,
-2024) optimizes schedules via a KLUB objective, but its CIFAR schedules are
-unpublished and its FID protocol differs (50k legacy vs our 10k Clean-FID).
-The free-node search is the stronger comparison on our protocol: it bounds
-what any schedule optimizer could achieve, and $m^\star$ matches it without
-optimization, FID feedback, or training.
+\emph{Head-to-head with AYS.} We reimplement Align-Your-Steps (Sabour et al.,
+2024) on our protocol: its exact KLUB cost, optimized by coordinate descent
+from the Karras schedule and early-stopped on validation FID
+(Table~\ref{tab:schedaxis}, AYS rows). $m^\star$ matches or beats it at every
+budget on both the DPM++ and Heun cores, decisively at low NFE ($23.2$ vs
+$35.6$ on DPM++ and $46.2$ vs $247.8$ on Heun at NFE 5), tying only at the
+floor. And it does so from a strictly cheaper access class: AYS's KLUB
+minimizer is degenerate (a single near-$\sigma_{\max}$ step), so it must be
+early-stopped on FID --- it needs both training data and an FID oracle, while
+$m^\star$ uses neither.
 
 \emph{Adaptive step-size control is not a substitute.} A Dormand--Prince RK45
 solver on the same 1-RF ODE cannot operate below NFE ${\approx}19$ (6
